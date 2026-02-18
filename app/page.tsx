@@ -1,108 +1,81 @@
-'use client'
-import { useState } from 'react'
+import React from 'react';
+import { LayoutDashboard, FileText, BookmarkCheck, Users, PlusCircle } from 'lucide-react';
 
-export default function FormularRegistratura() {
-  // State pentru a decide dacă e Intrare sau Ieșire
-  const [tipFlux, setTipFlux] = useState<'intrare' | 'iesire'>('intrare');
-  
-  // State pentru alegerea numărului (Următorul vs Rezervat)
-  const [sursaNumar, setSursaNumar] = useState<'automat' | 'rezervat'>('automat');
-
+export default function RegistraturaDashboard() {
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-white rounded-xl shadow-xl border">
-      <h2 className="text-2xl font-bold mb-6 text-blue-900 border-b pb-2">
-        📥 Înregistrare Document Nou
-      </h2>
+    <div className="min-h-screen bg-slate-50 flex">
+      {/* Sidebar - Meniu Lateral */}
+      <aside className="w-64 bg-slate-900 text-white flex flex-col">
+        <div className="p-6 border-b border-slate-800">
+          <h1 className="text-xl font-bold tracking-tight">Liceul Teoretic Teiuș</h1>
+          <p className="text-xs text-slate-400">Sistem Registratură v2.0</p>
+        </div>
+        <nav className="flex-1 p-4 space-y-2">
+          <a href="#" className="flex items-center gap-3 p-3 bg-blue-600 rounded-lg"><LayoutDashboard size={20}/> Dashboard</a>
+          <a href="#" className="flex items-center gap-3 p-3 hover:bg-slate-800 rounded-lg text-slate-300"><FileText size={20}/> Registru Documente</a>
+          <a href="#" className="flex items-center gap-3 p-3 hover:bg-slate-800 rounded-lg text-slate-300"><BookmarkCheck size={20}/> Numere Rezervate</a>
+          <a href="#" className="flex items-center gap-3 p-3 hover:bg-slate-800 rounded-lg text-slate-300"><Users size={20}/> Utilizatori</a>
+        </nav>
+      </aside>
 
-      <form className="space-y-6 text-black">
-        
-        {/* --- SELECȚIE FLUX --- */}
-        <div className="flex gap-4 p-2 bg-gray-100 rounded-lg">
-          <button 
-            type="button"
-            onClick={() => setTipFlux('intrare')}
-            className={`flex-1 py-2 rounded-md font-bold transition ${tipFlux === 'intrare' ? 'bg-blue-600 text-white shadow' : 'text-gray-600'}`}
-          >
-            DOC. INTRARE
+      {/* Main Content - Zona Centrală */}
+      <main className="flex-1 p-8">
+        <header className="flex justify-between items-center mb-8">
+          <div>
+            <h2 className="text-2xl font-bold text-slate-800">Bună ziua, Secretariat!</h2>
+            <p className="text-slate-500">Iată situația documentelor de astăzi.</p>
+          </div>
+          <button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition">
+            <PlusCircle size={20}/> Înregistrare Nouă
           </button>
-          <button 
-            type="button"
-            onClick={() => setTipFlux('iesire')}
-            className={`flex-1 py-2 rounded-md font-bold transition ${tipFlux === 'iesire' ? 'bg-blue-600 text-white shadow' : 'text-gray-600'}`}
-          >
-            DOC. IEȘIRE
-          </button>
-        </div>
+        </header>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          
-          {/* --- CÂMPURI DINAMICE (INTRARE vs IEȘIRE) --- */}
-          {tipFlux === 'intrare' ? (
-            <>
-              <div>
-                <label className="block text-sm font-bold">Număr Extern (de la expeditor)</label>
-                <input type="text" name="numar_extern" className="w-full border p-2 rounded" placeholder="Ex: 123/2026" />
-              </div>
-              <div>
-                <label className="block text-sm font-bold">Data Externă</label>
-                <input type="date" name="data_externa" className="w-full border p-2 rounded" />
-              </div>
-            </>
-          ) : (
-            <div className="md:col-span-2">
-              <label className="block text-sm font-bold text-red-600">Data Expedierii (Obligatoriu pentru Ieșire) *</label>
-              <input type="date" name="data_expediere" required className="w-full border-2 border-red-200 p-2 rounded" />
-            </div>
-          )}
-
-          {/* --- CÂMPURI OBLIGATORII (COMUNE) --- */}
-          <div className="md:col-span-2">
-            <label className="block text-sm font-bold">Emitent *</label>
-            <input 
-              type="text" 
-              name="emitent" 
-              required 
-              defaultValue={tipFlux === 'iesire' ? 'Liceul Teoretic Teiuș' : ''}
-              readOnly={tipFlux === 'iesire'}
-              className={`w-full border p-2 rounded ${tipFlux === 'iesire' ? 'bg-gray-100' : ''}`}
-            />
+        {/* Statistici Rapide */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+            <p className="text-sm text-slate-500 mb-1">Numere disponibile</p>
+            <h3 className="text-3xl font-bold text-blue-600">20</h3> {/* Valoare din rezervari_numere */}
           </div>
-
-          <div className="md:col-span-2">
-            <label className="block text-sm font-bold">Conținut pe scurt *</label>
-            <textarea name="continut" required rows={3} className="w-full border p-2 rounded"></textarea>
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+            <p className="text-sm text-slate-500 mb-1">Documente Nerezolvate</p>
+            <h3 className="text-3xl font-bold text-orange-500 text-center text-center">--</h3> 
           </div>
-
-          {/* --- SELECȚIE NUMĂR (CERINȚA 4) --- */}
-          <div className="md:col-span-2 border-t pt-4">
-            <label className="block text-sm font-bold mb-2">Alocare Număr Înregistrare:</label>
-            <select 
-              onChange={(e) => setSursaNumar(e.target.value as any)}
-              className="w-full border p-2 rounded bg-yellow-50 font-semibold"
-            >
-              <option value="automat">Următorul număr disponibil (Automat)</option>
-              <option value="rezervat">Folosește un număr rezervat anterior</option>
-            </select>
-          </div>
-
-        </div>
-
-        {/* --- ASIGNARE COMPARTIMENTE (CERINȚA 2) --- */}
-        <div className="p-4 bg-blue-50 rounded-lg">
-          <label className="block text-sm font-bold mb-2">Compartimente Responsabile:</label>
-          <div className="flex flex-wrap gap-4 text-sm">
-            {['Secretariat', 'Contabilitate', 'Directorat', 'Administrativ'].map(comp => (
-              <label key={comp} className="flex items-center gap-2">
-                <input type="checkbox" name="compartimente" value={comp} /> {comp}
-              </label>
-            ))}
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+            <p className="text-sm text-slate-500 mb-1">Total Înregistrări 2026</p>
+            <h3 className="text-3xl font-bold text-slate-800">0</h3>
           </div>
         </div>
 
-        <button type="submit" className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg shadow-lg uppercase">
-          Salvează Documentul
-        </button>
-      </form>
+        {/* Tabelul de Documente */}
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+          <div className="p-4 border-b border-slate-100 bg-slate-50">
+            <h3 className="font-semibold text-slate-700">Ultimele Documente Înregistrate</h3>
+          </div>
+          <table className="w-full text-left">
+            <thead>
+              <tr className="text-sm text-slate-500 border-b border-slate-100">
+                <th className="p-4">Nr. Reg.</th>
+                <th className="p-4">Emitent</th>
+                <th className="p-4">Tip</th>
+                <th className="p-4">Data</th>
+                <th className="p-4">Status</th>
+              </tr>
+            </thead>
+            <tbody className="text-slate-700">
+              {/* Aceste rânduri vor fi populate din baza de date */}
+              <tr className="border-b border-slate-50 hover:bg-slate-50">
+                <td className="p-4 font-medium">1/2026</td>
+                <td className="p-4">Primăria Teiuș</td>
+                <td className="p-4">Intrare</td>
+                <td className="p-4 text-sm">18.02.2026</td>
+                <td className="p-4">
+                  <span className="bg-orange-100 text-orange-700 px-2 py-1 rounded text-xs font-bold">ÎN LUCRU</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </main>
     </div>
-  )
+  );
 }
