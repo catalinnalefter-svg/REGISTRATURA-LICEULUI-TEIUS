@@ -13,6 +13,7 @@
     "react-dom": "18.2.0",
     "@supabase/supabase-js": "latest",
     "lucide-react": "latest"
+    "lucide-react": "^0.400.0",
   },
   "devDependencies": {
     "typescript": "^5",
@@ -21,4 +22,4 @@
     "@types/react-dom": "18.2.0"
   }
 }
-"lucide-react": "^0.400.0",
+
