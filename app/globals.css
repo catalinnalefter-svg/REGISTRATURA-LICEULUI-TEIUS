@@ -1,3 +1,9 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Poți adăuga și un font mai curat aici */
+body {
+  font-family: sans-serif;
+  background-color: #f8f9fa;
+}
