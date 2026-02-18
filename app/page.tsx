@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Plus, Hash, Calendar, X, Save, CheckCircle } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '../lib/supabase';
 
 export default function Registratura() {
   const [showForm, setShowForm] = useState(false);
