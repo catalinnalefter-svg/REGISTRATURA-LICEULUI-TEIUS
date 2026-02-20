@@ -45,19 +45,6 @@ export default function Registratura() {
     else alert("Parolă incorectă!");
   };
 
-  const startEdit = (doc: any) => {
-    setEditId(doc.id);
-    setTipDocument(doc.tip_document);
-    setFormData({
-      data: doc.creat_la || new Date().toISOString().split('T')[0],
-      expeditor: doc.emitent || '',
-      continut: doc.continut || ''
-    });
-    setIsEditing(true);
-    setNumarGenerat(null);
-    setShowForm(true);
-  };
-
   const handleSave = async () => {
     if (!formData.expeditor || !formData.continut) {
       alert("Completați toate câmpurile!");
@@ -76,9 +63,6 @@ export default function Registratura() {
           })
           .eq('id', editId);
         if (error) throw error;
-        await fetchDocumente();
-        setShowForm(false);
-        setIsEditing(false);
       } else {
         const { data, error } = await supabase
           .from('documente')
@@ -91,14 +75,14 @@ export default function Registratura() {
           }])
           .select();
         if (error) throw error;
-        if (data?.[0]) {
-          setNumarGenerat(data[0].numar_inregistrare);
-          await fetchDocumente();
-          setTimeout(() => {
-            setShowForm(false);
-            setNumarGenerat(null);
-          }, 3000);
-        }
+        if (data?.[0]) setNumarGenerat(data[0].numar_inregistrare);
+      }
+      await fetchDocumente();
+      if (!isEditing) {
+        setTimeout(() => { setShowForm(false); setNumarGenerat(null); }, 3000);
+      } else {
+        setShowForm(false);
+        setIsEditing(false);
       }
       setFormData({ data: new Date().toISOString().split('T')[0], expeditor: '', continut: '' });
     } catch (err: any) {
@@ -120,48 +104,56 @@ export default function Registratura() {
     link.click();
   };
 
-  const filtered = documente.filter(d => 
-    (d.emitent || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (d.continut || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (d.numar_inregistrare?.toString() || "").includes(searchTerm)
-  );
-
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
-        <div className="bg-white p-10 rounded-[2.5rem] w-full max-w-md text-center">
-          <div className="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
-            <Icons.School className="text-white" size={32} />
-          </div>
-          <h2 className="text-xl font-black mb-6 uppercase">Registru Teiuș</h2>
-          <form onSubmit={handleLogin} className="space-y-4">
-            <input 
-              type="password" placeholder="Parola" 
-              className="w-full p-4 bg-slate-50 border-2 rounded-2xl text-center outline-none focus:border-indigo-500 font-bold"
-              value={passwordInput} onChange={(e) => setPasswordInput(e.target.value)}
-            />
-            <button className="w-full bg-slate-900 text-white font-bold py-4 rounded-2xl uppercase text-xs tracking-widest">Conectare</button>
-          </form>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-slate-50 p-4 md:p-10 text-slate-900">
-      <div className="max-w-6xl mx-auto">
-        <header className="flex flex-col md:flex-row items-center justify-between mb-10 bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100">
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center text-white">
+    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
+      {!isAuthenticated ? (
+        <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
+          <div className="bg-white p-10 rounded-[2.5rem] w-full max-w-md text-center shadow-2xl">
+            <div className="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-6 text-white">
               <Icons.School size={32} />
             </div>
-            <div>
-              <h1 className="text-2xl font-black uppercase tracking-tight">Registru <span className="text-indigo-600">Intrare-Ieșire</span></h1>
-              <p className="text-slate-400 font-bold text-xs uppercase">Liceul Teoretic Teiuș • 2026</p>
-            </div>
+            <h2 className="text-xl font-black mb-6 uppercase tracking-tight">Registru Teiuș</h2>
+            <form onSubmit={handleLogin} className="space-y-4">
+              <input 
+                type="password" placeholder="Parola" 
+                className="w-full p-4 bg-slate-50 border-2 rounded-2xl text-center outline-none focus:border-indigo-500 font-bold"
+                value={passwordInput} onChange={(e) => setPasswordInput(e.target.value)}
+              />
+              <button type="submit" className="w-full bg-slate-900 text-white font-bold py-4 rounded-2xl uppercase text-xs tracking-widest hover:bg-indigo-600 transition-all">Conectare</button>
+            </form>
           </div>
-          <button onClick={() => setIsAuthenticated(false)} className="text-xs font-bold text-red-500 px-6 py-3 bg-red-50 rounded-xl">IEȘIRE</button>
-        </header>
+        </div>
+      ) : (
+        <div className="p-4 md:p-10 max-w-6xl mx-auto">
+          <header className="flex flex-col md:flex-row items-center justify-between mb-10 bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 gap-6">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg">
+                <Icons.School size={32} />
+              </div>
+              <div>
+                <h1 className="text-2xl font-black uppercase tracking-tight">Registru <span className="text-indigo-600">Intrare-Ieșire</span></h1>
+                <p className="text-slate-400 font-bold text-xs uppercase">Liceul Teoretic Teiuș • 2026</p>
+              </div>
+            </div>
+            <button onClick={() => setIsAuthenticated(false)} className="text-xs font-bold text-red-500 px-6 py-3 bg-red-50 rounded-xl hover:bg-red-500 hover:text-white transition-all">IEȘIRE</button>
+          </header>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-          {['intrare', 'iesire', 'rezervat'].map((t) => (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+            {['intrare', 'iesire', 'rezervat'].map((t) => (
+              <button key={t} onClick={() => { setTipDocument(t); setIsEditing(false); setNumarGenerat(null); setShowForm(true); }} className="bg-white p-8 rounded-[2.5rem] shadow-sm text-left hover:ring-2 ring-indigo-500 transition-all group">
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center mb-4 transition-colors ${t === 'intrare' ? 'bg-emerald-100 text-emerald-600' : t === 'iesire' ? 'bg-blue-100 text-blue-600' : 'bg-orange-100 text-orange-600'}`}>
+                  <Icons.Plus size={18} />
+                </div>
+                <h3 className="font-bold capitalize text-lg">{t}</h3>
+                <p className="text-xs text-slate-400">Adaugă înregistrare nouă</p>
+              </button>
+            ))}
+          </div>
+
+          <div className="bg-white rounded-[2.5rem] shadow-xl border border-slate-200 overflow-hidden">
+            <div className="p-8 bg-slate-50/50 border-b flex flex-col md:flex-row justify-between items-center gap-4">
+              <div className="flex items-center gap-4 w-full md:w-auto">
+                <button onClick={exportCSV} className="bg-emerald-600 text-white px-5 py-3 rounded-xl text-xs font-bold flex items-center gap-2 shadow-md hover:bg-emerald-700 transition-all"><Icons.Download size={14} /> EXPORT EXCEL</button>
+                <div className="relative flex-1 md:w-64">
+                  <Icons.Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                  <input type="text" placeholder="Caută..." className="w-full pl-11 pr-4 py-3 border rounded-xl text-sm outline-none focus:ring-2 ring-indigo-500" value={searchTerm} onChange={(e) => setSearchTerm(
