@@ -70,11 +70,17 @@ export default function Registratura() {
   };
 
  const handleDelete = async (nr: any) => {
+    // Verificăm dacă nr există pentru a evita eroarea "undefined"
+    if (!nr) {
+      alert("Eroare: Acest document nu are un număr de înregistrare valid pentru a fi șters.");
+      return;
+    }
+
     if (confirm(`Ești sigur că vrei să ștergi înregistrarea #${nr}?`)) {
       const { error } = await supabase
         .from('documente')
         .delete()
-        .eq('nr_inregistrare', nr); // Folosim nr_inregistrare în loc de id
+        .eq('numar_inregistrare', nr); // Folosim coloana exactă din poza ta
       
       if (error) {
         alert("Eroare la ștergere: " + error.message);
