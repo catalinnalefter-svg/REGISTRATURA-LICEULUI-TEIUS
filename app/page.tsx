@@ -35,9 +35,12 @@ export default function Registratura() {
   useEffect(() => { fetchDocumente(); }, [fetchDocumente]);
 
 const handleSave = async () => {
-  if (!formData.expeditor || !formData.continut) return alert("Completați câmpurile!");
+  if (!formData.expeditor || !formData.continut) {
+    alert("Completați toate câmpurile!");
+    return;
+  }
+
   setLoading(true);
-  
   try {
     const { data, error } = await supabase
       .from('documente')
@@ -53,27 +56,24 @@ const handleSave = async () => {
     if (error) throw error;
 
     if (data?.[0]) {
-      // 1. Afișăm numărul generat
       setNumarGenerat(data[0].numar_inregistrare);
-      
-      // 2. Reîmprospătăm tabelul imediat
       await fetchDocumente();
       
-      // 3. Resetăm formularul și ÎNCHIDEM fereastra după 3 secunde
+      // Închidem automat după 3 secunde
       setTimeout(() => {
-        setShowForm(false); // Aceasta închide modalul
-        setNumarGenerat(null); // Resetăm numărul pentru următoarea utilizare
-        setFormData({ 
-          data: new Date().toISOString().split('T')[0], 
-          expeditor: '', 
-          continut: '' 
-        });
-      }, 3000); 
+        setShowForm(false);
+        setNumarGenerat(null);
+        setFormData({ data: new Date().toISOString().split('T')[0], expeditor: '', continut: '' });
+      }, 3000);
     }
   } catch (err: any) {
+    console.error("Eroare la salvare:", err);
     alert('Eroare la salvare: ' + err.message);
-    setLoading(false);
+    // IMPORTANTE: Resetăm loading-ul aici dacă e eroare
+    setLoading(false); 
   }
+  // Alternativ, folosim finally pentru a fi siguri
+  // finally { setLoading(false); }
 };
 
  const handleDelete = async (id: any, nr: any) => {
