@@ -34,45 +34,31 @@ export default function Registratura() {
 
   useEffect(() => { fetchDocumente(); }, [fetchDocumente]);
 
-  // AICI ERA EROAREA - Am adaugat 'async' in fata functiei
-  const handleSave = async () => {
-    if (!formData.expeditor || !formData.continut) {
-      alert("Completați câmpurile!");
-      return;
-    }
-    
-    setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('documente')
-        .insert([{ 
-          tip_document: tipDocument, 
-          emitent: formData.expeditor, 
-          continut: formData.continut,
-          creat_la: formData.data,
-          anul: 2026
-        }])
-        .select();
+const handleSave = async () => {
+  if (!formData.expeditor || !formData.continut) return alert("Completați câmpurile!");
+  setLoading(true);
+  try {
+    const { data, error } = await supabase
+      .from('documente')
+      .insert([{ 
+        tip_document: tipDocument, 
+        emitent: formData.expeditor, 
+        continut: formData.continut,
+        creat_la: formData.data,
+        anul: 2026
+      }])
+      .select();
 
-      if (error) throw error;
-
-      if (data?.[0]) {
-        setNumarGenerat(data[0].numar_inregistrare);
-        // Acest await are nevoie de 'async' la inceputul functiei
-        await fetchDocumente();
-        
-        setTimeout(() => {
-          setShowForm(false);
-          setNumarGenerat(null);
-          setFormData({ data: new Date().toISOString().split('T')[0], expeditor: '', continut: '' });
-        }, 3000);
-      }
-    } catch (err: any) {
-      alert('Eroare la salvare: ' + err.message);
-    } finally { 
-      setLoading(false); 
+    if (error) throw error;
+    if (data?.[0]) {
+      setNumarGenerat(data[0].numar_inregistrare);
+      await fetchDocumente();
+      // ... restul logicii de timeout ...
     }
-  };
+  } catch (err: any) {
+    alert('Eroare la salvare: ' + err.message);
+  } finally { setLoading(false); }
+};
 
  const handleDelete = async (id: any, nr: any) => {
   // Verificăm dacă ID-ul este valid (trebuie să fie un string de tip UUID)
