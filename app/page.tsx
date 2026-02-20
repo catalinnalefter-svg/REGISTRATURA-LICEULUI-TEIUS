@@ -105,15 +105,34 @@ export default function Registratura() {
     }
   };
 
-  const exportToCSV = () => {
+const exportToCSV = () => {
+    // 1. Definim antetul
     const headers = ["Nr. Inregistrare", "Data", "Tip", "Emitent", "Continut"];
+    
+    // 2. Formatăm rândurile (folosim ghilimele pentru a evita erorile la virgulele din text)
     const rows = documente.map(doc => [
-      doc.numar_inregistrare,
-      doc.creat_la,
-      doc.tip_document,
-      doc.emitent,
-      doc.continut
+      `"${doc.numar_inregistrare}"`,
+      `"${doc.creat_la}"`,
+      `"${doc.tip_document}"`,
+      `"${doc.emitent}"`,
+      `"${doc.continut}"`
     ]);
+
+    // 3. Creăm conținutul CSV folosind PUNCT ȘI VIRGULĂ (;) pentru Excel în RO
+    // Adăugăm \uFEFF la început pentru ca Excel să recunoască diacriticele (UTF-8)
+    const csvContent = "\uFEFF" + 
+      headers.join(";") + "\n" + 
+      rows.map(e => e.join(";")).join("\n");
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `registru_liceu_teius_2026.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
     const csvContent = "\uFEFF" + headers.join(",") + "\n" + rows.map(e => e.join(",")).join("\n");
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
