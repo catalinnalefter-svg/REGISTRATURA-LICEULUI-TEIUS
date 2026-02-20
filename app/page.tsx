@@ -31,6 +31,7 @@ export default function Registratura() {
 
   const optiuniEmitent = ["DIN OFICIU", "MINISTERUL EDUCATIEI", "ISJ ALBA", "PRIMARIA TEIUS"];
   const optiuniDestinatar = ["ISJ ALBA", "MINISTERUL EDUCATIEI", "PRIMARIA TEIUS", "PERSONAL"];
+  const optiuniCompartiment = ["SECRETARIAT", "CONTABILITATE", "APP", "ALTELE"];
 
   const fetchDocumente = useCallback(async () => {
     try {
@@ -97,7 +98,7 @@ export default function Registratura() {
           <h2 className="text-3xl font-black mb-8 uppercase tracking-tighter">Acces Registru</h2>
           <form onSubmit={handleLogin} className="space-y-4">
             <input type="password" placeholder="Parola" className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-center outline-none font-bold" value={passwordInput} onChange={(e) => setPasswordInput(e.target.value)} />
-            <button type="submit" className="w-full bg-blue-600 font-bold py-5 rounded-2xl uppercase text-xs tracking-widest hover:bg-blue-500 transition-all">Autentificare</button>
+            <button type="submit" className="w-full bg-blue-600 font-bold py-5 rounded-2xl uppercase text-xs tracking-widest">Autentificare</button>
           </form>
         </div>
       </main>
@@ -150,7 +151,7 @@ export default function Registratura() {
                   <th className="px-6 py-4 w-40">Destinatar</th>
                   <th className="px-6 py-4 w-28 text-center">Nr. Conex</th>
                   <th className="px-6 py-4 w-28 text-center">Indicativ</th>
-                  <th className="px-6 py-4 w-24 text-center">Acțiuni</th>
+                  <th className="px-6 py-4 w-24 text-center">Opțiuni</th>
                 </tr>
               </thead>
               <tbody className="text-[11px] divide-y divide-slate-100">
@@ -165,13 +166,13 @@ export default function Registratura() {
                     <td className="px-6 py-4 font-bold truncate uppercase">{doc.destinatar || '-'}</td>
                     <td className="px-6 py-4 text-center text-blue-500 font-black">{doc.nr_conex || '-'}</td>
                     <td className="px-6 py-4 text-center font-black">{doc.indicativ_dosar || '-'}</td>
-                    <td className="px-6 py-4 text-center flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <td className="px-6 py-4 text-center flex justify-center gap-2">
                       <button onClick={() => {
                         setEditId(doc.id); setTipDocument(doc.tip_document);
                         setFormData({ data: doc.creat_la, emitent: doc.emitent, continut: doc.continut, compartiment: doc.compartiment || '', data_expediere: doc.data_expediere || '', destinatar: doc.destinatar || '', nr_conex: doc.nr_conex || '', indicativ_dosar: doc.indicativ_dosar || '' });
                         setIsEditing(true); setShowForm(true);
-                      }} className="text-blue-500 p-1 hover:bg-blue-100 rounded-lg"><Icons.Edit3 size={14} /></button>
-                      <button onClick={async () => { if(confirm('Elimini înregistrarea?')) { await supabase.from('documente').delete().eq('id', doc.id); fetchDocumente(); } }} className="text-red-400 p-1 hover:bg-red-100 rounded-lg"><Icons.Trash2 size={14} /></button>
+                      }} className="text-blue-500 p-1"><Icons.Edit3 size={14} /></button>
+                      <button onClick={async () => { if(confirm('Elimini?')) { await supabase.from('documente').delete().eq('id', doc.id); fetchDocumente(); } }} className="text-red-400 p-1"><Icons.Trash2 size={14} /></button>
                     </td>
                   </tr>
                 ))}
@@ -187,78 +188,4 @@ export default function Registratura() {
             {!numarGenerat ? (
               <div className="space-y-6 text-left">
                 <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-2xl font-black uppercase tracking-tighter text-slate-800">Detalii Înregistrare</h2>
-                  <button onClick={() => { setShowForm(false); setIsEditing(false); }} className="text-slate-300 hover:text-red-500"><Icons.X size={32} /></button>
-                </div>
-                
-                <div className="flex gap-2 p-1 bg-slate-100 rounded-xl mb-6">
-                  {['intrare', 'iesire', 'rezervat'].map((t) => (
-                    <button key={t} type="button" onClick={() => setTipDocument(t)} className={`flex-1 py-2 rounded-lg text-[9px] font-black uppercase transition-all ${tipDocument === t ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400'}`}>{t}</button>
-                  ))}
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div className="space-y-4">
-                    <label className="block">
-                      <span className="text-[10px] font-black uppercase text-slate-400 ml-1">Data Document</span>
-                      <input type="date" value={formData.data} onChange={(e) => setFormData({...formData, data: e.target.value})} className="w-full bg-slate-50 border border-slate-200 p-4 rounded-xl font-bold text-xs" />
-                    </label>
-                    <div>
-                      <span className="text-[10px] font-black uppercase text-slate-400 ml-1 mb-2 block">Emitent</span>
-                      <div className="flex flex-wrap gap-2 mb-3">
-                        {optiuniEmitent.map(opt => (
-                          <button key={opt} type="button" onClick={() => setFormData({...formData, emitent: opt})} className="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-[9px] font-bold hover:bg-blue-600 hover:text-white transition-all">{opt}</button>
-                        ))}
-                      </div>
-                      <input type="text" placeholder="Numele emitentului..." value={formData.emitent} onChange={(e) => setFormData({...formData, emitent: e.target.value.toUpperCase()})} className="w-full bg-slate-50 border border-slate-200 p-4 rounded-xl font-bold text-xs" />
-                    </div>
-                    <label className="block">
-                      <span className="text-[10px] font-black uppercase text-slate-400 ml-1">Conținut pe scurt</span>
-                      <textarea placeholder="Descriere document..." value={formData.continut} onChange={(e) => setFormData({...formData, continut: e.target.value})} className="w-full bg-slate-50 border border-slate-200 p-4 rounded-xl font-bold text-xs min-h-[100px]" />
-                    </label>
-                    <label className="block">
-                      <span className="text-[10px] font-black uppercase text-slate-400 ml-1">Compartimentul</span>
-                      <input type="text" placeholder="Ex: Secretariat" value={formData.compartiment} onChange={(e) => setFormData({...formData, compartiment: e.target.value.toUpperCase()})} className="w-full bg-slate-50 border border-slate-200 p-4 rounded-xl font-bold text-xs" />
-                    </label>
-                  </div>
-                  <div className="space-y-4">
-                    <label className="block">
-                      <span className="text-[10px] font-black uppercase text-slate-400 ml-1">Data expediere (dacă e cazul)</span>
-                      <input type="date" value={formData.data_expediere} onChange={(e) => setFormData({...formData, data_expediere: e.target.value})} className="w-full bg-slate-50 border border-slate-200 p-4 rounded-xl font-bold text-xs" />
-                    </label>
-                    <div>
-                      <span className="text-[10px] font-black uppercase text-slate-400 ml-1 mb-2 block">Destinatar</span>
-                      <div className="flex flex-wrap gap-2 mb-3">
-                        {optiuniDestinatar.map(opt => (
-                          <button key={opt} type="button" onClick={() => setFormData({...formData, destinatar: opt})} className="px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg text-[9px] font-bold hover:bg-emerald-600 hover:text-white transition-all">{opt}</button>
-                        ))}
-                      </div>
-                      <input type="text" placeholder="Numele destinatarului..." value={formData.destinatar} onChange={(e) => setFormData({...formData, destinatar: e.target.value.toUpperCase()})} className="w-full bg-slate-50 border border-slate-200 p-4 rounded-xl font-bold text-xs" />
-                    </div>
-                    <label className="block">
-                      <span className="text-[10px] font-black uppercase text-slate-400 ml-1 text-blue-600">Nr. Înreg. conex</span>
-                      <input type="text" placeholder="Nr referință..." value={formData.nr_conex} onChange={(e) => setFormData({...formData, nr_conex: e.target.value})} className="w-full bg-slate-50 border border-slate-200 p-4 rounded-xl font-bold text-xs text-blue-600" />
-                    </label>
-                    <label className="block">
-                      <span className="text-[10px] font-black uppercase text-slate-400 ml-1">Indicativ dosar</span>
-                      <input type="text" placeholder="Cod arhivă..." value={formData.indicativ_dosar} onChange={(e) => setFormData({...formData, indicativ_dosar: e.target.value.toUpperCase()})} className="w-full bg-slate-50 border border-slate-200 p-4 rounded-xl font-bold text-xs" />
-                    </label>
-                  </div>
-                </div>
-                <button onClick={handleSave} disabled={loading} className="w-full bg-blue-600 text-white font-black py-5 rounded-2xl uppercase tracking-widest text-[10px] mt-6 hover:bg-blue-700 transition-all shadow-lg active:scale-95">
-                  {loading ? 'Sincronizare...' : 'Salvează Înregistrarea'}
-                </button>
-              </div>
-            ) : (
-              <div className="text-center py-10">
-                <div className="w-20 h-20 bg-emerald-500 text-white rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-2xl animate-bounce"><Icons.Check size={40} /></div>
-                <h2 className="text-xl font-black uppercase text-slate-800">Număr Generat cu Succes</h2>
-                <div className="text-[8rem] font-black text-blue-600 leading-none tracking-tighter my-4">{numarGenerat}</div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-    </main>
-  );
-}
+                  <h2 className="text-2
