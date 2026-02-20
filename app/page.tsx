@@ -39,11 +39,19 @@ export default function Registratura() {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (passwordInput === 'liceuteius2026') {
-      setIsAuthenticated(true);
-    } else {
-      alert("Parolă incorectă!");
-    }
+    if (passwordInput === 'liceuteius2026') setIsAuthenticated(true);
+    else alert("Parolă incorectă!");
+  };
+
+  const exportToExcel = () => {
+    const header = `<tr><th>Nr. Inregistrare</th><th>Data</th><th>Tip</th><th>Corespondent</th><th>Continut</th></tr>`;
+    const rows = documente.map(d => `<tr><td>${d.numar_inregistrare}</td><td>${d.creat_la}</td><td>${d.tip_document}</td><td>${d.emitent}</td><td>${d.continut}</td></tr>`).join('');
+    const table = `<table>${header}${rows}</table>`;
+    const template = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8"></head><body>${table}</body></html>`;
+    const link = document.createElement("a");
+    link.href = 'data:application/vnd.ms-excel;base64,' + btoa(unescape(encodeURIComponent(template)));
+    link.download = `registru_2026.xls`;
+    link.click();
   };
 
   const handleSave = async () => {
@@ -70,16 +78,9 @@ export default function Registratura() {
       await fetchDocumente();
       if (!isEditing) {
         setTimeout(() => { setShowForm(false); setNumarGenerat(null); }, 2500);
-      } else {
-        setShowForm(false);
-        setIsEditing(false);
-      }
+      } else { setShowForm(false); setIsEditing(false); }
       setFormData({ data: new Date().toISOString().split('T')[0], expeditor: '', continut: '' });
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
+    } catch (err) { console.error(err); } finally { setLoading(false); }
   };
 
   return (
@@ -87,18 +88,12 @@ export default function Registratura() {
       {!isAuthenticated ? (
         <div className="min-h-screen bg-[#0f172a] flex items-center justify-center p-6">
           <div className="bg-white/10 backdrop-blur-xl p-12 rounded-[3rem] w-full max-w-md text-center border border-white/20 shadow-2xl">
-            <div className="w-20 h-20 bg-blue-600 rounded-[2rem] flex items-center justify-center mx-auto mb-8 shadow-xl">
-              <Icons.ShieldCheck className="text-white" size={40} />
+            <div className="w-20 h-20 bg-blue-600 rounded-[2rem] flex items-center justify-center mx-auto mb-8 shadow-xl text-white">
+              <Icons.ShieldCheck size={40} />
             </div>
             <h2 className="text-white text-3xl font-black mb-10 uppercase tracking-tighter">Acces Registru</h2>
             <form onSubmit={handleLogin} className="space-y-4">
-              <input 
-                type="password" 
-                placeholder="Introdu parola" 
-                className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-center outline-none focus:border-blue-500 text-white font-bold"
-                value={passwordInput} 
-                onChange={(e) => setPasswordInput(e.target.value)}
-              />
+              <input type="password" placeholder="Introdu parola" className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-center outline-none focus:border-blue-500 text-white font-bold" value={passwordInput} onChange={(e) => setPasswordInput(e.target.value)} />
               <button type="submit" className="w-full bg-blue-600 text-white font-bold py-5 rounded-2xl uppercase text-xs tracking-[0.2em] hover:bg-blue-500 transition-all">Autentificare</button>
             </form>
           </div>
@@ -132,23 +127,19 @@ export default function Registratura() {
 
           <div className="bg-white rounded-[4rem] shadow-xl border border-white overflow-hidden">
             <div className="p-10 bg-slate-50/50 border-b flex flex-col md:flex-row justify-between items-center gap-6">
-              <button onClick={() => {
-                const content = "\uFEFFNr;Data;Tip;Emitent;Continut\n" + documente.map(d => `${d.numar_inregistrare};${d.creat_la};${d.tip_document};${d.emitent};${d.continut}`).join("\n");
-                const link = document.createElement("a");
-                link.href = URL.createObjectURL(new Blob([content], { type: 'text/csv;charset=utf-8;' }));
-                link.download = `registru_2026.csv`;
-                link.click();
-              }} className="bg-slate-900 text-white px-8 py-4 rounded-2xl text-[10px] font-black tracking-widest uppercase hover:bg-blue-600 transition-all shadow-lg">Export CSV</button>
+              <button onClick={exportToExcel} className="bg-emerald-600 text-white px-8 py-4 rounded-2xl text-[10px] font-black tracking-widest uppercase hover:bg-emerald-700 transition-all shadow-lg flex items-center gap-2">
+                <Icons.FileSpreadsheet size={16} /> Export Excel
+              </button>
               <div className="relative w-full md:w-80">
                 <Icons.Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                 <input type="text" placeholder="Caută..." className="w-full pl-14 pr-6 py-4 bg-white border-2 border-slate-100 rounded-2xl text-sm outline-none font-bold text-slate-900 focus:border-blue-500 transition-all" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
               </div>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full text-left table-fixed min-w-[900px]">
+              <table className="w-full text-left table-fixed min-w-[1000px]">
                 <thead className="text-[11px] uppercase text-slate-400 font-black bg-slate-50/50">
                   <tr>
-                    <th className="px-10 py-8 w-24">Nr</th>
+                    <th className="px-10 py-8 w-40">Nr. Inregistrare</th>
                     <th className="px-10 py-8 w-40">Data</th>
                     <th className="px-10 py-8 w-32">Tip</th>
                     <th className="px-10 py-8 w-60">Corespondent</th>
@@ -172,7 +163,7 @@ export default function Registratura() {
                           setFormData({ data: doc.creat_la, expeditor: doc.emitent, continut: doc.continut });
                           setIsEditing(true); setShowForm(true);
                         }} className="text-blue-500"><Icons.Edit3 size={18} /></button>
-                        <button onClick={async () => { if(confirm('Ștergi?')) { await supabase.from('documente').delete().eq('id', doc.id); fetchDocumente(); } }} className="text-red-400"><Icons.Trash2 size={18} /></button>
+                        <button onClick={async () => { if(confirm('Ștergi înregistrarea?')) { await supabase.from('documente').delete().eq('id', doc.id); fetchDocumente(); } }} className="text-red-400"><Icons.Trash2 size={18} /></button>
                       </td>
                     </tr>
                   ))}
@@ -189,14 +180,30 @@ export default function Registratura() {
             {!numarGenerat ? (
               <div className="space-y-8">
                 <button onClick={() => { setShowForm(false); setIsEditing(false); }} className="absolute top-10 right-10 text-slate-300 hover:text-slate-600"><Icons.X size={32} /></button>
-                <h2 className="text-3xl font-black uppercase tracking-tighter text-slate-800">Înregistrare</h2>
-                <div className="space-y-5">
-                  <input type="date" value={formData.data} onChange={(e) => setFormData({...formData, data: e.target.value})} className="w-full bg-slate-50 border-2 border-slate-100 p-5 rounded-2xl font-bold outline-none text-slate-900 focus:border-blue-500" />
-                  <input type="text" placeholder="Emitent / Destinatar" value={formData.expeditor} onChange={(e) => setFormData({...formData, expeditor: e.target.value})} className="w-full bg-slate-50 border-2 border-slate-100 p-5 rounded-2xl outline-none font-bold text-slate-900 focus:border-blue-500" />
-                  <textarea placeholder="Descriere document..." value={formData.continut} onChange={(e) => setFormData({...formData, continut: e.target.value})} className="w-full bg-slate-50 border-2 border-slate-100 p-5 rounded-2xl outline-none font-bold text-slate-900 focus:border-blue-500 min-h-[120px]" />
+                <h2 className="text-3xl font-black uppercase tracking-tighter text-slate-800">{isEditing ? 'Editează' : 'Înregistrare'}</h2>
+                
+                <div className="flex gap-2 p-1 bg-slate-100 rounded-2xl">
+                  {['intrare', 'iesire', 'rezervat'].map((t) => (
+                    <button key={t} type="button" onClick={() => setTipDocument(t)} className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase transition-all ${tipDocument === t ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400'}`}>{t}</button>
+                  ))}
                 </div>
-                <button onClick={handleSave} disabled={loading} className="w-full bg-blue-600 text-white font-black py-6 rounded-[2rem] uppercase tracking-widest text-xs shadow-xl shadow-blue-100 hover:scale-[1.02] active:scale-95 transition-all">
-                  {loading ? 'Procesare...' : 'Salvează'}
+
+                <div className="space-y-5">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black uppercase text-slate-400 ml-2">Data Document</label>
+                    <input type="date" value={formData.data} onChange={(e) => setFormData({...formData, data: e.target.value})} className="w-full bg-slate-50 border-2 border-slate-100 p-5 rounded-2xl font-bold outline-none text-slate-900 focus:border-blue-500" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black uppercase text-slate-400 ml-2">Corespondent (Emitent/Destinatar)</label>
+                    <input type="text" placeholder="Ex: Ministerul Educatiei" value={formData.expeditor} onChange={(e) => setFormData({...formData, expeditor: e.target.value})} className="w-full bg-slate-50 border-2 border-slate-100 p-5 rounded-2xl outline-none font-bold text-slate-900 focus:border-blue-500" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black uppercase text-slate-400 ml-2">Continut pe Scurt</label>
+                    <textarea placeholder="Descriere..." value={formData.continut} onChange={(e) => setFormData({...formData, continut: e.target.value})} className="w-full bg-slate-50 border-2 border-slate-100 p-5 rounded-2xl outline-none font-bold text-slate-900 focus:border-blue-500 min-h-[120px]" />
+                  </div>
+                </div>
+                <button onClick={handleSave} disabled={loading} className="w-full bg-blue-600 text-white font-black py-6 rounded-[2rem] uppercase tracking-widest text-xs shadow-xl hover:scale-[1.02] active:scale-95 transition-all">
+                  {loading ? 'Procesare...' : isEditing ? 'Actualizează' : 'Înregistrează și Generază Nr.'}
                 </button>
               </div>
             ) : (
@@ -204,7 +211,7 @@ export default function Registratura() {
                 <div className="w-24 h-24 bg-emerald-500 text-white rounded-[2.5rem] flex items-center justify-center mx-auto mb-8 shadow-2xl shadow-emerald-200">
                   <Icons.Check size={50} strokeWidth={4} />
                 </div>
-                <h2 className="text-2xl font-black uppercase text-slate-800 tracking-tighter">Număr Generat</h2>
+                <h2 className="text-2xl font-black uppercase text-slate-800 tracking-tighter">Număr Alocat</h2>
                 <div className="text-[10rem] font-black text-blue-600 leading-none tracking-tighter">
                   {numarGenerat}
                 </div>
