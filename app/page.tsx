@@ -3,7 +3,17 @@
 export const dynamic = 'force-dynamic';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import * as Icons from 'lucide-react';
+import { 
+  ShieldCheck, 
+  BookOpen, 
+  FileSpreadsheet, 
+  Plus, 
+  Search, 
+  Edit3, 
+  Trash2, 
+  X, 
+  Check 
+} from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 export default function Registratura() {
@@ -60,7 +70,7 @@ export default function Registratura() {
     const template = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8"></head><body>${table}</body></html>`;
     const link = document.createElement("a");
     link.href = 'data:application/vnd.ms-excel;base64,' + btoa(unescape(encodeURIComponent(template)));
-    link.download = `registru_liceu_2026.xls`;
+    link.download = `registru_2026.xls`;
     link.click();
   };
 
@@ -92,50 +102,50 @@ export default function Registratura() {
 
   if (!isAuthenticated) {
     return (
-      <main className="min-h-screen bg-[#0f172a] flex items-center justify-center p-6">
-        <div className="bg-white/10 backdrop-blur-xl p-12 rounded-[3rem] w-full max-w-md text-center border border-white/20 shadow-2xl text-white">
-          <Icons.ShieldCheck className="mx-auto mb-6" size={48} />
+      <div className="min-h-screen bg-[#0f172a] flex items-center justify-center p-6">
+        <div className="bg-white/10 backdrop-blur-xl p-12 rounded-[3rem] w-full max-w-md text-center border border-white/20 text-white">
+          <ShieldCheck className="mx-auto mb-6" size={48} />
           <h2 className="text-3xl font-black mb-8 uppercase tracking-tighter">Acces Registru</h2>
           <form onSubmit={handleLogin} className="space-y-4">
-            <input type="password" placeholder="Parola" className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-center outline-none font-bold" value={passwordInput} onChange={(e) => setPasswordInput(e.target.value)} />
+            <input type="password" placeholder="Parola" className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-center outline-none" value={passwordInput} onChange={(e) => setPasswordInput(e.target.value)} />
             <button type="submit" className="w-full bg-blue-600 font-bold py-5 rounded-2xl uppercase text-xs tracking-widest">Autentificare</button>
           </form>
         </div>
-      </main>
+      </div>
     );
   }
 
   return (
-    <main className="min-h-screen bg-[#f8fafc] text-slate-900 p-4 md:p-10">
+    <div className="min-h-screen bg-[#f8fafc] text-slate-900 p-4 md:p-10">
       <div className="max-w-[1600px] mx-auto">
         <header className="flex flex-col lg:flex-row items-center justify-between mb-8 bg-white/70 backdrop-blur-md p-8 rounded-[2.5rem] shadow-sm border border-white gap-6">
           <div className="flex items-center gap-6 w-full text-left">
-            <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center text-white shrink-0"><Icons.BookOpen size={30} /></div>
+            <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center text-white shrink-0"><BookOpen size={30} /></div>
             <div>
               <h1 className="text-2xl md:text-3xl font-black uppercase text-slate-800 tracking-tighter">Registru <span className="text-blue-600">Liceul Teiuș</span></h1>
               <p className="text-slate-400 font-bold text-[10px] uppercase tracking-widest">Gestiune Documente • 2026</p>
             </div>
           </div>
           <div className="flex gap-4">
-            <button onClick={exportToExcel} className="bg-emerald-600 text-white px-6 py-3 rounded-xl text-[10px] font-black uppercase flex items-center gap-2 transition-transform active:scale-95"><Icons.FileSpreadsheet size={16} /> Excel</button>
-            <button onClick={() => setIsAuthenticated(false)} className="text-[10px] font-black text-slate-400 px-6 py-3 bg-slate-100 rounded-xl uppercase hover:bg-red-50 hover:text-red-500 transition-all">Ieșire</button>
+            <button onClick={exportToExcel} className="bg-emerald-600 text-white px-6 py-3 rounded-xl text-[10px] font-black uppercase flex items-center gap-2"><FileSpreadsheet size={16} /> Excel</button>
+            <button onClick={() => setIsAuthenticated(false)} className="text-[10px] font-black text-slate-400 px-6 py-3 bg-slate-100 rounded-xl uppercase hover:text-red-500">Ieșire</button>
           </div>
         </header>
 
-        <section className="grid grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-3 gap-6 mb-8">
           {['intrare', 'iesire', 'rezervat'].map((t) => (
-            <button key={t} onClick={() => { setTipDocument(t); setIsEditing(false); setNumarGenerat(null); setShowForm(true); }} className="bg-white p-6 rounded-[2rem] shadow-sm border border-white text-left group hover:shadow-lg transition-all">
-              <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${t === 'intrare' ? 'bg-emerald-500 text-white' : t === 'iesire' ? 'bg-blue-500 text-white' : 'bg-amber-500 text-white'}`}><Icons.Plus size={20} /></div>
+            <button key={t} onClick={() => { setTipDocument(t); setIsEditing(false); setNumarGenerat(null); setShowForm(true); }} className="bg-white p-6 rounded-[2rem] shadow-sm border border-white text-left group">
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${t === 'intrare' ? 'bg-emerald-500 text-white' : t === 'iesire' ? 'bg-blue-500 text-white' : 'bg-amber-500 text-white'}`}><Plus size={20} /></div>
               <h3 className="font-black text-lg text-slate-800 uppercase tracking-tight">{t}</h3>
             </button>
           ))}
-        </section>
+        </div>
 
-        <section className="bg-white rounded-[2.5rem] shadow-xl border border-white overflow-hidden">
+        <div className="bg-white rounded-[2.5rem] shadow-xl border border-white overflow-hidden">
           <div className="p-6 bg-slate-50/50 border-b flex items-center">
             <div className="relative w-full max-w-md">
-              <Icons.Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-              <input type="text" placeholder="Caută în registru..." className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-xs font-bold outline-none focus:border-blue-500" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+              <input type="text" placeholder="Caută..." className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-xs font-bold outline-none" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
             </div>
           </div>
           <div className="overflow-x-auto">
@@ -145,18 +155,18 @@ export default function Registratura() {
                   <th className="px-6 py-4 w-32 text-blue-600">Nr. Înreg.</th>
                   <th className="px-6 py-4 w-28">Data</th>
                   <th className="px-6 py-4 w-48">Emitent</th>
-                  <th className="px-6 py-4 w-64">Conținut pe scurt</th>
+                  <th className="px-6 py-4 w-64">Conținut</th>
                   <th className="px-6 py-4 w-32">Compartiment</th>
                   <th className="px-6 py-4 w-28">Expediere</th>
                   <th className="px-6 py-4 w-40">Destinatar</th>
-                  <th className="px-6 py-4 w-28 text-center">Nr. Conex</th>
+                  <th className="px-6 py-4 w-28 text-center">Conex</th>
                   <th className="px-6 py-4 w-28 text-center">Indicativ</th>
                   <th className="px-6 py-4 w-24 text-center">Opțiuni</th>
                 </tr>
               </thead>
               <tbody className="text-[11px] divide-y divide-slate-100">
-                {documente.filter(d => (d.emitent || "").toLowerCase().includes(searchTerm.toLowerCase()) || (d.continut || "").toLowerCase().includes(searchTerm.toLowerCase()) || (d.numar_inregistrare?.toString() || "").includes(searchTerm)).map((doc) => (
-                  <tr key={doc.id} className="hover:bg-slate-50 transition-all group">
+                {documente.filter(d => (d.emitent || "").toLowerCase().includes(searchTerm.toLowerCase()) || (d.continut || "").toLowerCase().includes(searchTerm.toLowerCase())).map((doc) => (
+                  <tr key={doc.id} className="hover:bg-slate-50 transition-all">
                     <td className="px-6 py-4 font-black text-blue-600">#{doc.numar_inregistrare}</td>
                     <td className="px-6 py-4 text-slate-500 font-bold">{doc.creat_la}</td>
                     <td className="px-6 py-4 font-black uppercase text-slate-700 truncate">{doc.emitent}</td>
@@ -171,15 +181,15 @@ export default function Registratura() {
                         setEditId(doc.id); setTipDocument(doc.tip_document);
                         setFormData({ data: doc.creat_la, emitent: doc.emitent, continut: doc.continut, compartiment: doc.compartiment || '', data_expediere: doc.data_expediere || '', destinatar: doc.destinatar || '', nr_conex: doc.nr_conex || '', indicativ_dosar: doc.indicativ_dosar || '' });
                         setIsEditing(true); setShowForm(true);
-                      }} className="text-blue-500 p-1"><Icons.Edit3 size={14} /></button>
-                      <button onClick={async () => { if(confirm('Elimini?')) { await supabase.from('documente').delete().eq('id', doc.id); fetchDocumente(); } }} className="text-red-400 p-1"><Icons.Trash2 size={14} /></button>
+                      }} className="text-blue-500"><Edit3 size={14} /></button>
+                      <button onClick={async () => { if(confirm('Elimini?')) { await supabase.from('documente').delete().eq('id', doc.id); fetchDocumente(); } }} className="text-red-400"><Trash2 size={14} /></button>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-        </section>
+        </div>
       </div>
 
       {showForm && (
@@ -188,4 +198,19 @@ export default function Registratura() {
             {!numarGenerat ? (
               <div className="space-y-6 text-left">
                 <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-2
+                  <h2 className="text-2xl font-black uppercase tracking-tighter text-slate-800">Detalii</h2>
+                  <button onClick={() => { setShowForm(false); setIsEditing(false); }} className="text-slate-300 hover:text-red-500"><X size={32} /></button>
+                </div>
+                <div className="flex gap-2 p-1 bg-slate-100 rounded-xl mb-6">
+                  {['intrare', 'iesire', 'rezervat'].map((t) => (
+                    <button key={t} type="button" onClick={() => setTipDocument(t)} className={`flex-1 py-2 rounded-lg text-[9px] font-black uppercase transition-all ${tipDocument === t ? 'bg-white text-blue-600' : 'text-slate-400'}`}>{t}</button>
+                  ))}
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-4">
+                    <label className="block">
+                      <span className="text-[10px] font-black uppercase text-slate-400 ml-1">Data Document</span>
+                      <input type="date" value={formData.data} onChange={(e) => setFormData({...formData, data: e.target.value})} className="w-full bg-slate-50 border border-slate-200 p-4 rounded-xl font-bold text-xs" />
+                    </label>
+                    <div>
+                      <span className="text-[10px]
