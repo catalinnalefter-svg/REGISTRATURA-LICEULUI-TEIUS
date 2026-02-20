@@ -21,24 +21,28 @@ export default function Registratura() {
   });
 
   const fetchDocumente = useCallback(async () => {
-    const { data, error } = await supabase
-      .from('documente')
-      .select('*')
-      .order('creat_la', { ascending: false });
-    if (!error && data) setDocumente(data);
+    try {
+      const { data, error } = await supabase
+        .from('documente')
+        .select('*')
+        .order('creat_la', { ascending: false });
+      if (!error && data) setDocumente(data);
+    } catch (err) {
+      console.error(err);
+    }
   }, []);
 
   useEffect(() => { fetchDocumente(); }, [fetchDocumente]);
 
-const handleSave = async () => {
+  // AICI ERA EROAREA - Am adaugat 'async' in fata functiei
+  const handleSave = async () => {
     if (!formData.expeditor || !formData.continut) {
-      alert("Completati toate campurile!");
+      alert("Completați câmpurile!");
       return;
     }
-
+    
     setLoading(true);
     try {
-      // 1. Inserăm datele
       const { data, error } = await supabase
         .from('documente')
         .insert([{ 
@@ -48,38 +52,15 @@ const handleSave = async () => {
           creat_la: formData.data,
           anul: 2026
         }])
-        .select(); // IMPORTANT: Aceasta forțează Supabase să returneze rândul creat
+        .select();
 
       if (error) throw error;
 
-      // 2. Verificăm dacă am primit datele înapoi
-      if (data && data.length > 0) {
-        const nrNou = data[0].numar_inregistrare;
-        console.log("Numar primit de la server:", nrNou); // Verifică în consola browserului
-        setNumarGenerat(nrNou); // Setăm numărul pentru a fi afișat în modal
-        
-        await fetchDocumente(); // Reîmprospătăm tabelul în spate
-        
-        // 3. Închidem modalul după 4 secunde (să aibă timp utilizatorul să vadă numărul)
-        setTimeout(() => {
-          setShowForm(false);
-          setNumarGenerat(null);
-          setFormData({ data: new Date().toISOString().split('T')[0], expeditor: '', continut: '' });
-        }, 4000);
-      } else {
-        alert("Documentul a fost salvat, dar serverul nu a returnat numărul. Reîmprospătați pagina.");
-      }
-    } catch (err: any) {
-      alert('Eroare la salvare: ' + err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-      if (error) throw error;
       if (data?.[0]) {
         setNumarGenerat(data[0].numar_inregistrare);
+        // Acest await are nevoie de 'async' la inceputul functiei
         await fetchDocumente();
+        
         setTimeout(() => {
           setShowForm(false);
           setNumarGenerat(null);
@@ -88,7 +69,9 @@ const handleSave = async () => {
       }
     } catch (err: any) {
       alert('Eroare la salvare: ' + err.message);
-    } finally { setLoading(false); }
+    } finally { 
+      setLoading(false); 
+    }
   };
 
   const handleDelete = async (id: string, nr: any) => {
@@ -96,9 +79,15 @@ const handleSave = async () => {
     if (confirm(`Ștergi înregistrarea #${nr || ''}?`)) {
       const { error } = await supabase.from('documente').delete().eq('id', id);
       if (error) alert(error.message);
-      else fetchDocumente();
+      else await fetchDocumente();
     }
   };
+
+  const documenteFiltrate = documente.filter(d => 
+    (d.emitent || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (d.continut || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (d.numar_inregistrare?.toString() || "").includes(searchTerm)
+  );
 
   return (
     <div className="min-h-screen bg-slate-50 p-4 md:p-10 text-slate-900">
@@ -112,7 +101,6 @@ const handleSave = async () => {
         </header>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-          {/* BUTOANE COLORATE CONFORM DESIGNULUI */}
           <button onClick={() => { setTipDocument('intrare'); setShowForm(true); }} className="bg-white p-8 rounded-[2rem] border-2 border-transparent hover:border-emerald-500 shadow-sm text-left group transition-all">
             <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform"><Icons.Plus size={24} /></div>
             <h3 className="font-bold text-lg">Intrare</h3>
@@ -130,11 +118,13 @@ const handleSave = async () => {
           </button>
         </div>
 
-        {/* TABEL CU CĂUTARE */}
         <div className="bg-white rounded-[2rem] shadow-xl border border-slate-200 overflow-hidden">
-          <div className="p-6 bg-slate-50/50 border-b flex justify-between items-center gap-4">
-            <h2 className="font-bold text-slate-700 flex items-center gap-2 uppercase text-xs tracking-widest"><Icons.List size={16} /> Registru</h2>
-            <input type="text" placeholder="Caută..." className="px-4 py-2 border rounded-xl text-sm outline-none w-64 focus:ring-2 ring-indigo-500" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+          <div className="p-6 bg-slate-50/50 border-b flex flex-col md:flex-row justify-between items-center gap-4">
+            <h2 className="font-bold text-slate-700 flex items-center gap-2 uppercase text-xs tracking-widest"><Icons.List size={16} /> Registru General</h2>
+            <div className="relative w-full md:w-64">
+              <Icons.Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+              <input type="text" placeholder="Caută în registru..." className="w-full pl-10 pr-4 py-2 border rounded-xl text-sm outline-none focus:ring-2 ring-indigo-500" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+            </div>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left">
@@ -149,25 +139,30 @@ const handleSave = async () => {
                 </tr>
               </thead>
               <tbody className="text-sm divide-y">
-                {documente.filter(d => (d.emitent || "").toLowerCase().includes(searchTerm.toLowerCase())).map((doc) => (
-                  <tr key={doc.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-6 py-4 font-bold text-indigo-600">#{doc.numar_inregistrare || '---'}</td>
-                    <td className="px-6 py-4">{new Date(doc.creat_la).toLocaleDateString('ro-RO')}</td>
-                    <td className={`px-6 py-4 uppercase text-[10px] font-bold ${doc.tip_document === 'intrare' ? 'text-emerald-600' : 'text-blue-600'}`}>{doc.tip_document}</td>
-                    <td className="px-6 py-4 font-bold uppercase">{doc.emitent}</td>
-                    <td className="px-6 py-4 text-slate-500 italic">{doc.continut}</td>
-                    <td className="px-6 py-4 text-center">
-                      <button onClick={() => handleDelete(doc.id, doc.numar_inregistrare)} className="text-slate-300 hover:text-red-500 p-2"><Icons.Trash2 size={18} /></button>
-                    </td>
-                  </tr>
-                ))}
+                {documenteFiltrate.length === 0 ? (
+                  <tr><td colSpan={6} className="px-6 py-10 text-center text-slate-400 italic">Nu s-au găsit înregistrări.</td></tr>
+                ) : (
+                  documenteFiltrate.map((doc) => (
+                    <tr key={doc.id} className="hover:bg-slate-50 transition-colors">
+                      <td className="px-6 py-4 font-bold text-indigo-600">#{doc.numar_inregistrare || '---'}</td>
+                      <td className="px-6 py-4">{doc.creat_la ? new Date(doc.creat_la).toLocaleDateString('ro-RO') : '---'}</td>
+                      <td className={`px-6 py-4 uppercase text-[10px] font-bold ${doc.tip_document === 'intrare' ? 'text-emerald-600' : doc.tip_document === 'iesire' ? 'text-blue-600' : 'text-orange-600'}`}>
+                        {doc.tip_document}
+                      </td>
+                      <td className="px-6 py-4 font-bold uppercase">{doc.emitent || '---'}</td>
+                      <td className="px-6 py-4 text-slate-500 italic">{doc.continut}</td>
+                      <td className="px-6 py-4 text-center">
+                        <button onClick={() => handleDelete(doc.id, doc.numar_inregistrare)} className="text-slate-300 hover:text-red-500 p-2"><Icons.Trash2 size={18} /></button>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
         </div>
       </div>
 
-      {/* FORMULAR MODAL CU DATA */}
       {showForm && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-[2rem] p-10 w-full max-w-md shadow-2xl relative">
@@ -183,12 +178,14 @@ const handleSave = async () => {
                   <input type="text" placeholder="Expeditor / Destinatar" value={formData.expeditor} onChange={(e) => setFormData({...formData, expeditor: e.target.value})} className="w-full bg-slate-50 border p-4 rounded-xl outline-none focus:ring-2 ring-indigo-500" />
                   <textarea placeholder="Continut pe scurt" value={formData.continut} onChange={(e) => setFormData({...formData, continut: e.target.value})} className="w-full bg-slate-50 border p-4 rounded-xl outline-none focus:ring-2 ring-indigo-500" rows={3} />
                 </div>
-                <button onClick={handleSave} disabled={loading} className="w-full bg-slate-900 text-white font-bold py-4 rounded-2xl hover:bg-indigo-600 transition-all">{loading ? 'Se salvează...' : 'Finalizează'}</button>
+                <button onClick={handleSave} disabled={loading} className="w-full bg-slate-900 text-white font-bold py-4 rounded-2xl hover:bg-indigo-600 transition-all">
+                  {loading ? 'Se salvează...' : 'Finalizează Inregistrarea'}
+                </button>
               </div>
             ) : (
               <div className="text-center py-10 animate-in zoom-in duration-300">
                 <Icons.CheckCircle size={64} className="text-emerald-500 mx-auto mb-6" />
-                <h2 className="text-2xl font-bold">Înregistrat!</h2>
+                <h2 className="text-2xl font-bold">Inregistrat cu succes!</h2>
                 <div className="text-6xl font-black text-indigo-600 mt-4 italic tracking-tighter">#{numarGenerat}</div>
               </div>
             )}
