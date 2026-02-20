@@ -96,7 +96,7 @@ export function RegistruClient() {
 
       setForm({data: new Date().toISOString().split('T')[0], emitent:'', continut:'', compartiment:'', destinatar:'', nr_conex:'', indicativ:''});
     } catch (err) {
-      alert("Eroare: Asigură-te că ai adăugat coloanele în Supabase! " + err.message);
+      alert("Eroare bază de date: " + err.message);
     }
     setLoading(false);
   };
@@ -104,7 +104,7 @@ export function RegistruClient() {
   const handleExport = () => {
     const csvContent = "data:text/csv;charset=utf-8," 
       + "Nr;Data;Tip;Emitent;Continut;Compartiment;Destinatar;Conex\n"
-      + documente.map(d => `${d.numar_inregistrare};${d.creat_la};${d.tip_document};${d.emitent};${d.continut};${d.compartiment};${d.destinatar};${d.nr_conex}`).join("\n");
+      + documente.map(d => `${d.numar_inregistrare};${d.creat_la};${d.tip_document || 'intrare'};${d.emitent || ''};${d.continut || ''};${d.compartiment || ''};${d.destinatar || ''};${d.nr_conex || ''}`).join("\n");
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
@@ -161,7 +161,7 @@ export function RegistruClient() {
           <div className="p-6 bg-slate-50/50 border-b flex justify-between items-center flex-wrap gap-4">
             <div className="relative w-full max-w-md">
               <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-              <input type="text" placeholder="Caută..." className="w-full pl-14 pr-6 py-4 bg-white border border-slate-200 rounded-2xl text-[11px] font-bold outline-none" onChange={(e) => setSearch(e.target.value)} />
+              <input type="text" placeholder="Caută..." className="w-full pl-14 pr-6 py-4 bg-white border border-slate-200 rounded-2xl text-[11px] font-bold outline-none focus:border-blue-500" onChange={(e) => setSearch(e.target.value)} />
             </div>
             <button onClick={handleExport} className="bg-emerald-500 text-white px-8 py-4 rounded-2xl text-[10px] font-black uppercase flex items-center gap-2 hover:bg-emerald-600 transition-all"><FileSpreadsheet size={16} /> Salvare Date</button>
           </div>
@@ -247,14 +247,35 @@ export function RegistruClient() {
                       <span className="text-[10px] font-black uppercase text-slate-400 mb-2 block">Compartiment</span>
                       <div className="flex flex-wrap gap-2 mb-2">
                         {["SECRETARIAT", "CONTABILITATE", "APP", "ALTELE"].map(v => (
-                          <button key={v} onClick={() => setForm({...form, compartiment: v})} className={`text-[8px] px-3 py-2 rounded-xl font-black transition-all ${form.compartiment === v ? 'bg-orange-500 text-white' : 'bg-orange-50 text-orange-600 hover:bg-orange-100'}`}>{v}</button>
+                          <button key={v} onClick={() => setForm({...form, compartment: v})} className={`text-[8px] px-3 py-2 rounded-xl font-black transition-all ${form.compartment === v ? 'bg-orange-500 text-white' : 'bg-orange-50 text-orange-600 hover:bg-orange-100'}`}>{v}</button>
                         ))}
                       </div>
-                      <input type="text" placeholder="Scrie compartimentul..." value={form.compartiment} onChange={(e) => setForm({...form, compartiment: e.target.value.toUpperCase()})} className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold text-xs outline-none focus:border-blue-500" />
+                      <input type="text" placeholder="Scrie compartimentul..." value={form.compartiment} onChange={(e) => setForm({...form, compartment: e.target.value.toUpperCase()})} className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold text-xs outline-none focus:border-blue-500" />
                     </div>
                     <label className="block">
                       <span className="text-[10px] font-black uppercase text-slate-400 mb-1 block">Destinatar</span>
                       <input type="text" placeholder="Către cine..." value={form.destinatar} onChange={(e) => setForm({...form, destinatar: e.target.value.toUpperCase()})} className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold text-xs outline-none focus:border-blue-500" />
                     </label>
                     <div className="grid grid-cols-2 gap-4">
-                      <label><span className="text-[10px] font-black uppercase text-blue-600 mb-1 block">Nr. Conex</span><input type="text" value={form.nr_conex} onChange={(e) => setForm({...form, nr_conex: e.target.value})} className="w-full bg-blue-50 border border-blue-100 p-4 rounded-2xl font-bold text-xs outline-
+                      <label><span className="text-[10px] font-black uppercase text-blue-600 mb-1 block">Nr. Conex</span><input type="text" value={form.nr_conex} onChange={(e) => setForm({...form, nr_conex: e.target.value})} className="w-full bg-blue-50 border border-blue-100 p-4 rounded-2xl font-bold text-xs outline-none focus:border-blue-500" /></label>
+                      <label><span className="text-[10px] font-black uppercase text-slate-400 mb-1 block">Indicativ</span><input type="text" value={form.indicativ} onChange={(e) => setForm({...form, indicativ: e.target.value.toUpperCase()})} className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold text-xs outline-none focus:border-blue-500" /></label>
+                    </div>
+                  </div>
+                </div>
+                <button onClick={handleSave} disabled={loading} className="w-full bg-blue-600 text-white font-black py-5 rounded-[2rem] uppercase tracking-widest text-xs mt-4 hover:bg-blue-700 transition-all shadow-xl shadow-blue-100 disabled:bg-slate-300">
+                  {loading ? 'Se salvează...' : editingId ? 'Actualizează Înregistrarea' : 'Salvează Înregistrarea'}
+                </button>
+              </div>
+            ) : (
+              <div className="text-center py-10">
+                <div className="w-24 h-24 bg-emerald-500 text-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-2xl animate-bounce"><Check size={48} strokeWidth={4} /></div>
+                <h2 className="text-sm font-black uppercase text-slate-400 tracking-widest">Număr Înregistrare Generat</h2>
+                <div className="text-[10rem] font-black text-blue-600 leading-none my-2 tracking-tighter">{numarGenerat}</div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
