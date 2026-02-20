@@ -74,14 +74,32 @@ export default function Registratura() {
     }
   };
 
-  const handleDelete = async (id: string, nr: any) => {
-    if (!id) return;
-    if (confirm(`Ștergi înregistrarea #${nr || ''}?`)) {
-      const { error } = await supabase.from('documente').delete().eq('id', id);
-      if (error) alert(error.message);
-      else await fetchDocumente();
-    }
-  };
+ const handleDelete = async (id: any, nr: any) => {
+  // Verificăm dacă ID-ul este valid (trebuie să fie un string de tip UUID)
+  if (!id || typeof id !== 'string') {
+    console.error("ID primit invalid:", id);
+    alert("Eroare: Acest document nu are un identificator valid pentru a fi șters.");
+    return;
+  }
+  
+  const confirmare = confirm(`Ești sigur că vrei să ștergi înregistrarea #${nr || ''}?`);
+  if (!confirmare) return;
+
+  try {
+    const { error } = await supabase
+      .from('documente')
+      .delete()
+      .match({ id: id }); // Folosim .match pentru precizie
+
+    if (error) throw error;
+
+    // Actualizăm lista locală imediat
+    setDocumente(prev => prev.filter(doc => doc.id !== id));
+    alert("Înregistrare ștearsă cu succes!");
+  } catch (err: any) {
+    alert("Eroare la ștergere: " + err.message);
+  }
+};
 
   const documenteFiltrate = documente.filter(d => 
     (d.emitent || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
