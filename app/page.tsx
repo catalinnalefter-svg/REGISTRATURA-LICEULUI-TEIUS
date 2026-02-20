@@ -17,10 +17,16 @@ export default function Registratura() {
   const [loading, setLoading] = useState(false);
   const [documente, setDocumente] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  
   const [formData, setFormData] = useState({
     data: new Date().toISOString().split('T')[0],
-    expeditor: '',
+    emitent: '',
     continut: '',
+    compartiment: '',
+    data_expediere: '',
+    destinatar: '',
+    nr_conex: '',
+    indicativ_dosar: ''
   });
 
   const fetchDocumente = useCallback(async () => {
@@ -44,42 +50,80 @@ export default function Registratura() {
   };
 
   const exportToExcel = () => {
-    const header = `<tr><th>Nr. Inregistrare</th><th>Data</th><th>Tip</th><th>Corespondent</th><th>Continut</th></tr>`;
-    const rows = documente.map(d => `<tr><td>${d.numar_inregistrare}</td><td>${d.creat_la}</td><td>${d.tip_document}</td><td>${d.emitent}</td><td>${d.continut}</td></tr>`).join('');
+    const header = `<tr>
+      <th>Nr. Inregistrare</th>
+      <th>Data</th>
+      <th>Emitent</th>
+      <th>Continut pe scurt</th>
+      <th>Compartiment</th>
+      <th>Data Expediere</th>
+      <th>Destinatar</th>
+      <th>Nr. Conex</th>
+      <th>Indicativ Dosar</th>
+    </tr>`;
+    
+    const rows = documente.map(d => `<tr>
+      <td>${d.numar_inregistrare}</td>
+      <td>${d.creat_la}</td>
+      <td>${d.emitent || ''}</td>
+      <td>${d.continut || ''}</td>
+      <td>${d.compartiment || ''}</td>
+      <td>${d.data_expediere || ''}</td>
+      <td>${d.destinatar || ''}</td>
+      <td>${d.nr_conex || ''}</td>
+      <td>${d.indicativ_dosar || ''}</td>
+    </tr>`).join('');
+
     const table = `<table>${header}${rows}</table>`;
     const template = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8"></head><body>${table}</body></html>`;
     const link = document.createElement("a");
     link.href = 'data:application/vnd.ms-excel;base64,' + btoa(unescape(encodeURIComponent(template)));
-    link.download = `registru_2026.xls`;
+    link.download = `registru_liceu_teius_2026.xls`;
     link.click();
   };
 
   const handleSave = async () => {
-    if (!formData.expeditor || !formData.continut) {
-      alert("Completați toate câmpurile!");
+    if (!formData.emitent || !formData.continut) {
+      alert("Câmpurile Emitent și Conținut sunt obligatorii!");
       return;
     }
     setLoading(true);
     try {
+      const payload = {
+        tip_document: tipDocument,
+        emitent: formData.emitent,
+        continut: formData.continut,
+        creat_la: formData.data,
+        compartiment: formData.compartiment,
+        data_expediere: formData.data_expediere,
+        destinatar: formData.destinatar,
+        nr_conex: formData.nr_conex,
+        indicativ_dosar: formData.indicativ_dosar,
+        anul: 2026
+      };
+
       if (isEditing && editId) {
-        await supabase.from('documente').update({
-          tip_document: tipDocument,
-          emitent: formData.expeditor,
-          continut: formData.continut,
-          creat_la: formData.data
-        }).eq('id', editId);
+        await supabase.from('documente').update(payload).eq('id', editId);
       } else {
-        const { data } = await supabase.from('documente').insert([{ 
-          tip_document: tipDocument, emitent: formData.expeditor, 
-          continut: formData.continut, creat_la: formData.data, anul: 2026
-        }]).select();
+        const { data } = await supabase.from('documente').insert([payload]).select();
         if (data?.[0]) setNumarGenerat(data[0].numar_inregistrare);
       }
+      
       await fetchDocumente();
       if (!isEditing) {
-        setTimeout(() => { setShowForm(false); setNumarGenerat(null); }, 2500);
+        setTimeout(() => { setShowForm(false); setNumarGenerat(null); }, 3000);
       } else { setShowForm(false); setIsEditing(false); }
-      setFormData({ data: new Date().toISOString().split('T')[0], expeditor: '', continut: '' });
+      
+      setFormData({
+        data: new Date().toISOString().split('T')[0],
+        emitent: '',
+        continut: '',
+        compartiment: '',
+        data_expediere: '',
+        destinatar: '',
+        nr_conex: '',
+        indicativ_dosar: ''
+      });
     } catch (err) { console.error(err); } finally { setLoading(false); }
   };
 
@@ -91,79 +135,95 @@ export default function Registratura() {
             <div className="w-20 h-20 bg-blue-600 rounded-[2rem] flex items-center justify-center mx-auto mb-8 shadow-xl text-white">
               <Icons.ShieldCheck size={40} />
             </div>
-            <h2 className="text-white text-3xl font-black mb-10 uppercase tracking-tighter">Acces Registru</h2>
+            <h2 className="text-white text-3xl font-black mb-10 uppercase tracking-tighter">Gestiune Registru</h2>
             <form onSubmit={handleLogin} className="space-y-4">
-              <input type="password" placeholder="Introdu parola" className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-center outline-none focus:border-blue-500 text-white font-bold" value={passwordInput} onChange={(e) => setPasswordInput(e.target.value)} />
+              <input type="password" placeholder="Parola de acces" className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-center outline-none focus:border-blue-500 text-white font-bold" value={passwordInput} onChange={(e) => setPasswordInput(e.target.value)} />
               <button type="submit" className="w-full bg-blue-600 text-white font-bold py-5 rounded-2xl uppercase text-xs tracking-[0.2em] hover:bg-blue-500 transition-all">Autentificare</button>
             </form>
           </div>
         </div>
       ) : (
-        <div className="p-6 md:p-12 max-w-7xl mx-auto">
-          <header className="flex flex-col lg:flex-row items-center justify-between mb-12 bg-white/70 backdrop-blur-md p-10 rounded-[3.5rem] shadow-sm border border-white gap-8">
+        <div className="p-4 md:p-10 max-w-[1600px] mx-auto">
+          <header className="flex flex-col lg:flex-row items-center justify-between mb-8 bg-white/70 backdrop-blur-md p-8 rounded-[2.5rem] shadow-sm border border-white gap-6">
             <div className="flex items-center gap-6 text-left w-full">
-              <div className="w-20 h-20 bg-blue-600 rounded-[2.2rem] flex items-center justify-center text-white shrink-0 shadow-lg shadow-blue-100">
-                <Icons.School size={40} />
+              <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center text-white shrink-0 shadow-lg shadow-blue-100">
+                <Icons.BookOpen size={30} />
               </div>
               <div>
-                <h1 className="text-3xl md:text-4xl font-black uppercase text-slate-800 tracking-tighter">Registru <span className="text-blue-600">Digital</span></h1>
-                <p className="text-slate-400 font-bold text-xs uppercase tracking-[0.3em]">Liceul Teoretic Teiuș</p>
+                <h1 className="text-2xl md:text-3xl font-black uppercase text-slate-800 tracking-tighter">Registru <span className="text-blue-600">Liceul Teiuș</span></h1>
+                <p className="text-slate-400 font-bold text-[10px] uppercase tracking-[0.3em]">Evidența Intrare-Ieșire • 2026</p>
               </div>
             </div>
-            <button onClick={() => setIsAuthenticated(false)} className="text-xs font-black text-slate-400 hover:text-red-500 px-8 py-4 bg-slate-100/50 rounded-2xl transition-all uppercase shrink-0">Ieșire</button>
+            <div className="flex gap-4">
+              <button onClick={exportToExcel} className="bg-emerald-600 text-white px-6 py-3 rounded-xl text-[10px] font-black tracking-widest uppercase hover:bg-emerald-700 transition-all shadow-lg flex items-center gap-2">
+                <Icons.FileSpreadsheet size={16} /> Excel
+              </button>
+              <button onClick={() => setIsAuthenticated(false)} className="text-[10px] font-black text-slate-400 hover:text-red-500 px-6 py-3 bg-slate-100/50 rounded-xl transition-all uppercase">Ieșire</button>
+            </div>
           </header>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+          <div className="grid grid-cols-3 gap-6 mb-8">
             {['intrare', 'iesire', 'rezervat'].map((t) => (
-              <button key={t} onClick={() => { setTipDocument(t); setIsEditing(false); setNumarGenerat(null); setShowForm(true); }} className="bg-white p-10 rounded-[3rem] shadow-sm hover:shadow-xl transition-all border border-white text-left group">
-                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-6 transition-transform group-hover:scale-110 ${t === 'intrare' ? 'bg-emerald-500 text-white' : t === 'iesire' ? 'bg-blue-500 text-white' : 'bg-amber-500 text-white'}`}>
-                  <Icons.Plus size={24} />
+              <button key={t} onClick={() => { setTipDocument(t); setIsEditing(false); setNumarGenerat(null); setShowForm(true); }} className="bg-white p-6 rounded-[2rem] shadow-sm hover:shadow-xl transition-all border border-white text-left group">
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${t === 'intrare' ? 'bg-emerald-500 text-white' : t === 'iesire' ? 'bg-blue-500 text-white' : 'bg-amber-500 text-white'}`}>
+                  <Icons.Plus size={20} />
                 </div>
-                <h3 className="font-black text-2xl text-slate-800 mb-1 uppercase tracking-tight">{t}</h3>
-                <p className="text-slate-400 text-sm font-medium">Înregistrare nouă</p>
+                <h3 className="font-black text-lg text-slate-800 uppercase tracking-tight">{t}</h3>
               </button>
             ))}
           </div>
 
-          <div className="bg-white rounded-[4rem] shadow-xl border border-white overflow-hidden">
-            <div className="p-10 bg-slate-50/50 border-b flex flex-col md:flex-row justify-between items-center gap-6">
-              <button onClick={exportToExcel} className="bg-emerald-600 text-white px-8 py-4 rounded-2xl text-[10px] font-black tracking-widest uppercase hover:bg-emerald-700 transition-all shadow-lg flex items-center gap-2">
-                <Icons.FileSpreadsheet size={16} /> Export Excel
-              </button>
-              <div className="relative w-full md:w-80">
-                <Icons.Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                <input type="text" placeholder="Caută..." className="w-full pl-14 pr-6 py-4 bg-white border-2 border-slate-100 rounded-2xl text-sm outline-none font-bold text-slate-900 focus:border-blue-500 transition-all" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+          <div className="bg-white rounded-[2.5rem] shadow-xl border border-white overflow-hidden">
+            <div className="p-6 bg-slate-50/50 border-b flex justify-between items-center">
+              <div className="relative w-full max-w-md">
+                <Icons.Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                <input type="text" placeholder="Caută după nr, emitent sau conținut..." className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-xs outline-none font-bold text-slate-900 focus:border-blue-500 transition-all" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
               </div>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full text-left table-fixed min-w-[1000px]">
-                <thead className="text-[11px] uppercase text-slate-400 font-black bg-slate-50/50">
+              <table className="w-full text-left table-fixed min-w-[1400px]">
+                <thead className="text-[10px] uppercase text-slate-400 font-black bg-slate-50/50">
                   <tr>
-                    <th className="px-10 py-8 w-40">Nr. Inregistrare</th>
-                    <th className="px-10 py-8 w-40">Data</th>
-                    <th className="px-10 py-8 w-32">Tip</th>
-                    <th className="px-10 py-8 w-60">Corespondent</th>
-                    <th className="px-10 py-8">Conținut</th>
-                    <th className="px-10 py-8 w-32 text-center">Acțiuni</th>
+                    <th className="px-6 py-4 w-32 text-blue-600">Nr. Înreg.</th>
+                    <th className="px-6 py-4 w-28">Data</th>
+                    <th className="px-6 py-4 w-48">Emitent</th>
+                    <th className="px-6 py-4 w-64">Conținut pe scurt</th>
+                    <th className="px-6 py-4 w-32">Compartiment</th>
+                    <th className="px-6 py-4 w-28">Expediere</th>
+                    <th className="px-6 py-4 w-40">Destinatar</th>
+                    <th className="px-6 py-4 w-28 text-center">Nr. Conex</th>
+                    <th className="px-6 py-4 w-28 text-center">Indicativ</th>
+                    <th className="px-6 py-4 w-24 text-center">Acțiuni</th>
                   </tr>
                 </thead>
-                <tbody className="text-sm divide-y divide-slate-100">
-                  {documente.filter(d => (d.emitent || "").toLowerCase().includes(searchTerm.toLowerCase()) || (d.numar_inregistrare?.toString() || "").includes(searchTerm)).map((doc) => (
+                <tbody className="text-[11px] divide-y divide-slate-100">
+                  {documente.filter(d => 
+                    (d.emitent || "").toLowerCase().includes(searchTerm.toLowerCase()) || 
+                    (d.continut || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    (d.numar_inregistrare?.toString() || "").includes(searchTerm)
+                  ).map((doc) => (
                     <tr key={doc.id} className="hover:bg-slate-50 transition-all group">
-                      <td className="px-10 py-8 font-black text-blue-600 text-lg italic">#{doc.numar_inregistrare}</td>
-                      <td className="px-10 py-8 text-slate-500 font-bold">{doc.creat_la}</td>
-                      <td className="px-10 py-8">
-                        <span className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase ${doc.tip_document === 'intrare' ? 'bg-emerald-50 text-emerald-600' : doc.tip_document === 'iesire' ? 'bg-blue-50 text-blue-600' : 'bg-amber-50 text-amber-600'}`}>{doc.tip_document}</span>
-                      </td>
-                      <td className="px-10 py-8 font-black uppercase text-slate-700 truncate">{doc.emitent}</td>
-                      <td className="px-10 py-8 text-slate-400 italic truncate font-medium">{doc.continut}</td>
-                      <td className="px-10 py-8 text-center flex justify-center gap-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <td className="px-6 py-4 font-black text-blue-600">#{doc.numar_inregistrare}</td>
+                      <td className="px-6 py-4 text-slate-500 font-bold">{doc.creat_la}</td>
+                      <td className="px-6 py-4 font-black uppercase text-slate-700 truncate">{doc.emitent}</td>
+                      <td className="px-6 py-4 text-slate-500 italic truncate">{doc.continut}</td>
+                      <td className="px-6 py-4 font-bold text-slate-600 uppercase">{doc.compartiment || '-'}</td>
+                      <td className="px-6 py-4 text-slate-400">{doc.data_expediere || '-'}</td>
+                      <td className="px-6 py-4 font-bold truncate">{doc.destinatar || '-'}</td>
+                      <td className="px-6 py-4 text-center text-blue-500 font-black">{doc.nr_conex || '-'}</td>
+                      <td className="px-6 py-4 text-center font-black">{doc.indicativ_dosar || '-'}</td>
+                      <td className="px-6 py-4 text-center flex justify-center gap-2">
                         <button onClick={() => {
                           setEditId(doc.id); setTipDocument(doc.tip_document);
-                          setFormData({ data: doc.creat_la, expeditor: doc.emitent, continut: doc.continut });
+                          setFormData({ 
+                            data: doc.creat_la, emitent: doc.emitent, continut: doc.continut,
+                            compartiment: doc.compartiment || '', data_expediere: doc.data_expediere || '',
+                            destinatar: doc.destinatar || '', nr_conex: doc.nr_conex || '', 
+                            indicativ_dosar: doc.indicativ_dosar || ''
+                          });
                           setIsEditing(true); setShowForm(true);
-                        }} className="text-blue-500"><Icons.Edit3 size={18} /></button>
-                        <button onClick={async () => { if(confirm('Ștergi înregistrarea?')) { await supabase.from('documente').delete().eq('id', doc.id); fetchDocumente(); } }} className="text-red-400"><Icons.Trash2 size={18} /></button>
+                        }} className="text-blue-500 p-1 hover:bg-blue-50 rounded"><Icons.Edit3 size={14} /></button>
+                        <button onClick={async () => { if(confirm('Ștergi?')) { await supabase.from('documente').delete().eq('id', doc.id); fetchDocumente(); } }} className="text-red-400 p-1 hover:bg-red-50 rounded"><Icons.Trash2 size={14} /></button>
                       </td>
                     </tr>
                   ))}
@@ -175,51 +235,11 @@ export default function Registratura() {
       )}
 
       {showForm && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xl flex items-center justify-center p-6 z-50">
-          <div className="bg-white rounded-[4rem] p-12 w-full max-w-xl shadow-2xl relative border border-white">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-[3rem] p-10 w-full max-w-4xl shadow-2xl relative border border-white max-h-[90vh] overflow-y-auto">
             {!numarGenerat ? (
-              <div className="space-y-8">
-                <button onClick={() => { setShowForm(false); setIsEditing(false); }} className="absolute top-10 right-10 text-slate-300 hover:text-slate-600"><Icons.X size={32} /></button>
-                <h2 className="text-3xl font-black uppercase tracking-tighter text-slate-800">{isEditing ? 'Editează' : 'Înregistrare'}</h2>
-                
-                <div className="flex gap-2 p-1 bg-slate-100 rounded-2xl">
-                  {['intrare', 'iesire', 'rezervat'].map((t) => (
-                    <button key={t} type="button" onClick={() => setTipDocument(t)} className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase transition-all ${tipDocument === t ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400'}`}>{t}</button>
-                  ))}
+              <div className="space-y-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-2xl font-black uppercase tracking-tighter text-slate-800">Câmpuri Înregistrare</h2>
+                  <button onClick={() => { setShowForm(false); setIsEditing(false); }} className="text-slate-300 hover:text-red-500 transition-colors"><Icons.X size={32} /></button>
                 </div>
-
-                <div className="space-y-5">
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-black uppercase text-slate-400 ml-2">Data Document</label>
-                    <input type="date" value={formData.data} onChange={(e) => setFormData({...formData, data: e.target.value})} className="w-full bg-slate-50 border-2 border-slate-100 p-5 rounded-2xl font-bold outline-none text-slate-900 focus:border-blue-500" />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-black uppercase text-slate-400 ml-2">Corespondent (Emitent/Destinatar)</label>
-                    <input type="text" placeholder="Ex: Ministerul Educatiei" value={formData.expeditor} onChange={(e) => setFormData({...formData, expeditor: e.target.value})} className="w-full bg-slate-50 border-2 border-slate-100 p-5 rounded-2xl outline-none font-bold text-slate-900 focus:border-blue-500" />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-black uppercase text-slate-400 ml-2">Continut pe Scurt</label>
-                    <textarea placeholder="Descriere..." value={formData.continut} onChange={(e) => setFormData({...formData, continut: e.target.value})} className="w-full bg-slate-50 border-2 border-slate-100 p-5 rounded-2xl outline-none font-bold text-slate-900 focus:border-blue-500 min-h-[120px]" />
-                  </div>
-                </div>
-                <button onClick={handleSave} disabled={loading} className="w-full bg-blue-600 text-white font-black py-6 rounded-[2rem] uppercase tracking-widest text-xs shadow-xl hover:scale-[1.02] active:scale-95 transition-all">
-                  {loading ? 'Procesare...' : isEditing ? 'Actualizează' : 'Înregistrează și Generază Nr.'}
-                </button>
-              </div>
-            ) : (
-              <div className="text-center py-10 animate-in zoom-in duration-500">
-                <div className="w-24 h-24 bg-emerald-500 text-white rounded-[2.5rem] flex items-center justify-center mx-auto mb-8 shadow-2xl shadow-emerald-200">
-                  <Icons.Check size={50} strokeWidth={4} />
-                </div>
-                <h2 className="text-2xl font-black uppercase text-slate-800 tracking-tighter">Număr Alocat</h2>
-                <div className="text-[10rem] font-black text-blue-600 leading-none tracking-tighter">
-                  {numarGenerat}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
