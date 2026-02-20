@@ -108,40 +108,39 @@ export default function Registratura() {
     }
   };
 
-  const exportToCSV = () => {
-    const headers = ["Nr. Inregistrare", "Data", "Tip", "Emitent/Destinatar", "Continut"];
-    const rows = documente.map(doc => [
-      `"${doc.numar_inregistrare}"`, 
-      `"${doc.creat_la}"`, 
-      `"${doc.tip_document}"`, 
-      `"${doc.emitent}"`, 
-      `"${doc.continut}"`
-    ]);
-    const csvContent = "\uFEFF" + headers.join(";") + "\n" + rows.map(e => e.join(";")).join("\n");
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const exportCSV = () => {
+    const headers = ["Nr", "Data", "Tip", "Emitent", "Continut"];
+    const rows = documente.map(d => [d.numar_inregistrare, d.creat_la, d.tip_document, d.emitent, d.continut]);
+    const content = "\uFEFF" + headers.join(";") + "\n" + rows.map(r => r.join(";")).join("\n");
+    const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `registru_liceu_teius_2026.csv`;
+    link.download = `registru_2026.csv`;
     link.click();
   };
+
+  const filtered = documente.filter(d => 
+    (d.emitent || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (d.continut || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (d.numar_inregistrare?.toString() || "").includes(searchTerm)
+  );
 
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
-        <div className="bg-white p-10 rounded-[2.5rem] shadow-2xl w-full max-w-md text-center border border-slate-100">
-          <div className="w-20 h-20 bg-gradient-to-tr from-indigo-600 to-blue-500 rounded-3xl flex items-center justify-center shadow-lg mx-auto mb-8 ring-8 ring-slate-50">
-            <Icons.School size={44} className="text-white" />
+        <div className="bg-white p-10 rounded-[2.5rem] w-full max-w-md text-center">
+          <div className="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
+            <Icons.School className="text-white" size={32} />
           </div>
-          <h1 className="text-2xl font-black text-slate-800 mb-2 tracking-tight uppercase">Acces Registru</h1>
-          <p className="text-slate-400 text-sm mb-8 font-medium italic">Liceul Teoretic Teiuș</p>
+          <h2 className="text-xl font-black mb-6 uppercase">Registru Teiuș</h2>
           <form onSubmit={handleLogin} className="space-y-4">
             <input 
-              type="password" placeholder="Introduceți parola"
-              className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-indigo-500 outline-none font-bold text-center transition-all"
-              value={passwordInput} onChange={(e) => setPasswordInput(e.target.value)} autoFocus
+              type="password" placeholder="Parola" 
+              className="w-full p-4 bg-slate-50 border-2 rounded-2xl text-center outline-none focus:border-indigo-500 font-bold"
+              value={passwordInput} onChange={(e) => setPasswordInput(e.target.value)}
             />
-            <button type="submit" className="w-full bg-slate-900 text-white font-bold py-4 rounded-2xl hover:bg-indigo-600 transition-all uppercase tracking-widest text-xs">Conectare</button>
+            <button className="w-full bg-slate-900 text-white font-bold py-4 rounded-2xl uppercase text-xs tracking-widest">Conectare</button>
           </form>
         </div>
       </div>
@@ -149,107 +148,20 @@ export default function Registratura() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 p-4 md:p-10 text-slate-900 font-sans">
+    <div className="min-h-screen bg-slate-50 p-4 md:p-10 text-slate-900">
       <div className="max-w-6xl mx-auto">
-        <header className="flex flex-col md:flex-row items-center justify-between mb-10 bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 gap-6">
-          <div className="flex items-center gap-6">
-            <div className="w-20 h-20 bg-gradient-to-br from-indigo-600 to-blue-500 rounded-2xl flex items-center justify-center shadow-lg ring-4 ring-slate-50">
-              <Icons.School size={40} className="text-white" />
+        <header className="flex flex-col md:flex-row items-center justify-between mb-10 bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100">
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center text-white">
+              <Icons.School size={32} />
             </div>
             <div>
-              <h1 className="text-2xl md:text-3xl font-black text-slate-800 tracking-tighter uppercase">Registru <span className="text-indigo-600">Intrare-Ieșire</span></h1>
-              <p className="text-slate-400 font-bold flex items-center gap-2 text-sm uppercase tracking-wide"><Icons.MapPin size={14} className="text-indigo-400" /> Liceul Teoretic Teiuș</p>
+              <h1 className="text-2xl font-black uppercase tracking-tight">Registru <span className="text-indigo-600">Intrare-Ieșire</span></h1>
+              <p className="text-slate-400 font-bold text-xs uppercase">Liceul Teoretic Teiuș • 2026</p>
             </div>
           </div>
-          <button onClick={() => setIsAuthenticated(false)} className="flex items-center gap-2 text-xs font-bold text-red-500 bg-red-50 px-6 py-3 rounded-2xl hover:bg-red-500 hover:text-white transition-all"><Icons.LogOut size={16} /> IEȘIRE</button>
+          <button onClick={() => setIsAuthenticated(false)} className="text-xs font-bold text-red-500 px-6 py-3 bg-red-50 rounded-xl">IEȘIRE</button>
         </header>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-          {['intrare', 'iesire', 'rezervat'].map((tip) => (
-            <button key={tip} onClick={() => { setTipDocument(tip); setIsEditing(false); setNumarGenerat(null); setShowForm(true); }} className="bg-white p-8 rounded-[2.5rem] border-2 border-transparent shadow-sm text-left group transition-all hover:border-indigo-500">
-              <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110 ${tip === 'intrare' ? 'bg-emerald-100 text-emerald-600' : tip === 'iesire' ? 'bg-blue-100 text-blue-600' : 'bg-orange-100 text-orange-600'}`}>
-                {tip === 'rezervat' ? <Icons.Hash /> : <Icons.Plus />}
-              </div>
-              <h3 className="font-bold text-lg capitalize">{tip}</h3>
-              <p className="text-sm text-slate-400">{tip === 'intrare' ? 'Primite' : tip === 'iesire' ? 'Trimise' : 'Număr blocat'}</p>
-            </button>
-          ))}
-        </div>
-
-        <div className="bg-white rounded-[2.5rem] shadow-xl border border-slate-200 overflow-hidden">
-          <div className="p-8 bg-slate-50/50 border-b flex flex-col md:flex-row justify-between items-center gap-6">
-            <h2 className="font-black text-slate-700 uppercase text-xs tracking-widest flex items-center gap-2"><Icons.List size={16} className="text-indigo-600" /> Jurnal Înregistrări 2026</h2>
-            <div className="flex items-center gap-3 w-full md:w-auto">
-              <button onClick={exportToCSV} className="bg-emerald-600 text-white px-6 py-3 rounded-2xl text-xs font-bold hover:bg-emerald-700 transition-all flex items-center gap-2 shadow-lg shadow-emerald-100"><Icons.Download size={14} /> EXPORT EXCEL</button>
-              <div className="relative flex-1 md:w-64">
-                <Icons.Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                <input type="text" placeholder="Caută..." className="w-full pl-12 pr-4 py-3 border border-slate-200 rounded-2xl text-sm focus:ring-4 ring-indigo-50/50 outline-none transition-all" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-              </div>
-            </div>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead className="text-[10px] uppercase text-slate-400 font-black border-b bg-slate-50/30 tracking-widest">
-                <tr>
-                  <th className="px-8 py-5">Nr. Crt</th>
-                  <th className="px-8 py-5">Data</th>
-                  <th className="px-8 py-5">Tip</th>
-                  <th className="px-8 py-5">Emitent/Destinatar</th>
-                  <th className="px-8 py-5">Conținut</th>
-                  <th className="px-8 py-5 text-center">Acțiuni</th>
-                </tr>
-              </thead>
-              <tbody className="text-sm divide-y divide-slate-100">
-                {documente.filter(d => (d.emitent || "").toLowerCase().includes(searchTerm.toLowerCase()) || (d.continut || "").toLowerCase().includes(searchTerm.toLowerCase()) || (d.numar_inregistrare?.toString() || "").includes(searchTerm)).map((doc) => (
-                  <tr key={doc.id} className="hover:bg-indigo-50/30 transition-colors group">
-                    <td className="px-8 py-5 font-black text-indigo-600 text-lg italic">#{doc.numar_inregistrare}</td>
-                    <td className="px-8 py-5 font-medium">{doc.creat_la ? new Date(doc.creat_la).toLocaleDateString('ro-RO') : '---'}</td>
-                    <td className="px-8 py-5">
-                      <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase ${doc.tip_document === 'intrare' ? 'bg-emerald-100 text-emerald-700' : doc.tip_document === 'iesire' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}`}>{doc.tip_document}</span>
-                    </td>
-                    <td className="px-8 py-5 font-bold uppercase text-slate-800">{doc.emitent}</td>
-                    <td className="px-8 py-5 text-slate-500 max-w-xs truncate">{doc.continut}</td>
-                    <td className="px-8 py-5 text-center flex items-center justify-center gap-2">
-                      <button onClick={() => startEdit(doc)} className="text-slate-300 hover:text-indigo-600 p-2 transition-all"><Icons.Edit3 size={18} /></button>
-                      <button onClick={async () => { if(confirm(`Ștergi înregistrarea #${doc.numar_inregistrare}?`)) { await supabase.from('documente').delete().eq('id', doc.id); fetchDocumente(); } }} className="text-slate-300 hover:text-red-500 p-2 transition-all"><Icons.Trash2 size={18} /></button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      {showForm && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-[2.5rem] p-10 w-full max-w-md shadow-2xl relative">
-            {!numarGenerat ? (
-              <div className="space-y-6">
-                <button onClick={() => { setShowForm(false); setIsEditing(false); }} className="absolute top-8 right-8 text-slate-300 hover:text-slate-600"><Icons.X size={28} /></button>
-                <div className="space-y-1">
-                  <h2 className="text-2xl font-black uppercase text-slate-800">{isEditing ? 'Editează' : 'Înregistrare Nouă'}</h2>
-                  <p className="text-indigo-600 font-bold text-[10px] uppercase tracking-widest">Selectați tipul:</p>
-                </div>
-                <div className="flex gap-2">
-                  {['intrare', 'iesire', 'rezervat'].map((t) => (
-                    <button key={t} type="button" onClick={() => setTipDocument(t)} className={`flex-1 py-2 rounded-xl text-[10px] font-black uppercase border-2 transition-all ${tipDocument === t ? 'border-indigo-600 bg-indigo-50 text-indigo-600' : 'border-slate-100 text-slate-400'}`}>{t}</button>
-                  ))}
-                </div>
-                <div className="space-y-4">
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-black text-slate-400 uppercase ml-1">Data</label>
-                    <input type="date" value={formData.data} onChange={(e) => setFormData({...formData, data: e.target.value})} className="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl font-bold focus:border-indigo-500 outline-none transition-all" />
-                  </div>
-                  <input type="text" placeholder="Emitent / Destinatar" value={formData.expeditor} onChange={(e) => setFormData({...formData, expeditor: e.target.value})} className="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl outline-none focus:border-indigo-500 transition-all font-medium" />
-                  <textarea placeholder="Conținut / Descriere" value={formData.continut} onChange={(e) => setFormData({...formData, continut: e.target.value})} className="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl outline-none focus:border-indigo-500 transition-all font-medium" rows={3} />
-                </div>
-                <button onClick={handleSave} disabled={loading} className="w-full bg-indigo-600 text-white font-black py-5 rounded-2xl hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100 uppercase tracking-widest text-sm disabled:bg-slate-300">
-                  {loading ? 'Se procesează...' : isEditing ? 'Salvează Modificarea' : 'Alocă Număr'}
-                </button>
-              </div>
-            ) : (
-              <div className="text-center py-10 animate-in zoom-in duration-500">
-                <div className="w-24 h-24 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6"><Icons.CheckCircle size={56} /></div>
-                <h2 className="text-2xl font-black uppercase text-slate-800">Succes!</h2>
-                <div className="text-8xl
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+          {['intrare', 'iesire', 'rezervat'].map((t) => (
