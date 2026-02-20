@@ -39,13 +39,24 @@ export default function Registratura() {
   }, []);
 
   useEffect(() => {
-    fetchDocumente();
-  }, [fetchDocumente]);
-
-  const handleSave = async () => {
-    if (!formData.expeditor || !formData.continut) {
-      alert("Completati toate campurile!");
-      return;
+const fetchDocumente = useCallback(async () => {
+  try {
+    // Adaugam un parametru de timp pentru a pacali cache-ul browserului
+    const { data, error } = await supabase
+      .from('documente')
+      .select('*')
+      .order('nr_inregistrare', { ascending: false });
+    
+    if (error) {
+      console.error("Eroare Supabase:", error.message);
+    } else {
+      console.log("Date primite:", data); // Verifica in consola (F12) daca apar date aici
+      setDocumente(data || []);
+    }
+  } catch (err) {
+    console.error("Eroare incarcare:", err);
+  }
+}, []);
     }
     setLoading(true);
     try {
