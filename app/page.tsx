@@ -30,20 +30,51 @@ export default function Registratura() {
 
   useEffect(() => { fetchDocumente(); }, [fetchDocumente]);
 
-  const handleSave = async () => {
-    if (!formData.expeditor || !formData.continut) return alert("Completați câmpurile!");
+const handleSave = async () => {
+    if (!formData.expeditor || !formData.continut) {
+      alert("Completati toate campurile!");
+      return;
+    }
+
     setLoading(true);
     try {
+      // 1. Inserăm datele
       const { data, error } = await supabase
         .from('documente')
         .insert([{ 
           tip_document: tipDocument, 
           emitent: formData.expeditor, 
-          continut: formData.continut, // Coloana redenumită la Pasul 1
+          continut: formData.continut,
           creat_la: formData.data,
           anul: 2026
         }])
-        .select();
+        .select(); // IMPORTANT: Aceasta forțează Supabase să returneze rândul creat
+
+      if (error) throw error;
+
+      // 2. Verificăm dacă am primit datele înapoi
+      if (data && data.length > 0) {
+        const nrNou = data[0].numar_inregistrare;
+        console.log("Numar primit de la server:", nrNou); // Verifică în consola browserului
+        setNumarGenerat(nrNou); // Setăm numărul pentru a fi afișat în modal
+        
+        await fetchDocumente(); // Reîmprospătăm tabelul în spate
+        
+        // 3. Închidem modalul după 4 secunde (să aibă timp utilizatorul să vadă numărul)
+        setTimeout(() => {
+          setShowForm(false);
+          setNumarGenerat(null);
+          setFormData({ data: new Date().toISOString().split('T')[0], expeditor: '', continut: '' });
+        }, 4000);
+      } else {
+        alert("Documentul a fost salvat, dar serverul nu a returnat numărul. Reîmprospătați pagina.");
+      }
+    } catch (err: any) {
+      alert('Eroare la salvare: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
       if (error) throw error;
       if (data?.[0]) {
