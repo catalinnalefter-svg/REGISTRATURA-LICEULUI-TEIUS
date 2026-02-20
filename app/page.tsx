@@ -25,83 +25,85 @@ export default function Registratura() {
       const { data, error } = await supabase
         .from('documente')
         .select('*')
-        .order('creat_la', { ascending: false });
+        .order('numar_inregistrare', { ascending: false });
       if (!error && data) setDocumente(data);
     } catch (err) {
-      console.error(err);
+      console.error("Eroare la încărcare:", err);
     }
   }, []);
 
   useEffect(() => { fetchDocumente(); }, [fetchDocumente]);
 
-const handleSave = async () => {
-  if (!formData.expeditor || !formData.continut) {
-    alert("Completați toate câmpurile!");
-    return;
-  }
-
-  setLoading(true);
-  try {
-    const { data, error } = await supabase
-      .from('documente')
-      .insert([{ 
-        tip_document: tipDocument, 
-        emitent: formData.expeditor, 
-        continut: formData.continut,
-        creat_la: formData.data,
-        anul: 2026
-      }])
-      .select();
-
-    if (error) throw error;
-
-    if (data?.[0]) {
-      setNumarGenerat(data[0].numar_inregistrare);
-      await fetchDocumente();
-      
-      // Închidem automat după 3 secunde
-      setTimeout(() => {
-        setShowForm(false);
-        setNumarGenerat(null);
-        setFormData({ data: new Date().toISOString().split('T')[0], expeditor: '', continut: '' });
-      }, 3000);
+  const handleSave = async () => {
+    if (!formData.expeditor || !formData.continut) {
+      alert("Completați toate câmpurile!");
+      return;
     }
-  } catch (err: any) {
-    console.error("Eroare la salvare:", err);
-    alert('Eroare la salvare: ' + err.message);
-    // IMPORTANTE: Resetăm loading-ul aici dacă e eroare
-    setLoading(false); 
-  }
-  // Alternativ, folosim finally pentru a fi siguri
-  // finally { setLoading(false); }
-};
+    
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('documente')
+        .insert([{ 
+          tip_document: tipDocument, 
+          emitent: formData.expeditor, 
+          continut: formData.continut,
+          creat_la: formData.data,
+          anul: 2026
+        }])
+        .select();
 
- const handleDelete = async (id: any, nr: any) => {
-  // Verificăm dacă ID-ul este valid (trebuie să fie un string de tip UUID)
-  if (!id || typeof id !== 'string') {
-    console.error("ID primit invalid:", id);
-    alert("Eroare: Acest document nu are un identificator valid pentru a fi șters.");
-    return;
-  }
-  
-  const confirmare = confirm(`Ești sigur că vrei să ștergi înregistrarea #${nr || ''}?`);
-  if (!confirmare) return;
+      if (error) throw error;
 
-  try {
-    const { error } = await supabase
-      .from('documente')
-      .delete()
-      .match({ id: id }); // Folosim .match pentru precizie
+      if (data?.[0]) {
+        setNumarGenerat(data[0].numar_inregistrare);
+        await fetchDocumente();
+        
+        setTimeout(() => {
+          setShowForm(false);
+          setNumarGenerat(null);
+          setFormData({ data: new Date().toISOString().split('T')[0], expeditor: '', continut: '' });
+          setLoading(false); // Resetăm loading după succes
+        }, 3000);
+      }
+    } catch (err: any) {
+      alert('Eroare la salvare: ' + err.message);
+      setLoading(false); // Resetăm loading obligatoriu în caz de eroare
+    }
+  };
 
-    if (error) throw error;
+  const handleDelete = async (id: string, nr: any) => {
+    if (!id || id === "undefined") {
+      alert("Eroare: Acest document nu are un identificator valid.");
+      return;
+    }
+    if (confirm(`Ștergi definitiv înregistrarea #${nr || ''}?`)) {
+      const { error } = await supabase.from('documente').delete().eq('id', id);
+      if (error) alert("Eroare la ștergere: " + error.message);
+      else await fetchDocumente();
+    }
+  };
 
-    // Actualizăm lista locală imediat
-    setDocumente(prev => prev.filter(doc => doc.id !== id));
-    alert("Înregistrare ștearsă cu succes!");
-  } catch (err: any) {
-    alert("Eroare la ștergere: " + err.message);
-  }
-};
+  const exportToCSV = () => {
+    const headers = ["Nr. Inregistrare", "Data", "Tip", "Emitent", "Continut"];
+    const rows = documente.map(doc => [
+      doc.numar_inregistrare,
+      doc.creat_la,
+      doc.tip_document,
+      doc.emitent,
+      doc.continut
+    ]);
+
+    const csvContent = "\uFEFF" + headers.join(",") + "\n" + rows.map(e => e.join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `registru_liceu_teius_2026.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   const documenteFiltrate = documente.filter(d => 
     (d.emitent || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -110,29 +112,29 @@ const handleSave = async () => {
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 p-4 md:p-10 text-slate-900">
+    <div className="min-h-screen bg-slate-50 p-4 md:p-10 text-slate-900 font-sans">
       <div className="max-w-6xl mx-auto">
         <header className="flex items-center justify-between mb-10 bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center font-bold text-white text-xl shadow-lg">LT</div>
-            <h1 className="text-xl font-bold text-slate-800 tracking-tight">Registratura Liceului Teiuș</h1>
+            <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center font-bold text-white text-xl">LT</div>
+            <h1 className="text-xl font-bold text-slate-800">Registratura Liceului Teiuș</h1>
           </div>
-          <div className="text-xs font-bold text-slate-400 bg-slate-100 px-4 py-2 rounded-full uppercase tracking-widest">An 2026</div>
+          <div className="text-xs font-bold text-slate-400 bg-slate-100 px-4 py-2 rounded-full">AN 2026</div>
         </header>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
           <button onClick={() => { setTipDocument('intrare'); setShowForm(true); }} className="bg-white p-8 rounded-[2rem] border-2 border-transparent hover:border-emerald-500 shadow-sm text-left group transition-all">
-            <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform"><Icons.Plus size={24} /></div>
+            <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform"><Icons.Plus /></div>
             <h3 className="font-bold text-lg">Intrare</h3>
             <p className="text-sm text-slate-400">Documente primite</p>
           </button>
           <button onClick={() => { setTipDocument('iesire'); setShowForm(true); }} className="bg-white p-8 rounded-[2rem] border-2 border-transparent hover:border-blue-500 shadow-sm text-left group transition-all">
-            <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform"><Icons.Plus size={24} /></div>
+            <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform"><Icons.Plus /></div>
             <h3 className="font-bold text-lg">Ieșire</h3>
             <p className="text-sm text-slate-400">Documente trimise</p>
           </button>
           <button onClick={() => { setTipDocument('rezervat'); setShowForm(true); }} className="bg-white p-8 rounded-[2rem] border-2 border-transparent hover:border-orange-500 shadow-sm text-left group transition-all">
-            <div className="w-12 h-12 bg-orange-100 text-orange-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform"><Icons.Hash size={24} /></div>
+            <div className="w-12 h-12 bg-orange-100 text-orange-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform"><Icons.Hash /></div>
             <h3 className="font-bold text-lg">Rezervă</h3>
             <p className="text-sm text-slate-400">Blochează numere</p>
           </button>
@@ -141,9 +143,14 @@ const handleSave = async () => {
         <div className="bg-white rounded-[2rem] shadow-xl border border-slate-200 overflow-hidden">
           <div className="p-6 bg-slate-50/50 border-b flex flex-col md:flex-row justify-between items-center gap-4">
             <h2 className="font-bold text-slate-700 flex items-center gap-2 uppercase text-xs tracking-widest"><Icons.List size={16} /> Registru General</h2>
-            <div className="relative w-full md:w-64">
-              <Icons.Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-              <input type="text" placeholder="Caută în registru..." className="w-full pl-10 pr-4 py-2 border rounded-xl text-sm outline-none focus:ring-2 ring-indigo-500" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+            <div className="flex items-center gap-3 w-full md:w-auto">
+              <button onClick={exportToCSV} className="flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-emerald-700 transition-all">
+                <Icons.Download size={14} /> EXPORT EXCEL
+              </button>
+              <div className="relative flex-1 md:w-64">
+                <Icons.Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                <input type="text" placeholder="Caută..." className="w-full pl-10 pr-4 py-2 border rounded-xl text-sm focus:ring-2 ring-indigo-500" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+              </div>
             </div>
           </div>
           <div className="overflow-x-auto">
@@ -159,24 +166,18 @@ const handleSave = async () => {
                 </tr>
               </thead>
               <tbody className="text-sm divide-y">
-                {documenteFiltrate.length === 0 ? (
-                  <tr><td colSpan={6} className="px-6 py-10 text-center text-slate-400 italic">Nu s-au găsit înregistrări.</td></tr>
-                ) : (
-                  documenteFiltrate.map((doc) => (
-                    <tr key={doc.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="px-6 py-4 font-bold text-indigo-600">#{doc.numar_inregistrare || '---'}</td>
-                      <td className="px-6 py-4">{doc.creat_la ? new Date(doc.creat_la).toLocaleDateString('ro-RO') : '---'}</td>
-                      <td className={`px-6 py-4 uppercase text-[10px] font-bold ${doc.tip_document === 'intrare' ? 'text-emerald-600' : doc.tip_document === 'iesire' ? 'text-blue-600' : 'text-orange-600'}`}>
-                        {doc.tip_document}
-                      </td>
-                      <td className="px-6 py-4 font-bold uppercase">{doc.emitent || '---'}</td>
-                      <td className="px-6 py-4 text-slate-500 italic">{doc.continut}</td>
-                      <td className="px-6 py-4 text-center">
-                        <button onClick={() => handleDelete(doc.id, doc.numar_inregistrare)} className="text-slate-300 hover:text-red-500 p-2"><Icons.Trash2 size={18} /></button>
-                      </td>
-                    </tr>
-                  ))
-                )}
+                {documenteFiltrate.map((doc) => (
+                  <tr key={doc.id} className="hover:bg-slate-50 transition-colors group">
+                    <td className="px-6 py-4 font-bold text-indigo-600">#{doc.numar_inregistrare || '---'}</td>
+                    <td className="px-6 py-4">{doc.creat_la ? new Date(doc.creat_la).toLocaleDateString('ro-RO') : '---'}</td>
+                    <td className={`px-6 py-4 uppercase text-[10px] font-bold ${doc.tip_document === 'intrare' ? 'text-emerald-600' : doc.tip_document === 'iesire' ? 'text-blue-600' : 'text-orange-600'}`}>{doc.tip_document}</td>
+                    <td className="px-6 py-4 font-bold uppercase">{doc.emitent}</td>
+                    <td className="px-6 py-4 text-slate-500">{doc.continut}</td>
+                    <td className="px-6 py-4 text-center">
+                      <button onClick={() => handleDelete(doc.id, doc.numar_inregistrare)} className="text-slate-300 hover:text-red-500 p-2"><Icons.Trash2 size={18} /></button>
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
@@ -192,21 +193,21 @@ const handleSave = async () => {
                 <h2 className="text-xl font-bold uppercase text-indigo-900">Nou {tipDocument}</h2>
                 <div className="space-y-4">
                   <div>
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Data Inregistrării</label>
-                    <input type="date" value={formData.data} onChange={(e) => setFormData({...formData, data: e.target.value})} className="w-full bg-slate-50 border p-4 rounded-xl font-bold outline-none focus:ring-2 ring-indigo-500" />
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Data Înregistrării</label>
+                    <input type="date" value={formData.data} onChange={(e) => setFormData({...formData, data: e.target.value})} className="w-full bg-slate-50 border p-4 rounded-xl font-bold focus:ring-2 ring-indigo-500" />
                   </div>
-                  <input type="text" placeholder="Expeditor / Destinatar" value={formData.expeditor} onChange={(e) => setFormData({...formData, expeditor: e.target.value})} className="w-full bg-slate-50 border p-4 rounded-xl outline-none focus:ring-2 ring-indigo-500" />
-                  <textarea placeholder="Continut pe scurt" value={formData.continut} onChange={(e) => setFormData({...formData, continut: e.target.value})} className="w-full bg-slate-50 border p-4 rounded-xl outline-none focus:ring-2 ring-indigo-500" rows={3} />
+                  <input type="text" placeholder="Expeditor / Destinatar" value={formData.expeditor} onChange={(e) => setFormData({...formData, expeditor: e.target.value})} className="w-full bg-slate-50 border p-4 rounded-xl focus:ring-2 ring-indigo-500" />
+                  <textarea placeholder="Conținut pe scurt" value={formData.continut} onChange={(e) => setFormData({...formData, continut: e.target.value})} className="w-full bg-slate-50 border p-4 rounded-xl focus:ring-2 ring-indigo-500" rows={3} />
                 </div>
-                <button onClick={handleSave} disabled={loading} className="w-full bg-slate-900 text-white font-bold py-4 rounded-2xl hover:bg-indigo-600 transition-all">
-                  {loading ? 'Se salvează...' : 'Finalizează Inregistrarea'}
+                <button onClick={handleSave} disabled={loading} className="w-full bg-slate-900 text-white font-bold py-4 rounded-2xl hover:bg-indigo-600 transition-all disabled:bg-slate-400">
+                  {loading ? 'Se salvează...' : 'Finalizează Înregistrarea'}
                 </button>
               </div>
             ) : (
               <div className="text-center py-10 animate-in zoom-in duration-300">
                 <Icons.CheckCircle size={64} className="text-emerald-500 mx-auto mb-6" />
-                <h2 className="text-2xl font-bold">Inregistrat cu succes!</h2>
-                <div className="text-6xl font-black text-indigo-600 mt-4 italic tracking-tighter">#{numarGenerat}</div>
+                <h2 className="text-2xl font-bold">Înregistrat cu succes!</h2>
+                <div className="text-7xl font-black text-indigo-600 mt-4 italic">#{numarGenerat}</div>
               </div>
             )}
           </div>
