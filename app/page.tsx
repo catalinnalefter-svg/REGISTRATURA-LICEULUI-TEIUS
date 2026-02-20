@@ -69,12 +69,12 @@ export default function Registratura() {
     document.body.removeChild(link);
   };
 
-  const handleDelete = async (id: any, nr: any) => {
+ const handleDelete = async (nr: any) => {
     if (confirm(`Ești sigur că vrei să ștergi înregistrarea #${nr}?`)) {
       const { error } = await supabase
         .from('documente')
         .delete()
-        .eq('id', id);
+        .eq('nr_inregistrare', nr); // Folosim nr_inregistrare în loc de id
       
       if (error) {
         alert("Eroare la ștergere: " + error.message);
