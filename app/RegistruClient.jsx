@@ -44,8 +44,8 @@ export function RegistruClient() {
     setTip(doc.tip_document);
     setForm({
       data: doc.creat_la,
-      emitent: doc.emitent,
-      continut: doc.continut,
+      emitent: doc.emitent || '',
+      continut: doc.continut || '',
       compartiment: doc.compartiment || '',
       data_expediere: doc.data_expediere || '',
       destinatar: doc.destinatar || '',
@@ -56,7 +56,7 @@ export function RegistruClient() {
   };
 
   const handleDelete = async (id) => {
-    if (confirm('Sigur dorești să ștergi această înregistrare?')) {
+    if (confirm('Ștergeți definitiv această înregistrare?')) {
       await supabase.from('documente').delete().eq('id', id);
       fetchDocs();
     }
@@ -96,14 +96,17 @@ export function RegistruClient() {
       result = await supabase.from('documente').insert([payload]).select();
     }
     
-    if (result.error) alert("Eroare: " + result.error.message);
-    else {
+    if (result.error) {
+      alert("Eroare: " + result.error.message);
+    } else {
       if (!editingId && result.data) setNumarGenerat(result.data[0].numar_inregistrare);
       fetchDocs();
-      if (editingId) setShowForm(false);
-      else setTimeout(() => { setShowForm(false); setNumarGenerat(null); }, 3000);
-      
-      setEditingId(null);
+      if (editingId) {
+        setShowForm(false);
+        setEditingId(null);
+      } else {
+        setTimeout(() => { setShowForm(false); setNumarGenerat(null); }, 3000);
+      }
       setForm({data: new Date().toISOString().split('T')[0], emitent:'', continut:'', compartiment:'', data_expediere:'', destinatar:'', nr_conex:'', indicativ:''});
     }
     setLoading(false);
@@ -112,71 +115,43 @@ export function RegistruClient() {
   if (!isAuth) {
     return (
       <div className="min-h-screen bg-[#0f172a] flex items-center justify-center p-6">
-        <form onSubmit={handleLogin} className="bg-white/10 backdrop-blur-2xl p-12 rounded-[3.5rem] w-full max-w-md text-center border border-white/20 shadow-2xl animate-in zoom-in duration-500">
-          <ShieldCheck className="mx-auto mb-6 text-blue-400" size={60} />
-          <h2 className="text-3xl font-black mb-2 text-white uppercase tracking-tighter">Registru Digital</h2>
-          <p className="text-blue-200/50 text-xs font-bold uppercase tracking-widest mb-8">Liceul Teoretic Teiuș</p>
-          <input type="password" placeholder="Parola de acces" autoFocus className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-center text-white mb-6 outline-none font-bold focus:border-blue-500 transition-all" value={pass} onChange={(e) => setPass(e.target.value)} />
-          <button type="submit" className="w-full bg-blue-600 text-white font-black py-5 rounded-2xl uppercase tracking-widest hover:bg-blue-500 transition-all">Autentificare</button>
+        <form onSubmit={handleLogin} className="bg-white/10 backdrop-blur-2xl p-10 rounded-[3rem] w-full max-w-md text-center border border-white/20 shadow-2xl">
+          <ShieldCheck className="mx-auto mb-4 text-blue-400" size={50} />
+          <h2 className="text-2xl font-black mb-1 text-white uppercase tracking-tighter">Registru Digital</h2>
+          <p className="text-blue-200/50 text-[10px] font-bold uppercase tracking-widest mb-8">Liceul Teoretic Teiuș</p>
+          <input type="password" placeholder="Parola" autoFocus className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl text-center text-white mb-4 outline-none font-bold focus:border-blue-500 transition-all" value={pass} onChange={(e) => setPass(e.target.value)} />
+          <button type="submit" className="w-full bg-blue-600 text-white font-black py-4 rounded-2xl uppercase tracking-widest hover:bg-blue-500 transition-all">Intră</button>
         </form>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#f1f5f9] text-slate-900 p-4 md:p-6 font-sans">
-      <div className="max-w-[1750px] mx-auto">
-        <header className="flex flex-col lg:flex-row items-center justify-between mb-6 bg-white p-6 rounded-[2.5rem] shadow-xl border border-white/50 gap-4">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl flex items-center justify-center text-white shadow-lg"><BookOpen size={28} /></div>
+    <div className="min-h-screen bg-[#f1f5f9] text-slate-900 p-3 md:p-6 font-sans">
+      <div className="max-w-[1800px] mx-auto">
+        <header className="flex flex-col lg:flex-row items-center justify-between mb-4 bg-white p-5 rounded-[2rem] shadow-lg border border-white/50 gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg"><BookOpen size={24} /></div>
             <div>
-              <h1 className="text-xl md:text-2xl font-black uppercase text-slate-800 tracking-tighter leading-none">Registru <span className="text-blue-600">Intrări-Ieșiri</span></h1>
-              <p className="text-slate-400 font-bold text-[9px] uppercase tracking-widest mt-1">Liceul Teoretic Teiuș • 2026</p>
+              <h1 className="text-xl font-black uppercase text-slate-800 tracking-tighter leading-none">Registru <span className="text-blue-600">Intrări-Ieșiri</span></h1>
+              <p className="text-slate-400 font-bold text-[8px] uppercase tracking-widest mt-1">Liceul Teoretic Teiuș</p>
             </div>
           </div>
-          <div className="flex gap-3">
-            <button onClick={handleExport} className="bg-emerald-500 text-white px-6 py-3 rounded-xl text-[9px] font-black uppercase flex items-center gap-2 hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-100"><FileSpreadsheet size={16} /> Excel</button>
-            <button onClick={() => window.location.reload()} className="bg-slate-100 text-slate-500 p-3 rounded-xl hover:bg-red-50 hover:text-red-500 transition-all"><LogOut size={18} /></button>
+          <div className="flex gap-2">
+            <button onClick={handleExport} className="bg-emerald-500 text-white px-5 py-2.5 rounded-xl text-[9px] font-black uppercase flex items-center gap-2 hover:bg-emerald-600 transition-all"><FileSpreadsheet size={14} /> Excel</button>
+            <button onClick={() => window.location.reload()} className="bg-slate-100 text-slate-500 p-2.5 rounded-xl hover:text-red-500 transition-all"><LogOut size={16} /></button>
           </div>
         </header>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
           {['intrare', 'iesire', 'rezervat'].map((t) => (
-            <button key={t} onClick={() => { setTip(t); setEditingId(null); setShowForm(true); }} className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-white hover:shadow-xl hover:-translate-y-1 transition-all group flex items-center justify-between">
-              <div>
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${t === 'intrare' ? 'bg-emerald-100 text-emerald-600' : t === 'iesire' ? 'bg-blue-100 text-blue-600' : 'bg-amber-100 text-amber-600'}`}><Plus size={20} /></div>
-                <h3 className="font-black text-lg text-slate-800 uppercase tracking-tight">Înregistrare {t}</h3>
+            <button key={t} onClick={() => { setTip(t); setEditingId(null); setShowForm(true); }} className="bg-white p-5 rounded-[2rem] shadow-sm border border-white hover:shadow-md transition-all flex items-center justify-between group">
+              <div className="flex items-center gap-3">
+                <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${t === 'intrare' ? 'bg-emerald-100 text-emerald-600' : t === 'iesire' ? 'bg-blue-100 text-blue-600' : 'bg-amber-100 text-amber-600'}`}><Plus size={18} /></div>
+                <h3 className="font-black text-sm text-slate-800 uppercase tracking-tight">Nou {t}</h3>
               </div>
-              <div className="text-slate-100 group-hover:text-slate-200 transition-colors"><Plus size={40} strokeWidth={4} /></div>
             </button>
           ))}
         </div>
 
-        <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-slate-200/50 border border-white overflow-hidden">
-          <div className="p-6 bg-slate-50/50 border-b">
-            <div className="relative w-full max-w-xl">
-              <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-              <input type="text" placeholder="Caută..." className="w-full pl-14 pr-6 py-4 bg-white border border-slate-200 rounded-2xl text-xs font-bold outline-none focus:border-blue-500 transition-all" onChange={(e) => setSearch(e.target.value)} />
-            </div>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left table-fixed min-w-[1600px]">
-              <thead className="text-[9px] uppercase text-slate-400 font-black bg-slate-50/80 border-b">
-                <tr>
-                  <th className="px-6 py-4 w-28 text-blue-600">Nr. Înreg.</th>
-                  <th className="px-6 py-4 w-28">Data</th>
-                  <th className="px-6 py-4 w-52">Emitent</th>
-                  <th className="px-6 py-4 w-80">Conținut Document</th>
-                  <th className="px-6 py-4 w-40 text-center">Compartiment</th>
-                  <th className="px-6 py-4 w-32 text-center">Data Exped.</th>
-                  <th className="px-6 py-4 w-52">Destinatar</th>
-                  <th className="px-6 py-4 w-24 text-center">Conex</th>
-                  <th className="px-6 py-4 w-32 text-right">Acțiuni</th>
-                </tr>
-              </thead>
-              <tbody className="text-[10px] divide-y divide-slate-100 uppercase font-bold">
-                {documente.filter(d => 
-                  (d.emitent || '').toLowerCase().includes(search.toLowerCase()) || 
-                  (d.continut || '').toLowerCase().includes(search.toLowerCase())
-                ).map((doc) => (
-                  <tr
+        <div className="bg-white rounded-[2.5rem] shadow-xl border border-white overflow-hidden">
