@@ -10,7 +10,7 @@ export default function Registratura() {
   // --- SECȚIUNE AUTENTIFICARE ---
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
-  const CORECT_PASSWORD = 'liceuteius2026'; // Poți schimba parola aici
+  const CORECT_PASSWORD = 'liceuteius2026';
 
   // --- STĂRI APLICAȚIE ---
   const [showForm, setShowForm] = useState(false);
@@ -79,7 +79,6 @@ export default function Registratura() {
         setNumarGenerat(data[0].numar_inregistrare);
         await fetchDocumente();
         
-        // Închidere automată și resetare
         setTimeout(() => {
           setShowForm(false);
           setNumarGenerat(null);
@@ -89,7 +88,7 @@ export default function Registratura() {
       }
     } catch (err: any) {
       alert('Eroare la salvare: ' + err.message);
-      setLoading(false); // Deblochează butonul în caz de eroare
+      setLoading(false);
     }
   };
 
@@ -105,11 +104,8 @@ export default function Registratura() {
     }
   };
 
-const exportToCSV = () => {
-    // 1. Definim antetul
+  const exportToCSV = () => {
     const headers = ["Nr. Inregistrare", "Data", "Tip", "Emitent", "Continut"];
-    
-    // 2. Formatăm rândurile (folosim ghilimele pentru a evita erorile la virgulele din text)
     const rows = documente.map(doc => [
       `"${doc.numar_inregistrare}"`,
       `"${doc.creat_la}"`,
@@ -118,28 +114,12 @@ const exportToCSV = () => {
       `"${doc.continut}"`
     ]);
 
-    // 3. Creăm conținutul CSV folosind PUNCT ȘI VIRGULĂ (;) pentru Excel în RO
-    // Adăugăm \uFEFF la început pentru ca Excel să recunoască diacriticele (UTF-8)
-    const csvContent = "\uFEFF" + 
-      headers.join(";") + "\n" + 
-      rows.map(e => e.join(";")).join("\n");
-
+    const csvContent = "\uFEFF" + headers.join(";") + "\n" + rows.map(e => e.join(";")).join("\n");
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.setAttribute("href", url);
     link.setAttribute("download", `registru_liceu_teius_2026.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-    const csvContent = "\uFEFF" + headers.join(",") + "\n" + rows.map(e => e.join(",")).join("\n");
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `registru_2026.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -189,7 +169,6 @@ const exportToCSV = () => {
           <button onClick={() => setIsAuthenticated(false)} className="text-xs font-bold text-red-500 bg-red-50 px-4 py-2 rounded-full hover:bg-red-100">IEȘIRE</button>
         </header>
 
-        {/* Butoane Acțiuni */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
           <button onClick={() => { setTipDocument('intrare'); setShowForm(true); }} className="bg-white p-8 rounded-[2rem] border-2 border-transparent hover:border-emerald-500 shadow-sm text-left group transition-all">
             <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform"><Icons.Plus /></div>
@@ -208,7 +187,6 @@ const exportToCSV = () => {
           </button>
         </div>
 
-        {/* Tabel Documente */}
         <div className="bg-white rounded-[2rem] shadow-xl border border-slate-200 overflow-hidden">
           <div className="p-6 bg-slate-50/50 border-b flex flex-col md:flex-row justify-between items-center gap-4">
             <h2 className="font-bold text-slate-700 flex items-center gap-2 uppercase text-xs tracking-widest"><Icons.List size={16} /> Registru General</h2>
@@ -253,7 +231,6 @@ const exportToCSV = () => {
         </div>
       </div>
 
-      {/* Modal Formular */}
       {showForm && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-[2rem] p-10 w-full max-w-md shadow-2xl relative">
