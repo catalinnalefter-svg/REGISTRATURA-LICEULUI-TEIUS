@@ -48,34 +48,40 @@ export default function Registratura() {
     );
   });
 
-  // FUNCȚIA DE EXPORT EXCEL (CSV)
   const exportToCSV = () => {
     if (documente.length === 0) return;
-
-    // Capul de tabel
-    const headers = ["Nr. Inregistrare", "Data", "Tip", "Expeditor/Destinatar", "Continut"];
-    
-    // Transformăm datele în rânduri CSV
+    const headers = ["Nr. Inreg", "Data", "Tip", "Expeditor/Destinatar", "Continut"];
     const rows = documente.map(doc => [
       doc.nr_inregistrare,
       doc.data_inregistrare,
       doc.tip_document,
-      `"${doc.expeditor_destinatar?.replace(/"/g, '""')}"`, // Ghilimele pentru a evita erori la virgule
+      `"${doc.expeditor_destinatar?.replace(/"/g, '""')}"`,
       `"${doc.continut_pe_scurt?.replace(/"/g, '""')}"`
     ]);
-
-    // Combinăm totul cu separatorul punct și virgulă (specific Excel în RO)
     const csvContent = [headers, ...rows].map(e => e.join(";")).join("\n");
-    
-    // Creăm fișierul și îl descărcăm
     const blob = new Blob(["\ufeff" + csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.setAttribute("href", url);
-    link.setAttribute("download", `Registru_Liceu_Teius_2026.csv`);
+    link.setAttribute("download", `Registru_2026.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const handleDelete = async (id: any, nr: any) => {
+    if (confirm(`Ești sigur că vrei să ștergi înregistrarea #${nr}?`)) {
+      const { error } = await supabase
+        .from('documente')
+        .delete()
+        .eq('id', id);
+      
+      if (error) {
+        alert("Eroare la ștergere: " + error.message);
+      } else {
+        await fetchDocumente();
+      }
+    }
   };
 
   const handleSave = async () => {
@@ -83,7 +89,6 @@ export default function Registratura() {
       alert("Completati toate campurile!");
       return;
     }
-
     setLoading(true);
     try {
       const { data, error } = await supabase
@@ -96,9 +101,7 @@ export default function Registratura() {
           anul: 2026
         }])
         .select();
-
       if (error) throw error;
-
       if (data && data[0]) {
         setNumarGenerat(data[0].nr_inregistrare);
         await fetchDocumente();
@@ -151,23 +154,12 @@ export default function Registratura() {
             </h2>
             
             <div className="flex items-center gap-2 w-full md:w-auto">
-              {/* BUTON EXPORT */}
-              <button 
-                onClick={exportToCSV}
-                className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-xl text-sm font-bold hover:bg-emerald-100 transition-all"
-              >
+              <button onClick={exportToCSV} className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-xl text-sm font-bold hover:bg-emerald-100 transition-all">
                 <Icons.Download size={16} /> Export Excel
               </button>
-
               <div className="relative flex-1 md:w-64">
                 <Icons.Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                <input 
-                  type="text" 
-                  placeholder="Caută în registru..." 
-                  className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 ring-indigo-500 transition-all"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
+                <input type="text" placeholder="Caută..." className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 ring-indigo-500 transition-all" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
               </div>
             </div>
           </div>
@@ -181,25 +173,27 @@ export default function Registratura() {
                   <th className="px-6 py-4">Tip</th>
                   <th className="px-6 py-4">Expeditor / Destinatar</th>
                   <th className="px-6 py-4">Continut</th>
+                  <th className="px-6 py-4 text-center">Actiuni</th>
                 </tr>
               </thead>
               <tbody className="text-sm divide-y divide-slate-100">
                 {documenteFiltrate.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="px-6 py-20 text-center text-slate-400 italic">
-                      {searchTerm ? "Nicio potrivire găsită." : "Nu există date înregistrate."}
-                    </td>
-                  </tr>
+                  <tr><td colSpan={6} className="px-6 py-20 text-center text-slate-400 italic">Nu există date.</td></tr>
                 ) : (
                   documenteFiltrate.map((doc) => (
-                    <tr key={doc.nr_inregistrare} className="hover:bg-slate-50 transition-colors">
+                    <tr key={doc.id} className="hover:bg-slate-50 transition-colors">
                       <td className="px-6 py-4 font-bold text-indigo-600">#{doc.nr_inregistrare}</td>
                       <td className="px-6 py-4">{new Date(doc.data_inregistrare).toLocaleDateString('ro-RO')}</td>
-                      <td className="px-6 py-4 uppercase text-[10px] font-bold tracking-tighter">
+                      <td className="px-6 py-4 uppercase text-[10px] font-bold">
                         <span className={doc.tip_document === 'intrare' ? 'text-emerald-600' : 'text-blue-600'}>{doc.tip_document}</span>
                       </td>
                       <td className="px-6 py-4 font-bold uppercase">{doc.expeditor_destinatar}</td>
                       <td className="px-6 py-4 text-slate-500 italic">{doc.continut_pe_scurt}</td>
+                      <td className="px-6 py-4 text-center">
+                        <button onClick={() => handleDelete(doc.id, doc.nr_inregistrare)} className="text-slate-300 hover:text-red-500 transition-colors p-2">
+                          <Icons.Trash2 size={18} />
+                        </button>
+                      </td>
                     </tr>
                   ))
                 )}
@@ -211,26 +205,25 @@ export default function Registratura() {
 
       {showForm && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-[2rem] p-10 w-full max-w-md shadow-2xl relative border border-white">
+          <div className="bg-white rounded-[2rem] p-10 w-full max-w-md shadow-2xl relative">
             {!numarGenerat && (
               <button onClick={() => setShowForm(false)} className="absolute top-8 right-8 text-slate-300 hover:text-slate-600"><Icons.X size={24} /></button>
             )}
-
             {numarGenerat ? (
-              <div className="text-center py-10 animate-in zoom-in duration-300">
+              <div className="text-center py-10">
                 <Icons.CheckCircle size={64} className="text-emerald-500 mx-auto mb-6" />
                 <h2 className="text-2xl font-bold">Salvat!</h2>
-                <div className="text-6xl font-black text-indigo-600 mt-4 tracking-tighter italic">#{numarGenerat}</div>
+                <div className="text-6xl font-black text-indigo-600 mt-4">#{numarGenerat}</div>
               </div>
             ) : (
               <div className="space-y-6">
-                <h2 className="text-xl font-bold uppercase tracking-tighter">Nou {tipDocument}</h2>
+                <h2 className="text-xl font-bold uppercase">Nou {tipDocument}</h2>
                 <div className="space-y-4">
-                  <input type="date" value={formData.data} onChange={(e) => setFormData({...formData, data: e.target.value})} className="w-full bg-slate-50 border p-4 rounded-xl outline-none focus:ring-2 ring-indigo-500 font-bold" />
-                  <input type="text" placeholder="Expeditor / Destinatar" value={formData.expeditor} onChange={(e) => setFormData({...formData, expeditor: e.target.value})} className="w-full bg-slate-50 border p-4 rounded-xl outline-none focus:ring-2 ring-indigo-500" />
-                  <textarea placeholder="Continut pe scurt" value={formData.continut} onChange={(e) => setFormData({...formData, continut: e.target.value})} className="w-full bg-slate-50 border p-4 rounded-xl outline-none focus:ring-2 ring-indigo-500" rows={3} />
+                  <input type="date" value={formData.data} onChange={(e) => setFormData({...formData, data: e.target.value})} className="w-full bg-slate-50 border p-4 rounded-xl outline-none" />
+                  <input type="text" placeholder="Expeditor / Destinatar" value={formData.expeditor} onChange={(e) => setFormData({...formData, expeditor: e.target.value})} className="w-full bg-slate-50 border p-4 rounded-xl outline-none" />
+                  <textarea placeholder="Continut pe scurt" value={formData.continut} onChange={(e) => setFormData({...formData, continut: e.target.value})} className="w-full bg-slate-50 border p-4 rounded-xl outline-none" rows={3} />
                 </div>
-                <button onClick={handleSave} disabled={loading} className="w-full bg-slate-900 text-white font-bold py-4 rounded-2xl shadow-lg active:scale-95 transition-all">
+                <button onClick={handleSave} disabled={loading} className="w-full bg-slate-900 text-white font-bold py-4 rounded-2xl">
                   {loading ? 'Se salvează...' : 'Finalizează'}
                 </button>
               </div>
