@@ -25,7 +25,7 @@ export default function Registratura() {
       const { data, error } = await supabase
         .from('documente')
         .select('*')
-        .order('nr_inregistrare', { ascending: false });
+        .order('creat_la', { ascending: false });
       
       if (!error && data) {
         setDocumente(data);
@@ -42,20 +42,20 @@ export default function Registratura() {
   const documenteFiltrate = documente.filter((doc) => {
     const term = searchTerm.toLowerCase();
     return (
-      doc.expeditor_destinatar?.toLowerCase().includes(term) ||
+      doc.emitent?.toLowerCase().includes(term) ||
       doc.continut_pe_scurt?.toLowerCase().includes(term) ||
-      doc.nr_inregistrare?.toString().includes(term)
+      doc.numar_inregistrare?.toString().includes(term)
     );
   });
 
   const exportToCSV = () => {
     if (documente.length === 0) return;
-    const headers = ["Nr. Inreg", "Data", "Tip", "Expeditor/Destinatar", "Continut"];
+    const headers = ["Nr. Inreg", "Data", "Tip", "Emitent", "Continut"];
     const rows = documente.map(doc => [
-      doc.nr_inregistrare,
-      doc.data_inregistrare,
+      doc.numar_inregistrare,
+      doc.creat_la,
       doc.tip_document,
-      `"${doc.expeditor_destinatar?.replace(/"/g, '""')}"`,
+      `"${doc.emitent?.replace(/"/g, '""')}"`,
       `"${doc.continut_pe_scurt?.replace(/"/g, '""')}"`
     ]);
     const csvContent = [headers, ...rows].map(e => e.join(";")).join("\n");
@@ -69,18 +69,18 @@ export default function Registratura() {
     document.body.removeChild(link);
   };
 
- const handleDelete = async (nr: any) => {
-    // Verificăm dacă nr există pentru a evita eroarea "undefined"
-    if (!nr) {
-      alert("Eroare: Acest document nu are un număr de înregistrare valid pentru a fi șters.");
+  // FUNCTIE DE STERGERE CORECTATA (folosind ID-ul de tip UUID din poza ta)
+  const handleDelete = async (id: string, nr: any) => {
+    if (!id) {
+      alert("Eroare: Acest document nu are un ID valid.");
       return;
     }
 
-    if (confirm(`Ești sigur că vrei să ștergi înregistrarea #${nr}?`)) {
+    if (confirm(`Ești sigur că vrei să ștergi înregistrarea #${nr || 'fără număr'}?`)) {
       const { error } = await supabase
         .from('documente')
         .delete()
-        .eq('numar_inregistrare', nr); // Folosim coloana exactă din poza ta
+        .eq('id', id); // Folosim coloana 'id' care este cheia primara in poza ta
       
       if (error) {
         alert("Eroare la ștergere: " + error.message);
@@ -101,21 +101,20 @@ export default function Registratura() {
         .from('documente')
         .insert([{ 
           tip_document: tipDocument, 
-          expeditor_destinatar: formData.expeditor, 
+          emitent: formData.expeditor, 
           continut_pe_scurt: formData.continut,
-          data_inregistrare: formData.data,
           anul: 2026
         }])
         .select();
       if (error) throw error;
       if (data && data[0]) {
-        setNumarGenerat(data[0].nr_inregistrare);
+        setNumarGenerat(data[0].numar_inregistrare);
         await fetchDocumente();
         setTimeout(() => {
           setShowForm(false);
           setNumarGenerat(null);
           setFormData({ data: new Date().toISOString().split('T')[0], expeditor: '', continut: '' });
-        }, 1500);
+        }, 2000);
       }
     } catch (err: any) {
       alert('Eroare la salvare: ' + err.message);
@@ -132,22 +131,22 @@ export default function Registratura() {
             <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center font-bold text-white text-xl shadow-lg">LT</div>
             <h1 className="text-xl font-bold tracking-tight text-slate-800">Registratura Liceului Teiuș</h1>
           </div>
-          <div className="text-xs font-bold text-slate-400 bg-slate-100 px-4 py-2 rounded-full uppercase tracking-widest">An 2026</div>
+          <div className="text-xs font-bold text-slate-400 bg-slate-100 px-4 py-2 rounded-full tracking-widest">AN 2026</div>
         </header>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-          <button onClick={() => { setTipDocument('intrare'); setShowForm(true); }} className="bg-white p-8 rounded-[2rem] border-2 border-transparent hover:border-emerald-500 shadow-sm transition-all text-left group">
-            <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform"><Icons.Plus size={24} /></div>
+          <button onClick={() => { setTipDocument('intrare'); setShowForm(true); }} className="bg-white p-8 rounded-[2rem] border-2 border-transparent hover:border-emerald-500 shadow-sm transition-all text-left">
+            <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center mb-4"><Icons.Plus size={24} /></div>
             <h3 className="font-bold text-lg">Intrare</h3>
             <p className="text-sm text-slate-400">Documente primite</p>
           </button>
-          <button onClick={() => { setTipDocument('iesire'); setShowForm(true); }} className="bg-white p-8 rounded-[2rem] border-2 border-transparent hover:border-blue-500 shadow-sm transition-all text-left group">
-            <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform"><Icons.Plus size={24} /></div>
+          <button onClick={() => { setTipDocument('iesire'); setShowForm(true); }} className="bg-white p-8 rounded-[2rem] border-2 border-transparent hover:border-blue-500 shadow-sm transition-all text-left">
+            <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mb-4"><Icons.Plus size={24} /></div>
             <h3 className="font-bold text-lg">Ieșire</h3>
             <p className="text-sm text-slate-400">Documente trimise</p>
           </button>
-          <button onClick={() => { setTipDocument('rezervat'); setShowForm(true); }} className="bg-white p-8 rounded-[2rem] border-2 border-transparent hover:border-orange-500 shadow-sm transition-all text-left group">
-            <div className="w-12 h-12 bg-orange-100 text-orange-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform"><Icons.Hash size={24} /></div>
+          <button onClick={() => { setTipDocument('rezervat'); setShowForm(true); }} className="bg-white p-8 rounded-[2rem] border-2 border-transparent hover:border-orange-500 shadow-sm transition-all text-left">
+            <div className="w-12 h-12 bg-orange-100 text-orange-600 rounded-xl flex items-center justify-center mb-4"><Icons.Hash size={24} /></div>
             <h3 className="font-bold text-lg">Rezervă</h3>
             <p className="text-sm text-slate-400">Blochează numere</p>
           </button>
@@ -158,14 +157,13 @@ export default function Registratura() {
             <h2 className="font-bold text-slate-800 flex items-center gap-2 uppercase text-sm tracking-wider">
               <Icons.List className="text-indigo-600" size={18} /> Registru General
             </h2>
-            
             <div className="flex items-center gap-2 w-full md:w-auto">
-              <button onClick={exportToCSV} className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-xl text-sm font-bold hover:bg-emerald-100 transition-all">
+              <button onClick={exportToCSV} className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-xl text-sm font-bold hover:bg-emerald-100">
                 <Icons.Download size={16} /> Export Excel
               </button>
               <div className="relative flex-1 md:w-64">
                 <Icons.Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                <input type="text" placeholder="Caută..." className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 ring-indigo-500 transition-all" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+                <input type="text" placeholder="Caută..." className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-sm outline-none" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
               </div>
             </div>
           </div>
@@ -179,7 +177,7 @@ export default function Registratura() {
                   <th className="px-6 py-4">Tip</th>
                   <th className="px-6 py-4">Expeditor / Destinatar</th>
                   <th className="px-6 py-4">Continut</th>
-                  <th className="px-6 py-4 text-center">Actiuni</th>
+                  <th className="px-6 py-4 text-center">Acțiuni</th>
                 </tr>
               </thead>
               <tbody className="text-sm divide-y divide-slate-100">
@@ -188,15 +186,17 @@ export default function Registratura() {
                 ) : (
                   documenteFiltrate.map((doc) => (
                     <tr key={doc.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="px-6 py-4 font-bold text-indigo-600">#{doc.nr_inregistrare}</td>
-                      <td className="px-6 py-4">{new Date(doc.data_inregistrare).toLocaleDateString('ro-RO')}</td>
+                      <td className="px-6 py-4 font-bold text-indigo-600">
+                        {doc.numar_inregistrare ? `#${doc.numar_inregistrare}` : '---'}
+                      </td>
+                      <td className="px-6 py-4">{new Date(doc.creat_la).toLocaleDateString('ro-RO')}</td>
                       <td className="px-6 py-4 uppercase text-[10px] font-bold">
                         <span className={doc.tip_document === 'intrare' ? 'text-emerald-600' : 'text-blue-600'}>{doc.tip_document}</span>
                       </td>
-                      <td className="px-6 py-4 font-bold uppercase">{doc.expeditor_destinatar}</td>
+                      <td className="px-6 py-4 font-bold uppercase">{doc.emitent || 'Nespecificat'}</td>
                       <td className="px-6 py-4 text-slate-500 italic">{doc.continut_pe_scurt}</td>
                       <td className="px-6 py-4 text-center">
-                        <button onClick={() => handleDelete(doc.id, doc.nr_inregistrare)} className="text-slate-300 hover:text-red-500 transition-colors p-2">
+                        <button onClick={() => handleDelete(doc.id, doc.numar_inregistrare)} className="text-slate-300 hover:text-red-500 transition-colors p-2">
                           <Icons.Trash2 size={18} />
                         </button>
                       </td>
@@ -219,17 +219,16 @@ export default function Registratura() {
               <div className="text-center py-10">
                 <Icons.CheckCircle size={64} className="text-emerald-500 mx-auto mb-6" />
                 <h2 className="text-2xl font-bold">Salvat!</h2>
-                <div className="text-6xl font-black text-indigo-600 mt-4">#{numarGenerat}</div>
+                <div className="text-6xl font-black text-indigo-600 mt-4 tracking-tighter italic">#{numarGenerat}</div>
               </div>
             ) : (
               <div className="space-y-6">
-                <h2 className="text-xl font-bold uppercase">Nou {tipDocument}</h2>
+                <h2 className="text-xl font-bold uppercase tracking-tighter">Nou {tipDocument}</h2>
                 <div className="space-y-4">
-                  <input type="date" value={formData.data} onChange={(e) => setFormData({...formData, data: e.target.value})} className="w-full bg-slate-50 border p-4 rounded-xl outline-none" />
-                  <input type="text" placeholder="Expeditor / Destinatar" value={formData.expeditor} onChange={(e) => setFormData({...formData, expeditor: e.target.value})} className="w-full bg-slate-50 border p-4 rounded-xl outline-none" />
-                  <textarea placeholder="Continut pe scurt" value={formData.continut} onChange={(e) => setFormData({...formData, continut: e.target.value})} className="w-full bg-slate-50 border p-4 rounded-xl outline-none" rows={3} />
+                  <input type="text" placeholder="Expeditor / Destinatar" value={formData.expeditor} onChange={(e) => setFormData({...formData, expeditor: e.target.value})} className="w-full bg-slate-50 border p-4 rounded-xl outline-none focus:ring-2 ring-indigo-500" />
+                  <textarea placeholder="Continut pe scurt" value={formData.continut} onChange={(e) => setFormData({...formData, continut: e.target.value})} className="w-full bg-slate-50 border p-4 rounded-xl outline-none focus:ring-2 ring-indigo-500" rows={3} />
                 </div>
-                <button onClick={handleSave} disabled={loading} className="w-full bg-slate-900 text-white font-bold py-4 rounded-2xl">
+                <button onClick={handleSave} disabled={loading} className="w-full bg-slate-900 text-white font-bold py-4 rounded-2xl shadow-lg active:scale-95 transition-all">
                   {loading ? 'Se salvează...' : 'Finalizează'}
                 </button>
               </div>
