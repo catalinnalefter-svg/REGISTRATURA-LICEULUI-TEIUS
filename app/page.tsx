@@ -7,6 +7,12 @@ import * as Icons from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 export default function Registratura() {
+  // --- SECȚIUNE AUTENTIFICARE ---
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [passwordInput, setPasswordInput] = useState('');
+  const CORECT_PASSWORD = 'liceuteius2026'; // Poți schimba parola aici
+
+  // --- STĂRI APLICAȚIE ---
   const [showForm, setShowForm] = useState(false);
   const [tipDocument, setTipDocument] = useState('');
   const [numarGenerat, setNumarGenerat] = useState<number | null>(null);
@@ -20,6 +26,7 @@ export default function Registratura() {
     continut: '',
   });
 
+  // --- LOGICĂ DATE ---
   const fetchDocumente = useCallback(async () => {
     try {
       const { data, error } = await supabase
@@ -32,7 +39,20 @@ export default function Registratura() {
     }
   }, []);
 
-  useEffect(() => { fetchDocumente(); }, [fetchDocumente]);
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchDocumente();
+    }
+  }, [isAuthenticated, fetchDocumente]);
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (passwordInput === CORECT_PASSWORD) {
+      setIsAuthenticated(true);
+    } else {
+      alert("Parolă incorectă!");
+    }
+  };
 
   const handleSave = async () => {
     if (!formData.expeditor || !formData.continut) {
@@ -59,22 +79,23 @@ export default function Registratura() {
         setNumarGenerat(data[0].numar_inregistrare);
         await fetchDocumente();
         
+        // Închidere automată și resetare
         setTimeout(() => {
           setShowForm(false);
           setNumarGenerat(null);
           setFormData({ data: new Date().toISOString().split('T')[0], expeditor: '', continut: '' });
-          setLoading(false); // Resetăm loading după succes
+          setLoading(false);
         }, 3000);
       }
     } catch (err: any) {
       alert('Eroare la salvare: ' + err.message);
-      setLoading(false); // Resetăm loading obligatoriu în caz de eroare
+      setLoading(false); // Deblochează butonul în caz de eroare
     }
   };
 
   const handleDelete = async (id: string, nr: any) => {
     if (!id || id === "undefined") {
-      alert("Eroare: Acest document nu are un identificator valid.");
+      alert("Eroare: Identificator invalid.");
       return;
     }
     if (confirm(`Ștergi definitiv înregistrarea #${nr || ''}?`)) {
@@ -99,7 +120,7 @@ export default function Registratura() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.setAttribute("href", url);
-    link.setAttribute("download", `registru_liceu_teius_2026.csv`);
+    link.setAttribute("download", `registru_2026.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -111,17 +132,45 @@ export default function Registratura() {
     (d.numar_inregistrare?.toString() || "").includes(searchTerm)
   );
 
+  // --- RENDER ECRAN LOGIN ---
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
+        <div className="bg-white p-8 rounded-[2rem] shadow-2xl w-full max-w-md text-center">
+          <div className="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center font-bold text-white text-2xl mx-auto mb-6">LT</div>
+          <h1 className="text-2xl font-bold text-slate-800 mb-2">Acces Registru</h1>
+          <p className="text-slate-400 text-sm mb-8">Liceul Teoretic Teiuș</p>
+          <form onSubmit={handleLogin} className="space-y-4">
+            <input 
+              type="password" 
+              placeholder="Parola de acces"
+              className="w-full p-4 bg-slate-50 border rounded-xl focus:ring-2 ring-indigo-500 outline-none font-bold text-center"
+              value={passwordInput}
+              onChange={(e) => setPasswordInput(e.target.value)}
+              autoFocus
+            />
+            <button type="submit" className="w-full bg-slate-900 text-white font-bold py-4 rounded-xl hover:bg-indigo-600 transition-all">
+              Conectare
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+  // --- RENDER INTERFAȚĂ PRINCIPALĂ ---
   return (
-    <div className="min-h-screen bg-slate-50 p-4 md:p-10 text-slate-900 font-sans">
+    <div className="min-h-screen bg-slate-50 p-4 md:p-10 text-slate-900">
       <div className="max-w-6xl mx-auto">
         <header className="flex items-center justify-between mb-10 bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center font-bold text-white text-xl">LT</div>
-            <h1 className="text-xl font-bold text-slate-800">Registratura Liceului Teiuș</h1>
+            <h1 className="text-xl font-bold text-slate-800">Registratură Teiuș</h1>
           </div>
-          <div className="text-xs font-bold text-slate-400 bg-slate-100 px-4 py-2 rounded-full">AN 2026</div>
+          <button onClick={() => setIsAuthenticated(false)} className="text-xs font-bold text-red-500 bg-red-50 px-4 py-2 rounded-full hover:bg-red-100">IEȘIRE</button>
         </header>
 
+        {/* Butoane Acțiuni */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
           <button onClick={() => { setTipDocument('intrare'); setShowForm(true); }} className="bg-white p-8 rounded-[2rem] border-2 border-transparent hover:border-emerald-500 shadow-sm text-left group transition-all">
             <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform"><Icons.Plus /></div>
@@ -136,20 +185,21 @@ export default function Registratura() {
           <button onClick={() => { setTipDocument('rezervat'); setShowForm(true); }} className="bg-white p-8 rounded-[2rem] border-2 border-transparent hover:border-orange-500 shadow-sm text-left group transition-all">
             <div className="w-12 h-12 bg-orange-100 text-orange-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform"><Icons.Hash /></div>
             <h3 className="font-bold text-lg">Rezervă</h3>
-            <p className="text-sm text-slate-400">Blochează numere</p>
+            <p className="text-sm text-slate-400">Blochează număr</p>
           </button>
         </div>
 
+        {/* Tabel Documente */}
         <div className="bg-white rounded-[2rem] shadow-xl border border-slate-200 overflow-hidden">
           <div className="p-6 bg-slate-50/50 border-b flex flex-col md:flex-row justify-between items-center gap-4">
             <h2 className="font-bold text-slate-700 flex items-center gap-2 uppercase text-xs tracking-widest"><Icons.List size={16} /> Registru General</h2>
             <div className="flex items-center gap-3 w-full md:w-auto">
               <button onClick={exportToCSV} className="flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-emerald-700 transition-all">
-                <Icons.Download size={14} /> EXPORT EXCEL
+                <Icons.Download size={14} /> EXPORT
               </button>
               <div className="relative flex-1 md:w-64">
                 <Icons.Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                <input type="text" placeholder="Caută..." className="w-full pl-10 pr-4 py-2 border rounded-xl text-sm focus:ring-2 ring-indigo-500" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+                <input type="text" placeholder="Caută..." className="w-full pl-10 pr-4 py-2 border rounded-xl text-sm focus:ring-2 ring-indigo-500 outline-none" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
               </div>
             </div>
           </div>
@@ -167,14 +217,14 @@ export default function Registratura() {
               </thead>
               <tbody className="text-sm divide-y">
                 {documenteFiltrate.map((doc) => (
-                  <tr key={doc.id} className="hover:bg-slate-50 transition-colors group">
-                    <td className="px-6 py-4 font-bold text-indigo-600">#{doc.numar_inregistrare || '---'}</td>
+                  <tr key={doc.id} className="hover:bg-slate-50 transition-colors">
+                    <td className="px-6 py-4 font-bold text-indigo-600">#{doc.numar_inregistrare}</td>
                     <td className="px-6 py-4">{doc.creat_la ? new Date(doc.creat_la).toLocaleDateString('ro-RO') : '---'}</td>
                     <td className={`px-6 py-4 uppercase text-[10px] font-bold ${doc.tip_document === 'intrare' ? 'text-emerald-600' : doc.tip_document === 'iesire' ? 'text-blue-600' : 'text-orange-600'}`}>{doc.tip_document}</td>
                     <td className="px-6 py-4 font-bold uppercase">{doc.emitent}</td>
                     <td className="px-6 py-4 text-slate-500">{doc.continut}</td>
                     <td className="px-6 py-4 text-center">
-                      <button onClick={() => handleDelete(doc.id, doc.numar_inregistrare)} className="text-slate-300 hover:text-red-500 p-2"><Icons.Trash2 size={18} /></button>
+                      <button onClick={() => handleDelete(doc.id, doc.numar_inregistrare)} className="text-slate-300 hover:text-red-500 p-2 transition-colors"><Icons.Trash2 size={18} /></button>
                     </td>
                   </tr>
                 ))}
@@ -184,6 +234,7 @@ export default function Registratura() {
         </div>
       </div>
 
+      {/* Modal Formular */}
       {showForm && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-[2rem] p-10 w-full max-w-md shadow-2xl relative">
@@ -192,21 +243,18 @@ export default function Registratura() {
                 <button onClick={() => setShowForm(false)} className="absolute top-8 right-8 text-slate-300 hover:text-slate-600"><Icons.X size={24} /></button>
                 <h2 className="text-xl font-bold uppercase text-indigo-900">Nou {tipDocument}</h2>
                 <div className="space-y-4">
-                  <div>
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Data Înregistrării</label>
-                    <input type="date" value={formData.data} onChange={(e) => setFormData({...formData, data: e.target.value})} className="w-full bg-slate-50 border p-4 rounded-xl font-bold focus:ring-2 ring-indigo-500" />
-                  </div>
-                  <input type="text" placeholder="Expeditor / Destinatar" value={formData.expeditor} onChange={(e) => setFormData({...formData, expeditor: e.target.value})} className="w-full bg-slate-50 border p-4 rounded-xl focus:ring-2 ring-indigo-500" />
-                  <textarea placeholder="Conținut pe scurt" value={formData.continut} onChange={(e) => setFormData({...formData, continut: e.target.value})} className="w-full bg-slate-50 border p-4 rounded-xl focus:ring-2 ring-indigo-500" rows={3} />
+                  <input type="date" value={formData.data} onChange={(e) => setFormData({...formData, data: e.target.value})} className="w-full bg-slate-50 border p-4 rounded-xl font-bold focus:ring-2 ring-indigo-500 outline-none" />
+                  <input type="text" placeholder="Expeditor / Destinatar" value={formData.expeditor} onChange={(e) => setFormData({...formData, expeditor: e.target.value})} className="w-full bg-slate-50 border p-4 rounded-xl focus:ring-2 ring-indigo-500 outline-none" />
+                  <textarea placeholder="Conținut pe scurt" value={formData.continut} onChange={(e) => setFormData({...formData, continut: e.target.value})} className="w-full bg-slate-50 border p-4 rounded-xl focus:ring-2 ring-indigo-500 outline-none" rows={3} />
                 </div>
                 <button onClick={handleSave} disabled={loading} className="w-full bg-slate-900 text-white font-bold py-4 rounded-2xl hover:bg-indigo-600 transition-all disabled:bg-slate-400">
-                  {loading ? 'Se salvează...' : 'Finalizează Înregistrarea'}
+                  {loading ? 'Se salvează...' : 'Finalizează'}
                 </button>
               </div>
             ) : (
               <div className="text-center py-10 animate-in zoom-in duration-300">
                 <Icons.CheckCircle size={64} className="text-emerald-500 mx-auto mb-6" />
-                <h2 className="text-2xl font-bold">Înregistrat cu succes!</h2>
+                <h2 className="text-2xl font-bold">Succes!</h2>
                 <div className="text-7xl font-black text-indigo-600 mt-4 italic">#{numarGenerat}</div>
               </div>
             )}
