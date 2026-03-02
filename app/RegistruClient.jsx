@@ -1,12 +1,13 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { FileSpreadsheet, Plus, Search, X, Check, Edit3 } from 'lucide-react'; 
+import { FileSpreadsheet, Plus, Search, X, Check, Edit3, UserCircle } from 'lucide-react'; 
 import { supabase } from '../lib/supabase';
 
 export function RegistruClient() {
   const [isAuth, setIsAuth] = useState(false);
   const [pass, setPass] = useState('');
+  const [currentUser, setCurrentUser] = useState(''); 
   const [documente, setDocumente] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -84,7 +85,8 @@ export function RegistruClient() {
         destinatar: form.destinatar.toUpperCase(),
         nr_conex: form.nr_conex || null,
         indicativ_dosar: form.indicativ.toUpperCase(),
-        anul: 2026
+        anul: 2026,
+        creat_de: currentUser
       };
 
       if (editingId) {
@@ -118,10 +120,10 @@ export function RegistruClient() {
   };
 
   const exportToExcelCompatibil = () => {
-    const headers = ["Nr. Inreg", "Data", "Tip", "Emitent", "Continut", "Compartiment", "Destinatar", "Data Expediere", "Nr. Conex", "Indicativ"];
+    const headers = ["Nr. Inreg", "Data", "Tip", "Emitent", "Continut", "Compartiment", "Destinatar", "Data Expediere", "Nr. Conex", "Indicativ", "Completat De"];
     const rows = documente.map(d => [
       d.numar_inregistrare, formatRoDate(d.creat_la), d.tip_document, d.emitent, 
-      `"${d.continut?.replace(/"/g, '""')}"`, d.compartiment, d.destinatar, formatRoDate(d.data_expediere), d.nr_conex, d.indicativ_dosar
+      `"${d.continut?.replace(/"/g, '""')}"`, d.compartiment, d.destinatar, formatRoDate(d.data_expediere), d.nr_conex, d.indicativ_dosar, d.creat_de
     ]);
     const csvContent = "\uFEFF" + headers.join(";") + "\n" + rows.map(e => e.join(";")).join("\n");
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -134,10 +136,29 @@ export function RegistruClient() {
   if (!isAuth) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 text-slate-900">
-        <form onSubmit={(e) => { e.preventDefault(); if(pass === 'liceulteius2026') setIsAuth(true); else alert('Parolă incorectă!'); }} className="bg-white p-12 rounded-[3rem] shadow-2xl text-center w-full max-w-md border border-slate-100">
+        <form onSubmit={(e) => { 
+            e.preventDefault(); 
+            if(pass === 'liceulteius2026' && currentUser !== '') setIsAuth(true); 
+            else if (currentUser === '') alert('Vă rugăm selectați cine sunteți!');
+            else alert('Parolă incorectă!'); 
+          }} className="bg-white p-12 rounded-[3rem] shadow-2xl text-center w-full max-w-md border border-slate-100">
           <img src="/liceul teoretic teius.png" className="w-24 h-24 mx-auto mb-4" alt="Logo" />
           <h2 className="text-2xl font-black uppercase tracking-tighter">ACCES REGISTRU</h2>
-          <input type="password" placeholder="Parola" className="w-full p-4 bg-slate-100 rounded-2xl mt-6 outline-none text-center font-bold text-lg focus:ring-2 ring-blue-500" value={pass} onChange={(e) => setPass(e.target.value)} />
+          
+          <select 
+            className="w-full p-4 bg-slate-100 rounded-2xl mt-6 outline-none text-center font-bold text-lg focus:ring-2 ring-blue-500 appearance-none border-2 border-transparent focus:border-blue-200 cursor-pointer"
+            value={currentUser}
+            onChange={(e) => setCurrentUser(e.target.value)}
+          >
+            <option value="">SELECTAȚI UTILIZATORUL</option>
+            <option value="SECRETARIAT">SECRETARIAT</option>
+            <option value="CONTABILITATE">CONTABILITATE</option>
+            <option value="ADMINISTRATIV">ADMINISTRATIV</option>
+            <option value="DIRECTOR">DIRECTOR</option>
+            <option value="ACHIZIȚII">ACHIZIȚII</option>
+          </select>
+
+          <input type="password" placeholder="Parola" className="w-full p-4 bg-slate-100 rounded-2xl mt-4 outline-none text-center font-bold text-lg focus:ring-2 ring-blue-500" value={pass} onChange={(e) => setPass(e.target.value)} />
           <button className="w-full bg-blue-600 text-white p-4 rounded-2xl mt-4 font-black uppercase hover:bg-blue-700 transition-all shadow-lg">Intră</button>
         </form>
       </div>
@@ -150,9 +171,14 @@ export function RegistruClient() {
         <header className="bg-white p-6 rounded-[2.5rem] shadow-sm flex justify-between items-center mb-8 px-10 border border-white">
           <div className="flex items-center gap-4">
             <img src="/liceul teoretic teius.png" className="w-14 h-14" alt="Logo" />
-            <h1 className="text-xl font-black uppercase tracking-tighter">
-              REGISTRATURA <span className="text-blue-600">LICEULUI TEORETIC TEIUȘ</span>
-            </h1>
+            <div className="flex flex-col text-left">
+                <h1 className="text-xl font-black uppercase tracking-tighter">
+                REGISTRATURA <span className="text-blue-600">LICEULUI TEORETIC TEIUȘ</span>
+                </h1>
+                <span className="flex items-center gap-1 text-[10px] font-black text-slate-500 uppercase">
+                    <UserCircle size={14} className="text-blue-500"/> UTILIZATOR ACTIV: {currentUser}
+                </span>
+            </div>
           </div>
           <div className="flex gap-4">
              <button onClick={exportToExcelCompatibil} className="bg-emerald-500 text-white px-6 py-3 rounded-2xl font-black text-[10px] uppercase flex items-center gap-2 hover:bg-emerald-600 transition-all shadow-lg"><FileSpreadsheet size={16}/> Export Excel</button>
@@ -187,7 +213,7 @@ export function RegistruClient() {
                   <th className="px-8 py-4 w-48">Emitent</th>
                   <th className="px-8 py-4 w-64">Conținut</th>
                   <th className="px-8 py-4 w-40 text-center">Compartiment</th>
-                  <th className="px-8 py-4 w-48">Destinatar</th>
+                  <th className="px-8 py-4 w-48 text-center">Creat De</th>
                   <th className="px-8 py-4 w-32 text-center">Data Exped.</th>
                   <th className="px-8 py-4 w-32 text-center">Conex/Ind.</th>
                   <th className="px-8 py-4 w-28 text-right">Editare</th>
@@ -206,7 +232,7 @@ export function RegistruClient() {
                     <td className="px-8 py-3 truncate">{doc.emitent}</td>
                     <td className="px-8 py-3 text-slate-600 normal-case italic truncate">{doc.continut}</td>
                     <td className="px-8 py-3 text-center"><span className="bg-slate-100 px-3 py-1 rounded-lg">{doc.compartiment || '-'}</span></td>
-                    <td className="px-8 py-3 truncate">{doc.destinatar || '-'}</td>
+                    <td className="px-8 py-3 text-center text-slate-400 text-[10px] font-black">{doc.creat_de || 'SISTEM'}</td>
                     <td className="px-8 py-3 text-center text-slate-500">{formatRoDate(doc.data_expediere)}</td>
                     <td className="px-8 py-3 text-center text-blue-700 font-black">{doc.nr_conex || '-'}/{doc.indicativ_dosar || '-'}</td>
                     <td className="px-8 py-3 text-right">
@@ -226,7 +252,7 @@ export function RegistruClient() {
             {!numarGenerat ? (
               <div className="space-y-6">
                 <div className="flex justify-between items-center border-b border-slate-200 pb-6">
-                  <div>
+                  <div className="text-left">
                     <h2 className="text-3xl font-black uppercase text-slate-900 tracking-tighter">DATE REGISTRU</h2>
                     <div className="flex gap-2 mt-3">
                        {['intrare', 'iesire', 'rezervat'].map(t => (
@@ -253,7 +279,7 @@ export function RegistruClient() {
                     </label>
 
                     <label className="block text-xs font-black uppercase text-slate-500 tracking-wider">Conținut / Descriere
-                      <textarea placeholder="DETALII DESPRE DOCUMENT..." value={form.continut} onChange={(e) => setForm({...form, continut: e.target.value})} className="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl font-bold text-lg h-40 mt-2 outline-none focus:ring-4 ring-blue-500/20 focus:border-blue-500 text-slate-900 resize-none leading-relaxed" />
+                      <textarea placeholder="DETALII DESPRE DOCUMENT..." value={form.continut} onChange={(e) => setForm({...form, continents: e.target.value})} className="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl font-bold text-lg h-40 mt-2 outline-none focus:ring-4 ring-blue-500/20 focus:border-blue-500 text-slate-900 resize-none leading-relaxed" />
                     </label>
                   </div>
 
