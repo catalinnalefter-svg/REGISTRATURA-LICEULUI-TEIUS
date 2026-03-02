@@ -279,7 +279,7 @@ export function RegistruClient() {
                     </label>
 
                     <label className="block text-xs font-black uppercase text-slate-500 tracking-wider">Conținut / Descriere
-                      <textarea placeholder="DETALII DESPRE DOCUMENT..." value={form.continut} onChange={(e) => setForm({...form, continents: e.target.value})} className="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl font-bold text-lg h-40 mt-2 outline-none focus:ring-4 ring-blue-500/20 focus:border-blue-500 text-slate-900 resize-none leading-relaxed" />
+                      <textarea placeholder="DETALII DESPRE DOCUMENT..." value={form.continut} onChange={(e) => setForm({...form, continut: e.target.value})} className="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl font-bold text-lg h-40 mt-2 outline-none focus:ring-4 ring-blue-500/20 focus:border-blue-500 text-slate-900 resize-none leading-relaxed" />
                     </label>
                   </div>
 
