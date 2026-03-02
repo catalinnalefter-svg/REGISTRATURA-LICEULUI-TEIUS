@@ -119,7 +119,7 @@ export function RegistruClient() {
   if (!isAuth) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
-        <form onSubmit={(e) => { e.preventDefault(); if(pass === 'liceuteius2026') setIsAuth(true); else alert('Parolă incorectă!'); }} className="bg-white p-12 rounded-[3rem] shadow-2xl text-center w-full max-w-md">
+        <form onSubmit={(e) => { e.preventDefault(); if(pass === 'liceulteius2026') setIsAuth(true); else alert('Parolă incorectă!'); }} className="bg-white p-12 rounded-[3rem] shadow-2xl text-center w-full max-w-md">
           <img src="/liceul teoretic teius.png" className="w-24 h-24 mx-auto mb-4" alt="Logo" />
           <h2 className="text-2xl font-black uppercase tracking-tighter">ACCES REGISTRU</h2>
           <input type="password" placeholder="Parola" className="w-full p-4 bg-slate-100 rounded-2xl mt-6 outline-none text-center font-bold focus:ring-2 ring-blue-500" value={pass} onChange={(e) => setPass(e.target.value)} />
