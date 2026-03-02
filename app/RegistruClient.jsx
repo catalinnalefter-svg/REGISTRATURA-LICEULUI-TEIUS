@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { FileSpreadsheet, Plus, Search, X, Check, Trash2, Edit3 } from 'lucide-react';
+import { FileSpreadsheet, Plus, Search, X, Check, Edit3 } from 'lucide-react'; // Am eliminat Trash2
 import { supabase } from '../lib/supabase';
 
 export function RegistruClient() {
@@ -36,7 +36,6 @@ export function RegistruClient() {
 
   useEffect(() => { if (isAuth) fetchDocs(); }, [isAuth, fetchDocs]);
 
-  // Funcție pentru formatarea datei în format European (ZZ-LL-AAAA)
   const formatRoDate = (dateStr) => {
     if (!dateStr) return '-';
     try {
@@ -66,6 +65,16 @@ export function RegistruClient() {
     setLoading(true);
     
     try {
+      // LOGICĂ START DE LA 200
+      let noulNumarInregistrare;
+      
+      if (!editingId) {
+        // Dacă e document nou, calculăm numărul
+        const ultimulDoc = documente[0]; // documente sunt deja sortate descendent în fetchDocs
+        const ultimulNumar = ultimulDoc ? ultimulDoc.numar_inregistrare : 199;
+        noulNumarInregistrare = Math.max(ultimulNumar + 1, 200);
+      }
+
       const payload = {
         tip_document: tip,
         emitent: form.emitent.toUpperCase(),
@@ -76,7 +85,7 @@ export function RegistruClient() {
         destinatar: form.destinatar.toUpperCase(),
         nr_conex: form.nr_conex || null,
         indicativ_dosar: form.indicativ.toUpperCase(),
-        anul: 2026
+        anul: new Date(form.data).getFullYear() // Dinamic în funcție de data aleasă
       };
 
       if (editingId) {
@@ -84,7 +93,12 @@ export function RegistruClient() {
         if (error) throw error;
         setEditingId(null);
       } else {
-        const { data, error } = await supabase.from('documente').insert([payload]).select();
+        // Adăugăm numărul calculat manual în payload pentru inserare
+        const { data, error } = await supabase.from('documente').insert([{
+          ...payload,
+          numar_inregistrare: noulNumarInregistrare
+        }]).select();
+        
         if (error) throw error;
         if (data && data[0]) setNumarGenerat(data[0].numar_inregistrare);
       }
@@ -195,7 +209,7 @@ export function RegistruClient() {
                     <td className="px-8 py-3 text-right">
                       <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button onClick={() => handleEdit(doc)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl"><Edit3 size={16} /></button>
-                        <button onClick={async () => { if(confirm('Ștergeți definitiv?')) { await supabase.from('documente').delete().eq('id', doc.id); fetchDocs(); }}} className="p-2 text-red-500 hover:bg-red-50 rounded-xl"><Trash2 size={16} /></button>
+                        {/* BUTONUL DE ȘTERGERE A FOST ELIMINAT */}
                       </div>
                     </td>
                   </tr>
