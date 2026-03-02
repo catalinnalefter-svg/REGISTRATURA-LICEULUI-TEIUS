@@ -71,7 +71,6 @@ export function RegistruClient() {
     if (!form.emitent || !form.continut) return alert('Emitentul și Conținutul sunt obligatorii!');
     setLoading(true);
     
-    // Obținem data de azi în format YYYY-MM-DD
     const today = new Date().toISOString().split('T')[0];
 
     try {
@@ -81,7 +80,6 @@ export function RegistruClient() {
         continut: form.continut,
         creat_la: form.data,
         compartiment: form.compartiment.toUpperCase(),
-        // LOGICA NOUĂ: Dacă data_expediere e goală, pune data de azi (today)
         data_expediere: form.data_expediere || today,
         destinatar: form.destinatar.toUpperCase(),
         nr_conex: form.nr_conex || null,
@@ -152,7 +150,9 @@ export function RegistruClient() {
         <header className="bg-white p-6 rounded-[2.5rem] shadow-sm flex justify-between items-center mb-8 px-10 border border-white">
           <div className="flex items-center gap-4">
             <img src="/liceul teoretic teius.png" className="w-14 h-14" alt="Logo" />
-            <h1 className="text-xl font-black uppercase tracking-tighter">REGISTRATURA <span className="text-blue-600">LICEULUI TEIUȘ</span></h1>
+            <h1 className="text-xl font-black uppercase tracking-tighter">
+              REGISTRATURA <span className="text-blue-600">LICEULUI TEORETIC TEIUȘ</span>
+            </h1>
           </div>
           <div className="flex gap-4">
              <button onClick={exportToExcelCompatibil} className="bg-emerald-500 text-white px-6 py-3 rounded-2xl font-black text-[10px] uppercase flex items-center gap-2 hover:bg-emerald-600 transition-all shadow-lg"><FileSpreadsheet size={16}/> Export Excel</button>
