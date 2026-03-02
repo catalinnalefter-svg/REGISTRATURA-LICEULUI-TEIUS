@@ -71,6 +71,9 @@ export function RegistruClient() {
     if (!form.emitent || !form.continut) return alert('Emitentul și Conținutul sunt obligatorii!');
     setLoading(true);
     
+    // Obținem data de azi în format YYYY-MM-DD
+    const today = new Date().toISOString().split('T')[0];
+
     try {
       const payload = {
         tip_document: tip,
@@ -78,7 +81,8 @@ export function RegistruClient() {
         continut: form.continut,
         creat_la: form.data,
         compartiment: form.compartiment.toUpperCase(),
-        data_expediere: form.data_expediere || null,
+        // LOGICA NOUĂ: Dacă data_expediere e goală, pune data de azi (today)
+        data_expediere: form.data_expediere || today,
         destinatar: form.destinatar.toUpperCase(),
         nr_conex: form.nr_conex || null,
         indicativ_dosar: form.indicativ.toUpperCase(),
