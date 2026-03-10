@@ -20,16 +20,28 @@ export default function RegistruTeius() {
 
   const [form, setForm] = useState({
     data: new Date().toISOString().split('T')[0],
-    emitent: '', continut: '', destinatar: '', 
-    data_expediere: '', conex: '', indicativ_dosar: '', 
-    compartiment: '', observatii: ''
+    emitent: '', 
+    continut: '', 
+    destinatar: '', 
+    data_expediere: '', 
+    conex: '', 
+    indicativ_dosar: '', 
+    compartiment: '', // Variabila corectă
+    observatii: ''
   });
 
   const fetchData = useCallback(async () => {
-    let table = activeTab === 'general' ? 'documente' : (activeTab === 'decizii' ? 'registrul_deciziilor' : 'registrul_registrelor');
-    const { data: result, error } = await supabase.from(table).select('*').order('created_at', { ascending: false });
-    if (!error) setData(result || []);
-  }, [activeTab]);
+    setLoading(true);
+    const { data: result, error } = await supabase
+      .from('documente')
+      .select('*')
+      .order('numar_inregistrare', { ascending: false });
+    
+    if (!error) {
+      setData(result || []);
+    }
+    setLoading(false);
+  }, []);
 
   useEffect(() => { if (isAuth) fetchData(); }, [isAuth, fetchData]);
 
@@ -39,58 +51,36 @@ export default function RegistruTeius() {
     else alert("Parolă incorectă!");
   };
 
-  // FUNCȚIA DE EXPORT ACTUALIZATĂ PENTRU FIECARE REGISTRU
-  const exportToCSV = () => {
-    let headers = [];
-    let rows = [];
-    
-    if (activeTab === 'general') {
-      headers = ['Tip', 'Nr. Inreg', 'Data Inreg', 'Emitent', 'Continut', 'Compartiment', 'Creat De', 'Destinatar', 'Data Exped', 'Conex/Ind'];
-      rows = data.map(i => [i.tip, i.numar_inregistrare, i.creat_la, i.emitent, i.continut, i.compartiment, i.creat_de, i.destinatar, i.data_expediere, `${i.conex_ind || ''}/${i.indicativ_dosar || ''}`]);
-    } else {
-      // Pentru celelalte registre
-      headers = ['Nr', 'Data', 'Continut', 'Observatii', 'Creat De'];
-      rows = data.map(i => [i.numar_inregistrare || i.numar_manual, i.creat_la || i.data_emitere, i.continut, i.observatii, i.creat_de]);
-    }
-
-    const csvContent = "\uFEFF" + [headers, ...rows].map(e => e.map(cell => `"${(cell || '').toString().replace(/"/g, '""')}"`).join(",")).join("\n");
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `Export_${activeTab.toUpperCase()}_${new Date().toLocaleDateString()}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
   const handleSave = async () => {
     setLoading(true);
-    let table = activeTab === 'general' ? 'documente' : (activeTab === 'decizii' ? 'registrul_deciziilor' : 'registrul_registrelor');
-    let payload = { 
-        continut: form.continut.toUpperCase(), 
-        creat_de: currentUser 
+    const payload = {
+      tip: formType,
+      creat_la: form.data,
+      emitent: (form.emitent || '').toUpperCase(),
+      continut: (form.continut || '').toUpperCase(),
+      destinatar: (form.destinatar || '').toUpperCase(),
+      compartiment: (form.compartiment || '').toUpperCase(),
+      creat_de: currentUser,
+      data_expediere: form.data_expediere || null,
+      conex_ind: form.conex,
+      indicativ_dosar: form.indicativ_dosar
     };
 
-    if (activeTab === 'general') {
-        Object.assign(payload, {
-            tip: formType,
-            creat_la: form.data,
-            emitent: form.emitent.toUpperCase(),
-            destinatar: form.destinatar.toUpperCase(),
-            compartiment: form.compartiment.toUpperCase(),
-            indicativ_dosar: form.indicativ_dosar,
-            conex_ind: form.conex,
-            data_expediere: form.data_expediere || null
-        });
-    }
-
     const { error } = editingId 
-        ? await supabase.from(table).update(payload).eq('id', editingId) 
-        : await supabase.from(table).insert([payload]);
+        ? await supabase.from('documente').update(payload).eq('id', editingId) 
+        : await supabase.from('documente').insert([payload]);
 
-    if (error) alert("Eroare: " + error.message);
-    else { setShowForm(false); setEditingId(null); fetchData(); }
+    if (error) {
+      alert("Eroare: " + error.message);
+    } else {
+      setShowForm(false);
+      setEditingId(null);
+      setForm({
+        data: new Date().toISOString().split('T')[0],
+        emitent: '', continut: '', destinatar: '', data_expediere: '', conex: '', indicativ_dosar: '', compartiment: '', observatii: ''
+      });
+      fetchData();
+    }
     setLoading(false);
   };
 
@@ -100,7 +90,11 @@ export default function RegistruTeius() {
         <div className="bg-white p-10 rounded-[2.5rem] shadow-2xl w-full max-w-md text-center border-t-8 border-blue-600">
           <h2 className="text-2xl font-black text-slate-800 mb-2 uppercase tracking-tight">Acces Registre</h2>
           <p className="text-blue-600 font-bold mb-8 text-sm uppercase">Liceul Teoretic Teiuș</p>
-          <select className="w-full p-4 bg-slate-50 rounded-2xl mb-4 font-bold border-2 border-slate-100 outline-none focus:border-blue-500" value={currentUser} onChange={e => setCurrentUser(e.target.value)}>
+          <select 
+            className="w-full p-4 bg-slate-50 rounded-2xl mb-4 font-bold border-2 border-slate-100 outline-none focus:border-blue-500" 
+            value={currentUser} 
+            onChange={e => setCurrentUser(e.target.value)}
+          >
             <option value="">Alege compartimentul...</option>
             {listaCompartimente.map(dep => <option key={dep} value={dep}>{dep}</option>)}
           </select>
@@ -128,20 +122,14 @@ export default function RegistruTeius() {
             </div>
           </div>
           <div className="flex gap-3">
-             {/* BUTON EXPORT EXCEL ACTIV PENTRU FIECARE TAB */}
-             <button onClick={exportToCSV} className="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3 rounded-2xl font-black text-xs uppercase flex items-center gap-2 transition-all shadow-md shadow-emerald-100">
-                <Download size={18}/> Export Excel
-             </button>
              <button onClick={() => window.location.reload()} className="bg-slate-100 text-slate-400 p-3 rounded-2xl hover:bg-red-50 hover:text-red-500 transition-all"><LogOut size={20}/></button>
           </div>
         </header>
 
         <div className="flex gap-4 mb-8">
-            {['general', 'decizii', 'registre'].map(tab => (
-              <button key={tab} onClick={() => setActiveTab(tab)} className={`flex-1 p-4 rounded-[1.5rem] font-black uppercase text-xs transition-all border-b-4 ${activeTab === tab ? 'bg-white border-blue-600 text-blue-600 shadow-md' : 'bg-slate-100 border-transparent text-slate-400'}`}>
-                {tab === 'general' ? 'Registru General' : tab === 'decizii' ? 'Decizii / Note' : 'Registru Registre'}
-              </button>
-            ))}
+            <button onClick={() => setActiveTab('general')} className={`flex-1 p-4 rounded-[1.5rem] font-black uppercase text-xs transition-all border-b-4 ${activeTab === 'general' ? 'bg-white border-blue-600 text-blue-600 shadow-md' : 'bg-slate-100 border-transparent text-slate-400'}`}>Registru General</button>
+            <button className="flex-1 p-4 rounded-[1.5rem] font-black uppercase text-xs bg-slate-100 text-slate-400 opacity-50 cursor-not-allowed">Decizii / Note</button>
+            <button className="flex-1 p-4 rounded-[1.5rem] font-black uppercase text-xs bg-slate-100 text-slate-400 opacity-50 cursor-not-allowed">Registru Registre</button>
         </div>
 
         {activeTab === 'general' && (
@@ -184,7 +172,6 @@ export default function RegistruTeius() {
                 {data.filter(i => (i.continut || '').toLowerCase().includes(search.toLowerCase())).map(item => (
                   <tr key={item.id} className="hover:bg-blue-50/30 transition-colors">
                     <td className="px-4 py-4">
-                      {/* CASETĂ COLORATĂ PENTRU TIP - CONFORM SOLICITĂRII */}
                       <span className={`px-3 py-1.5 rounded-xl text-[9px] font-black text-white uppercase tracking-wider ${item.tip==='INTRARE'?'bg-emerald-500':item.tip==='IESIRE'?'bg-blue-500':'bg-orange-500'}`}>
                         {item.tip}
                       </span>
@@ -209,7 +196,6 @@ export default function RegistruTeius() {
         </div>
       </div>
 
-      {/* MODALUL TĂU PERFECT - NESCHIMBAT VIZUAL */}
       {showForm && activeTab === 'general' && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-50 p-6 text-slate-900">
           <div className="bg-white rounded-[3rem] p-10 w-full max-w-5xl shadow-2xl relative border-[12px] border-slate-50">
@@ -245,10 +231,10 @@ export default function RegistruTeius() {
                   <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">Compartiment</label>
                   <div className="flex gap-2 mb-3">
                      {['SECRETARIAT', 'CONTABILITATE', 'APP', 'ALTELE'].map(c => (
-                       <button key={c} onClick={() => setForm({...form, compartment: c})} className="px-4 py-2 bg-orange-50 text-orange-700 rounded-xl text-[9px] font-black hover:bg-orange-600 hover:text-white border border-orange-100 uppercase">{c}</button>
+                       <button key={c} onClick={() => setForm({...form, compartiment: c})} className="px-4 py-2 bg-orange-50 text-orange-700 rounded-xl text-[9px] font-black hover:bg-orange-600 hover:text-white border border-orange-100 uppercase">{c}</button>
                      ))}
                   </div>
-                  <input type="text" placeholder="SCRIE COMPARTIMENT..." value={form.compartiment} onChange={e => setForm({...form, compartment: e.target.value})} className="w-full p-5 bg-slate-50 rounded-2xl font-black border-2 border-slate-100 outline-none focus:border-blue-500 uppercase" />
+                  <input type="text" placeholder="SCRIE COMPARTIMENT..." value={form.compartiment} onChange={e => setForm({...form, compartiment: e.target.value})} className="w-full p-5 bg-slate-50 rounded-2xl font-black border-2 border-slate-100 outline-none focus:border-blue-500 uppercase" />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                    <input type="date" value={form.data_expediere} onChange={e => setForm({...form, data_expediere: e.target.value})} className="w-full p-5 bg-slate-50 rounded-2xl border-2 border-slate-100 font-black outline-none" />
