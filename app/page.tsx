@@ -1,7 +1,9 @@
-import { RegistruClient } from './RegistruClient';
-
-export const dynamic = 'force-dynamic';
+import RegistruClient from './RegistruClient';
 
 export default function Page() {
-  return <RegistruClient />;
+  return (
+    <main>
+      <RegistruClient />
+    </main>
+  );
 }
