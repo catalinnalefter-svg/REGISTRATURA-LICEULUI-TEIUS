@@ -56,51 +56,28 @@ export default function RegistruClient() {
     setShowForm(true);
   };
 
-  const exportToExcel = () => {
-    const fileName = `Registru_${activeTab}_2026.xls`;
-    let headers = ["Tip", "Nr. Înregistrare", "Data Inreg.", "Emitent", "Conținut", "Compartiment", "Creat De", "Destinatar", "Data Exped.", "Conex/Ind."];
-    let excelContent = `<?xml version="1.0"?><?mso-application progid="Excel.Sheet"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet" xmlns:html="http://www.w3.org/TR/REC-html40"><Worksheet ss:Name="Registru"><Table>`;
-    excelContent += `<Row>${headers.map(h => `<Cell><Data ss:Type="String">${h}</Data></Cell>`).join('')}</Row>`;
-    data.forEach(i => {
-      excelContent += `<Row>
-        <Cell><Data ss:Type="String">${i.tip || i.tip_document || ''}</Data></Cell>
-        <Cell><Data ss:Type="String">${i.numar_inregistrare || i.numar_manual || ''}</Data></Cell>
-        <Cell><Data ss:Type="String">${i.creat_la || i.data_emitere || i.data_inceput || ''}</Data></Cell>
-        <Cell><Data ss:Type="String">${i.emitent || ''}</Data></Cell>
-        <Cell><Data ss:Type="String">${i.continut || ''}</Data></Cell>
-        <Cell><Data ss:Type="String">${i.compartiment || ''}</Data></Cell>
-        <Cell><Data ss:Type="String">${i.creat_de || ''}</Data></Cell>
-        <Cell><Data ss:Type="String">${i.destinatar || ''}</Data></Cell>
-        <Cell><Data ss:Type="String">${i.data_expedire || ''}</Data></Cell>
-        <Cell><Data ss:Type="String">${i.conex_ind || ''}</Data></Cell>
-      </Row>`;
-    });
-    excelContent += `</Table></Worksheet></Workbook>`;
-    const blob = new Blob([excelContent], { type: 'application/vnd.ms-excel' });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = fileName;
-    link.click();
-  };
-
   const handleSave = async () => {
     if (!form.continut) return alert('Introduceți conținutul!');
     setLoading(true);
     try {
       let table = activeTab === 'general' ? 'documente' : (activeTab === 'decizii' ? 'registrul_deciziilor' : 'registrul_registrelor');
       let payload = { continut: form.continut, creat_de: currentUser, anul: 2026 };
+
       if (activeTab === 'general') {
-        payload = { ...payload, tip: formType, creat_la: form.data, emitent: form.emitent.toUpperCase(), destinatar: form.destinatar.toUpperCase(), data_expedire: form.data_exped || null, conex_ind: form.conex, indicativ_dosar: form.indicativ_dosar, compartiment: form.compartiment };
+        payload = { ...payload, tip: formType, creat_la: form.data, emitent: (form.emitent || '').toUpperCase(), destinatar: (form.destinatar || '').toUpperCase(), data_expedire: form.data_exped || null, conex_ind: form.conex, indicativ_dosar: form.indicativ_dosar, compartiment: form.compartiment };
       } else if (activeTab === 'decizii') {
         payload = { ...payload, tip_document: form.tip_document_spec, data_emitere: form.data, observatii: form.observatii };
       } else {
         payload = { ...payload, numar_manual: form.numar_manual, data_inceput: form.data, data_sfarsit: form.data_final || null, observatii: form.observatii };
       }
+
       const { data: saved, error } = editingId 
         ? await supabase.from(table).update(payload).eq('id', editingId).select()
         : await supabase.from(table).insert([payload]).select();
+
       if (error) throw error;
       if (!editingId && saved) setLastRegNumber(activeTab === 'registre' ? saved[0].numar_manual : saved[0].numar_inregistrare);
+      
       fetchData();
       setShowForm(false);
     } catch (err) { alert(err.message); }
@@ -134,82 +111,98 @@ export default function RegistruClient() {
         {/* HEADER */}
         <header className="bg-white rounded-[2.5rem] p-6 mb-8 flex flex-col md:flex-row justify-between items-center shadow-sm border border-white">
           <div className="flex items-center gap-4">
-            <img src="/liceul_teius_logo.png" className="w-14 h-14 object-contain" alt="Logo" />
+            <img src="/liceul_teius_logo.png" className="w-16 h-16 object-contain" alt="LOGO LICEU" />
             <div>
               <h1 className="text-xl font-black text-[#1e3a8a] uppercase leading-none">REGISTRATURA <span className="text-blue-600">LICEULUI TEORETIC TEIUȘ</span></h1>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Creat de ing. Lefter C. | UTILIZATOR ACTIV: <span className="text-blue-600 font-black">{currentUser}</span></p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Creat de ing. Lefter C. | UTILIZATOR: <span className="text-blue-600 font-black">{currentUser}</span></p>
             </div>
           </div>
           <nav className="flex gap-2 bg-slate-50 p-1.5 rounded-2xl">
             {['general', 'decizii', 'registre'].map(tab => (
-              <button key={tab} onClick={() => setActiveTab(tab)} className={`px-8 py-2.5 rounded-xl font-black text-[10px] uppercase transition-all ${activeTab === tab ? 'bg-blue-600 text-white shadow-md' : 'text-slate-400'}`}>
-                {tab === 'decizii' ? 'DECIZII / NOTE' : `REGISTRU ${tab}`}
+              <button key={tab} onClick={() => setActiveTab(tab)} className={`px-8 py-2.5 rounded-xl font-black text-[10px] uppercase transition-all ${activeTab === tab ? 'bg-blue-600 text-white shadow-md' : 'text-slate-400 hover:bg-white'}`}>
+                {tab === 'decizii' ? 'DECIZII / NOTE' : tab === 'registre' ? 'REGISTRU REGISTRE' : 'REGISTRU GENERAL'}
               </button>
             ))}
           </nav>
-          <div className="flex gap-2">
-            <button onClick={exportToExcel} className="bg-[#10b981] text-white px-6 py-3 rounded-2xl font-black text-[10px] uppercase flex items-center gap-2 shadow-sm"><Download size={16}/> Export Excel</button>
-            <button onClick={() => window.location.reload()} className="bg-slate-50 text-slate-400 px-6 py-3 rounded-2xl font-black text-[10px] uppercase hover:text-red-500">Ieșire</button>
-          </div>
+          <button onClick={() => window.location.reload()} className="bg-slate-50 text-slate-400 px-6 py-3 rounded-2xl font-black text-[10px] uppercase hover:text-red-500">Ieșire</button>
         </header>
 
         {/* ACTIONS */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
           {activeTab === 'general' ? (
             ['INTRARE', 'IESIRE', 'REZERVAT'].map(t => (
-              <div key={t} onClick={() => handleOpenNew(t)} className="bg-white p-10 rounded-[3rem] shadow-sm border border-white hover:shadow-md cursor-pointer">
+              <div key={t} onClick={() => handleOpenNew(t)} className="bg-white p-10 rounded-[3rem] shadow-sm border border-white hover:shadow-md cursor-pointer group">
                 <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white mb-6 ${t === 'INTRARE' ? 'bg-[#10b981]' : t === 'IESIRE' ? 'bg-[#3b82f6]' : 'bg-[#f97316]'}`}><Plus size={28}/></div>
                 <h2 className="text-4xl font-black uppercase text-[#0f172a]">{t}</h2>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">CREARE ÎNREGISTRARE</p>
               </div>
             ))
           ) : (
             <div onClick={() => handleOpenNew()} className="bg-white p-10 rounded-[3rem] shadow-sm border border-white hover:shadow-md cursor-pointer group col-span-3 flex items-center gap-8">
               <div className="bg-blue-600 w-16 h-16 rounded-[2rem] flex items-center justify-center text-white shadow-xl"><Plus size={36}/></div>
-              <h2 className="text-4xl font-black uppercase text-[#0f172a]">ADĂUGARE ÎN {activeTab === 'decizii' ? 'DECIZII / NOTE' : 'REGISTRUL REGISTRELOR'}</h2>
+              <h2 className="text-4xl font-black uppercase text-[#0f172a]">ADĂUGARE ÎN {activeTab === 'decizii' ? 'DECIZII / NOTE' : 'REGISTRU REGISTRE'}</h2>
             </div>
           )}
         </div>
 
-        {/* TABLE */}
+        {/* TABEL DINAMIC */}
         <div className="bg-white rounded-[3rem] shadow-sm border border-white overflow-hidden">
           <div className="p-8 border-b border-slate-50 flex items-center gap-4">
              <Search className="text-slate-300" size={22}/>
-             <input type="text" placeholder="Caută după nr, emitent sau conținut..." className="w-full outline-none font-bold text-slate-600" value={search} onChange={e => setSearch(e.target.value)} />
+             <input type="text" placeholder="Căutare rapidă..." className="w-full outline-none font-bold text-slate-600" value={search} onChange={e => setSearch(e.target.value)} />
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead className="bg-slate-50/50 text-[10px] font-black uppercase text-slate-400 tracking-widest border-b border-slate-50">
-                <tr>
-                  <th className="px-6 py-6">Tip</th>
-                  <th className="px-6 py-6">Nr. Înregistrare</th>
-                  <th className="px-6 py-6">Data Inreg.</th>
-                  <th className="px-6 py-6">Emitent</th>
-                  <th className="px-6 py-6">Conținut</th>
-                  <th className="px-6 py-6">Compartiment</th>
-                  <th className="px-6 py-6">Creat De</th>
-                  <th className="px-6 py-6">Destinatar</th>
-                  <th className="px-6 py-6">Data Exped.</th>
-                  <th className="px-6 py-6">Conex/Ind.</th>
-                  <th className="px-6 py-6 text-center">Editare</th>
-                </tr>
+                {activeTab === 'general' ? (
+                  <tr>
+                    <th className="px-6 py-6">Tip</th><th className="px-6 py-6">Nr. Înregistrare</th><th className="px-6 py-6">Data Inreg.</th><th className="px-6 py-6">Emitent</th><th className="px-6 py-6">Conținut</th><th className="px-6 py-6">Compartiment</th><th className="px-6 py-6">Creat De</th><th className="px-6 py-6">Destinatar</th><th className="px-6 py-6">Data Exped.</th><th className="px-6 py-6">Conex/Ind.</th><th className="px-6 py-6 text-center">Editare</th>
+                  </tr>
+                ) : activeTab === 'decizii' ? (
+                  <tr>
+                    <th className="px-6 py-6">Tip</th><th className="px-6 py-6">Nr. Document</th><th className="px-6 py-6">Data</th><th className="px-6 py-6">Conținut</th><th className="px-6 py-6">Observații</th><th className="px-6 py-6 text-center">Editare</th>
+                  </tr>
+                ) : (
+                  <tr>
+                    <th className="px-6 py-6">Nr. Registru</th><th className="px-6 py-6">Data Început</th><th className="px-6 py-6">Conținut</th><th className="px-6 py-6">Data Terminare</th><th className="px-6 py-6">Observații</th><th className="px-6 py-6 text-center">Editare</th>
+                  </tr>
+                )}
               </thead>
               <tbody className="text-[11px] font-bold text-slate-700">
                 {data.filter(i => (i.continut || '').toLowerCase().includes(search.toLowerCase())).map((item) => (
-                  <tr key={item.id} className="border-b border-slate-50 hover:bg-slate-50/40">
-                    <td className="px-6 py-6">
-                      <span className={`px-4 py-1.5 rounded-lg text-[9px] font-black text-white ${item.tip === 'INTRARE' ? 'bg-[#10b981]' : item.tip === 'IESIRE' ? 'bg-[#3b82f6]' : 'bg-[#f97316]'}`}>{item.tip || 'DOC'}</span>
+                  <tr key={item.id} className="border-b border-slate-50 hover:bg-slate-50/40 transition-colors">
+                    {activeTab === 'general' ? (
+                      <>
+                        <td className="px-6 py-6"><span className={`px-4 py-1.5 rounded-lg text-[9px] font-black text-white ${item.tip === 'INTRARE' ? 'bg-[#10b981]' : item.tip === 'IESIRE' ? 'bg-[#3b82f6]' : 'bg-[#f97316]'}`}>{item.tip}</span></td>
+                        <td className="px-6 py-6 text-blue-600 font-black">#{item.numar_inregistrare}</td>
+                        <td className="px-6 py-6 text-slate-500">{item.creat_la}</td>
+                        <td className="px-6 py-6 uppercase">{item.emitent}</td>
+                        <td className="px-6 py-6 italic truncate max-w-[200px]">{item.continut}</td>
+                        <td className="px-6 py-6 uppercase">{item.compartiment}</td>
+                        <td className="px-6 py-6 text-slate-400">{item.creat_de}</td>
+                        <td className="px-6 py-6 uppercase">{item.destinatar}</td>
+                        <td className="px-6 py-6 text-slate-400">{item.data_expedire || '-'}</td>
+                        <td className="px-6 py-6">{item.conex_ind || '-'}</td>
+                      </>
+                    ) : activeTab === 'decizii' ? (
+                      <>
+                        <td className="px-6 py-6 uppercase">{item.tip_document}</td>
+                        <td className="px-6 py-6 text-blue-600 font-black">#{item.numar_inregistrare}</td>
+                        <td className="px-6 py-6 text-slate-500">{item.data_emitere}</td>
+                        <td className="px-6 py-6 italic">{item.continut}</td>
+                        <td className="px-6 py-6 text-slate-400">{item.observatii}</td>
+                      </>
+                    ) : (
+                      <>
+                        <td className="px-6 py-6 text-blue-600 font-black">{item.numar_manual}</td>
+                        <td className="px-6 py-6 text-slate-500">{item.data_inceput}</td>
+                        <td className="px-6 py-6 italic">{item.continut}</td>
+                        <td className="px-6 py-6 text-slate-500">{item.data_sfarsit || 'În curs'}</td>
+                        <td className="px-6 py-6 text-slate-400">{item.observatii}</td>
+                      </>
+                    )}
+                    <td className="px-6 py-6 text-center">
+                      <button onClick={() => { setEditingId(item.id); setForm(item); setShowForm(true); }} className="text-slate-200 hover:text-blue-500"><Edit2 size={18}/></button>
                     </td>
-                    <td className="px-6 py-6 text-blue-600 font-black">#{item.numar_inregistrare || item.numar_manual}</td>
-                    <td className="px-6 py-6 text-slate-500">{item.creat_la || item.data_emitere || item.data_inceput}</td>
-                    <td className="px-6 py-6 uppercase">{item.emitent || '-'}</td>
-                    <td className="px-6 py-6 italic truncate max-w-[200px]">{item.continut}</td>
-                    <td className="px-6 py-6 uppercase font-black">{item.compartiment || '-'}</td>
-                    <td className="px-6 py-6 text-slate-400">{item.creat_de}</td>
-                    <td className="px-6 py-6 uppercase">{item.destinatar || '-'}</td>
-                    <td className="px-6 py-6 text-slate-400">{item.data_expedire || '-'}</td>
-                    <td className="px-6 py-6">{item.conex_ind || item.indicativ_dosar || '-'}</td>
-                    <td className="px-6 py-6 text-center"><button onClick={() => { setEditingId(item.id); setForm(item); setShowForm(true); }} className="text-slate-200 hover:text-blue-500"><Edit2 size={18}/></button></td>
                   </tr>
                 ))}
               </tbody>
@@ -223,79 +216,90 @@ export default function RegistruClient() {
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-[4rem] p-12 w-full max-w-[1000px] shadow-2xl relative max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-start mb-10">
-              <div>
-                <h2 className="text-4xl font-black text-[#1e293b] uppercase tracking-tighter">DATE REGISTRU</h2>
-                {activeTab === 'general' && (
-                    <div className="flex gap-2 mt-4">
-                        {['INTRARE', 'IESIRE', 'REZERVAT'].map(t => (
-                            <button key={t} onClick={() => setFormType(t)} className={`px-8 py-2.5 rounded-2xl font-black text-[10px] uppercase ${formType === t ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-400'}`}>{t}</button>
-                        ))}
-                    </div>
-                )}
-              </div>
+              <h2 className="text-4xl font-black text-[#1e293b] uppercase tracking-tighter">
+                {activeTab === 'general' ? 'DATE REGISTRU GENERAL' : activeTab === 'decizii' ? 'DATE DECIZII / NOTE' : 'DATE REGISTRU NOU'}
+              </h2>
               <button onClick={() => setShowForm(false)} className="bg-[#f1f5f9] p-5 rounded-[2rem] text-slate-400 hover:text-red-500"><X size={36}/></button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+              {/* STÂNGA */}
               <div className="space-y-6">
-                <div>
-                  <label className="text-[11px] font-black uppercase text-[#1e293b] mb-2 block ml-4 tracking-widest">DATA DOCUMENT (Z-L-A)</label>
-                  <input type="date" value={form.data} onChange={e => setForm({...form, data: e.target.value})} className="w-full p-6 bg-[#f8fafc] rounded-[2rem] font-black text-xl outline-none" />
-                </div>
-                <div>
-                  <label className="text-[11px] font-black uppercase text-[#1e293b] mb-2 block ml-4 tracking-widest">EMITENT</label>
-                  <div className="flex gap-2 mb-3">
-                    {['DIN OFICIU', 'ISJ ALBA', 'MINISTERUL EDUCAȚIEI'].map(e => (
-                      <button key={e} onClick={() => setForm({...form, emitent: e})} className="px-4 py-2 bg-blue-50 text-blue-600 rounded-xl font-black text-[9px] uppercase">{e}</button>
-                    ))}
+                {activeTab === 'decizii' && (
+                  <div>
+                    <label className="text-[11px] font-black uppercase text-slate-400 mb-2 block ml-4">Tip Document</label>
+                    <div className="flex gap-2">
+                      {['DECIZIE', 'NOTA DE SERVICIU'].map(t => (
+                        <button key={t} onClick={() => setForm({...form, tip_document_spec: t})} className={`px-6 py-3 rounded-2xl font-black text-[10px] ${form.tip_document_spec === t ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-400'}`}>{t}</button>
+                      ))}
+                    </div>
                   </div>
-                  <input type="text" placeholder="SCRIE EMITENTUL..." className="w-full p-6 bg-[#f8fafc] rounded-[2rem] font-black text-xl outline-none uppercase" value={form.emitent} onChange={e => setForm({...form, emitent: e.target.value})} />
-                </div>
+                )}
+                {activeTab === 'registre' && (
+                  <div>
+                    <label className="text-[11px] font-black uppercase text-slate-400 mb-2 block ml-4">Nr. Registru (Manual)</label>
+                    <input type="text" value={form.numar_manual} onChange={e => setForm({...form, numar_manual: e.target.value})} className="w-full p-5 bg-[#f8fafc] rounded-2xl font-black text-xl outline-none" placeholder="Ex: 12/2026" />
+                  </div>
+                )}
                 <div>
-                  <label className="text-[11px] font-black uppercase text-[#1e293b] mb-2 block ml-4 tracking-widest">CONȚINUT / DESCRIERE</label>
-                  <textarea placeholder="DETALII DESPRE DOCUMENT..." className="w-full p-7 bg-[#f8fafc] rounded-[3rem] font-black text-xl outline-none h-48 resize-none" value={form.continut} onChange={e => setForm({...form,宣伝: e.target.value})} />
+                  <label className="text-[11px] font-black uppercase text-slate-400 mb-2 block ml-4">Data</label>
+                  <input type="date" value={form.data} onChange={e => setForm({...form, data: e.target.value})} className="w-full p-5 bg-[#f8fafc] rounded-2xl font-black text-xl outline-none" />
+                </div>
+                {activeTab === 'registre' && (
+                  <div>
+                    <label className="text-[11px] font-black uppercase text-slate-400 mb-2 block ml-4">Data Terminare</label>
+                    <input type="date" value={form.data_final} onChange={e => setForm({...form, data_final: e.target.value})} className="w-full p-5 bg-[#f8fafc] rounded-2xl font-black text-xl outline-none" />
+                  </div>
+                )}
+                <div>
+                  <label className="text-[11px] font-black uppercase text-slate-400 mb-2 block ml-4">Conținut</label>
+                  <textarea value={form.continut} onChange={e => setForm({...form, continut: e.target.value})} className="w-full p-5 bg-[#f8fafc] rounded-2xl font-black text-xl outline-none h-40 resize-none" placeholder="Descrie documentul..." />
                 </div>
               </div>
 
+              {/* DREAPTA (DOAR PT GENERAL) */}
               <div className="space-y-6">
-                <div>
-                  <label className="text-[11px] font-black uppercase text-[#1e293b] mb-2 block ml-4 tracking-widest">COMPARTIMENT</label>
-                  <div className="flex gap-2 mb-3 flex-wrap">
-                    {['SECRETARIAT', 'CONTABILITATE', 'APP', 'ALTELE'].map(c => (
-                      <button key={c} onClick={() => setForm({...form, compartiment: c})} className={`px-4 py-2 rounded-xl font-black text-[9px] uppercase ${form.compartiment === c ? 'bg-orange-500 text-white' : 'bg-orange-50 text-orange-600'}`}>{c}</button>
-                    ))}
+                {activeTab === 'general' ? (
+                  <>
+                    <div>
+                      <label className="text-[11px] font-black uppercase text-slate-400 mb-2 block ml-4">Compartiment</label>
+                      <div className="flex gap-2 mb-3 flex-wrap">
+                        {['SECRETARIAT', 'CONTABILITATE', 'APP', 'ALTELE'].map(c => (
+                          <button key={c} onClick={() => setForm({...form, compartiment: c})} className={`px-4 py-2 rounded-xl font-black text-[9px] ${form.compartiment === c ? 'bg-orange-500 text-white' : 'bg-orange-50 text-orange-600'}`}>{c}</button>
+                        ))}
+                      </div>
+                      <input type="text" value={form.compartiment} onChange={e => setForm({...form, compartiment: e.target.value})} className="w-full p-5 bg-[#f8fafc] rounded-2xl font-black outline-none uppercase" />
+                    </div>
+                    <input type="text" placeholder="EMITENT" className="w-full p-5 bg-[#f8fafc] rounded-2xl font-black outline-none uppercase" value={form.emitent} onChange={e => setForm({...form, emitent: e.target.value})} />
+                    <input type="text" placeholder="DESTINATAR" className="w-full p-5 bg-[#f8fafc] rounded-2xl font-black outline-none uppercase" value={form.destinatar} onChange={e => setForm({...form, destinatar: e.target.value})} />
+                    <div className="grid grid-cols-2 gap-4">
+                      <input type="text" placeholder="CONEX" className="p-5 bg-[#f8fafc] rounded-2xl font-black outline-none" value={form.conex} onChange={e => setForm({...form, conex: e.target.value})} />
+                      <input type="text" placeholder="DOSAR" className="p-5 bg-[#f8fafc] rounded-2xl font-black outline-none" value={form.indicativ_dosar} onChange={e => setForm({...form, indicativ_dosar: e.target.value})} />
+                    </div>
+                  </>
+                ) : (
+                  <div>
+                    <label className="text-[11px] font-black uppercase text-slate-400 mb-2 block ml-4">Observații</label>
+                    <textarea value={form.observatii} onChange={e => setForm({...form, observatii: e.target.value})} className="w-full p-5 bg-[#f8fafc] rounded-2xl font-black text-xl outline-none h-64 resize-none" placeholder="Mențiuni suplimentare..." />
                   </div>
-                  <input type="text" placeholder="SCRIE COMPARTIMENT..." className="w-full p-6 bg-[#f8fafc] rounded-[2rem] font-black text-xl outline-none uppercase" value={form.compartiment} onChange={e => setForm({...form, compartiment: e.target.value})} />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <input type="date" value={form.data_exped} onChange={e => setForm({...form, data_exped: e.target.value})} className="w-full p-5 bg-[#f8fafc] rounded-2xl font-black outline-none" />
-                  <input type="text" placeholder="DESTINATAR" className="w-full p-5 bg-[#f8fafc] rounded-2xl font-black outline-none uppercase" value={form.destinatar} onChange={e => setForm({...form, destinatar: e.target.value})} />
-                </div>
-                <div className="bg-[#eff6ff] p-8 rounded-[3.5rem]">
-                  <h3 className="text-[#3b82f6] font-black uppercase text-[10px] text-center mb-6">LEGĂTURI DOCUMENT (CONEX/DOSAR)</h3>
-                  <div className="grid grid-cols-2 gap-6">
-                    <input type="text" placeholder="NR. CONEX" className="w-full p-5 bg-white rounded-3xl font-black outline-none" value={form.conex} onChange={e => setForm({...form, conex: e.target.value})} />
-                    <input type="text" placeholder="INDICATIV DOSAR" className="w-full p-5 bg-white rounded-3xl font-black outline-none" value={form.indicativ_dosar} onChange={e => setForm({...form, indicativ_dosar: e.target.value})} />
-                  </div>
-                </div>
+                )}
               </div>
             </div>
 
-            <button onClick={handleSave} disabled={loading} className="w-full mt-10 bg-[#3b82f6] text-white p-10 rounded-[2.5rem] font-black text-3xl uppercase shadow-2xl transition-all">
-              {loading ? 'SE SALVEAZĂ...' : 'SALVEAZĂ ÎN REGISTRU'}
+            <button onClick={handleSave} disabled={loading} className="w-full mt-10 bg-[#3b82f6] text-white p-10 rounded-[2.5rem] font-black text-3xl uppercase shadow-2xl">
+              {loading ? 'SE SALVEAZĂ...' : 'SALVEAZĂ'}
             </button>
           </div>
         </div>
       )}
 
-      {/* MODAL SUCCESS */}
+      {/* FIȘĂ NUMĂR SUCCES */}
       {lastRegNumber && (
         <div className="fixed inset-0 bg-blue-900/60 backdrop-blur-md flex items-center justify-center z-[60] p-4">
           <div className="bg-white rounded-[4rem] p-16 text-center shadow-2xl max-w-lg w-full">
             <div className="bg-blue-50 w-24 h-24 rounded-[2.5rem] flex items-center justify-center text-blue-600 mx-auto mb-8"><FileText size={48} /></div>
-            <h3 className="text-slate-400 font-black uppercase text-[12px] mb-4">Document Înregistrat</h3>
+            <h3 className="text-slate-400 font-black uppercase text-[12px] mb-4">Înregistrare Reușită</h3>
             <p className="text-slate-900 font-black text-8xl mb-6 tracking-tighter">#{lastRegNumber}</p>
-            <button onClick={() => setLastRegNumber(null)} className="w-full bg-blue-600 text-white p-6 rounded-2xl font-black uppercase">Închide</button>
           </div>
         </div>
       )}
