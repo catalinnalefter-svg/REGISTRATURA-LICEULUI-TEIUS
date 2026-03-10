@@ -237,4 +237,28 @@ export default function RegistruTeius() {
                 <div className="p-8 bg-blue-50/40 rounded-[3rem] border-2 border-blue-100">
                     <p className="text-[10px] font-black text-blue-600 uppercase mb-6 text-slate-900">Legături Document (Conex/Dosar)</p>
                     <div className="grid grid-cols-2 gap-6">
-                      <input type="text" placeholder="NR. CONEX" value={form.conex} onChange={e => setForm({...form, conex
+                      <input type="text" placeholder="NR. CONEX" value={form.conex} onChange={e => setForm({...form, conex: e.target.value})} className="w-full p-4 bg-white rounded-2xl font-black text-sm outline-none shadow-sm" />
+                      <input type="text" placeholder="IND. DOSAR" value={form.indicativ_dosar} onChange={e => setForm({...form, indicativ_dosar: e.target.value})} className="w-full p-4 bg-white rounded-2xl font-black text-sm outline-none shadow-sm" />
+                    </div>
+                </div>
+              </div>
+            </div>
+            <button onClick={handleSave} disabled={loading} className="w-full bg-blue-600 hover:bg-blue-700 text-white p-6 rounded-[2rem] font-black text-lg uppercase shadow-xl shadow-blue-200 mt-10 transition-all">{loading ? 'SALVARE...' : 'Salvează în Registru'}</button>
+          </div>
+        </div>
+      )}
+
+      {/* FORMULAR SIMPLU PENTRU CELELALTE REGISTRE (Pentru a evita erori pana le facem pe rand) */}
+      {showForm && activeTab !== 'general' && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-50 p-6 text-slate-900">
+          <div className="bg-white rounded-[3rem] p-10 w-full max-w-lg shadow-2xl relative border-[12px] border-slate-50">
+            <button onClick={() => setShowForm(false)} className="absolute top-8 right-8 text-slate-300 hover:text-red-500"><X size={32}/></button>
+            <h2 className="text-2xl font-black mb-6 uppercase italic">Gestiune {activeTab}</h2>
+            <textarea value={form.continut} onChange={e => setForm({...form, continut: e.target.value.toUpperCase()})} className="w-full p-5 bg-slate-50 rounded-2xl mb-4 border-2 border-slate-50 h-32 outline-none font-bold text-sm" placeholder="CONȚINUT..." />
+            <button onClick={handleSave} className="w-full bg-blue-600 text-white p-5 rounded-2xl font-black uppercase tracking-widest">{loading ? '...' : 'Confirmă'}</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
