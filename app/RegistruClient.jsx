@@ -248,4 +248,133 @@ export default function RegistruTeius() {
       {showForm && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-[3.5rem] p-10 md:p-16 w-full max-w-[1050px] shadow-2xl relative max-h-[95vh] overflow-y-auto border-[15px] border-slate-50">
-            <div className="flex justify-between items-start
+            <div className="flex justify-between items-start mb-12">
+              <div>
+                <h2 className="text-4xl font-black text-slate-900 uppercase tracking-tighter">
+                    {activeTab === 'general' ? `DATE REGISTRU ${formType}` : activeTab === 'decizii' ? 'DATE DECIZIE / NOTĂ' : 'DATE REGISTRU REGISTRE'}
+                </h2>
+                <div className="h-1.5 w-32 bg-blue-600 rounded-full mt-4"></div>
+              </div>
+              <button onClick={() => setShowForm(false)} className="bg-slate-100 p-5 rounded-3xl text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all"><X size={32}/></button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+              
+              {/* --- FORMULAR REGISTRU GENERAL --- */}
+              {activeTab === 'general' && (
+                <>
+                  <div className="space-y-8">
+                    <div>
+                        <label className="block text-[11px] font-black uppercase text-slate-400 ml-3 mb-3">Data Inregistrare (Z-L-A)</label>
+                        <input type="date" value={form.data} onChange={e => setForm({...form, data: e.target.value})} className="w-full p-6 bg-slate-50 rounded-[1.5rem] border-none font-bold text-lg outline-none focus:ring-4 ring-blue-50 transition-all shadow-inner" />
+                    </div>
+                    <div>
+                        <label className="block text-[11px] font-black uppercase text-slate-400 ml-3 mb-3">Emitent (Proveniență)</label>
+                        <input type="text" placeholder="SCRIE EMITENTUL..." value={form.emitent} onChange={e => setForm({...form, emitent: e.target.value})} className="w-full p-6 bg-slate-50 rounded-[1.5rem] border-none font-black uppercase outline-none focus:ring-4 ring-blue-50 transition-all shadow-inner" />
+                    </div>
+                    <div>
+                        <label className="block text-[11px] font-black uppercase text-slate-400 ml-3 mb-3">Conținut / Scurtă descriere</label>
+                        <textarea value={form.continut} onChange={e => setForm({...form, continut: e.target.value})} className="w-full p-8 bg-slate-50 rounded-[2rem] border-none font-bold h-52 resize-none outline-none focus:ring-4 ring-blue-50 transition-all shadow-inner" placeholder="DETALII DOCUMENT..." />
+                    </div>
+                  </div>
+                  <div className="space-y-8">
+                    <div>
+                        <label className="block text-[11px] font-black uppercase text-slate-400 ml-3 mb-3">Compartiment Destinatar</label>
+                        <input type="text" value={form.compartiment} onChange={e => setForm({...form, compartiment: e.target.value})} className="w-full p-6 bg-slate-50 rounded-[1.5rem] border-none font-black uppercase outline-none focus:ring-4 ring-blue-50 transition-all shadow-inner" placeholder="EX: SECRETARIAT, DIRECTOR..." />
+                    </div>
+                    <div className="grid grid-cols-2 gap-6">
+                        <div>
+                            <label className="block text-[11px] font-black uppercase text-slate-400 ml-3 mb-3">Destinatar</label>
+                            <input type="text" placeholder="CĂTRE..." value={form.destinatar} onChange={e => setForm({...form, destinatar: e.target.value})} className="w-full p-6 bg-slate-50 rounded-[1.5rem] border-none font-bold uppercase outline-none shadow-inner" />
+                        </div>
+                        <div>
+                            <label className="block text-[11px] font-black uppercase text-slate-400 ml-3 mb-3">Data Exped.</label>
+                            <input type="date" value={form.data_exped} onChange={e => setForm({...form, data_exped: e.target.value})} className="w-full p-6 bg-slate-50 rounded-[1.5rem] border-none font-bold outline-none shadow-inner" />
+                        </div>
+                    </div>
+                    <div className="p-10 bg-blue-50/50 rounded-[3rem] border-2 border-blue-100 grid grid-cols-2 gap-8 mt-4 shadow-sm">
+                        <div>
+                            <label className="block text-[10px] font-black text-blue-600 uppercase mb-3 ml-3 tracking-widest">Nr. Conex</label>
+                            <input type="text" placeholder="EX: 4" value={form.conex} onChange={e => setForm({...form, conex: e.target.value})} className="w-full p-5 bg-white rounded-2xl border-none font-black shadow-sm outline-none focus:ring-4 ring-blue-100" />
+                        </div>
+                        <div>
+                            <label className="block text-[10px] font-black text-blue-600 uppercase mb-3 ml-3 tracking-widest">Indicativ Dosar</label>
+                            <input type="text" placeholder="EX: IV-C" value={form.indicativ_dosar} onChange={e => setForm({...form, indicativ_dosar: e.target.value})} className="w-full p-5 bg-white rounded-2xl border-none font-black shadow-sm outline-none focus:ring-4 ring-blue-100" />
+                        </div>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* --- FORMULAR DECIZII --- */}
+              {activeTab === 'decizii' && (
+                <>
+                  <div className="space-y-10">
+                    <div>
+                        <label className="block text-[11px] font-black uppercase text-slate-400 ml-3 mb-4">Alege Tipul Documentului</label>
+                        <div className="grid grid-cols-2 gap-4">
+                            {['DECIZIE', 'NOTA DE SERVICIU'].map(t => (
+                                <button key={t} onClick={() => setForm({...form, tip_document_spec: t})} className={`p-5 rounded-2xl font-black text-xs border-2 transition-all ${form.tip_document_spec === t ? 'bg-blue-600 border-blue-600 text-white shadow-xl' : 'bg-slate-50 border-transparent text-slate-400'}`}>{t}</button>
+                            ))}
+                        </div>
+                    </div>
+                    <div>
+                        <label className="block text-[11px] font-black uppercase text-slate-400 ml-3 mb-3">Data Emitere</label>
+                        <input type="date" value={form.data} onChange={e => setForm({...form, data: e.target.value})} className="w-full p-6 bg-slate-50 rounded-[2rem] border-none font-bold outline-none focus:ring-4 ring-blue-50 shadow-inner" />
+                    </div>
+                  </div>
+                  <div className="space-y-8">
+                    <div>
+                        <label className="block text-[11px] font-black uppercase text-slate-400 ml-3 mb-3">Conținut / Obiectiv</label>
+                        <textarea value={form.continut} onChange={e => setForm({...form, continut: e.target.value})} className="w-full p-8 bg-slate-50 rounded-[2.5rem] border-none font-bold h-56 resize-none outline-none shadow-inner" placeholder="DESCRIERE..." />
+                    </div>
+                    <div>
+                        <label className="block text-[11px] font-black uppercase text-slate-400 ml-3 mb-3">Observații</label>
+                        <input type="text" value={form.observatii} onChange={e => setForm({...form, observatii: e.target.value})} className="w-full p-6 bg-slate-50 rounded-2xl border-none font-bold outline-none shadow-inner" />
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* --- FORMULAR REGISTRE --- */}
+              {activeTab === 'registre' && (
+                <>
+                  <div className="space-y-10">
+                    <div>
+                        <label className="block text-[11px] font-black uppercase text-slate-400 ml-3 mb-3">Număr Registru (Anual)</label>
+                        <input type="text" placeholder="EX: 01/2026" value={form.numar_manual} onChange={e => setForm({...form, numar_manual: e.target.value})} className="w-full p-6 bg-slate-50 rounded-[2rem] border-none font-black text-xl outline-none shadow-inner" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-6">
+                        <div>
+                            <label className="block text-[11px] font-black uppercase text-slate-400 ml-3 mb-3">Dată Deschidere</label>
+                            <input type="date" value={form.data} onChange={e => setForm({...form, data: e.target.value})} className="w-full p-6 bg-slate-50 rounded-2xl border-none font-bold outline-none shadow-inner" />
+                        </div>
+                        <div>
+                            <label className="block text-[11px] font-black uppercase text-slate-400 ml-3 mb-3">Dată Închidere</label>
+                            <input type="date" value={form.data_final} onChange={e => setForm({...form, data_final: e.target.value})} className="w-full p-6 bg-slate-50 rounded-2xl border-none font-bold outline-none shadow-inner" />
+                        </div>
+                    </div>
+                  </div>
+                  <div className="space-y-8">
+                    <div>
+                        <label className="block text-[11px] font-black uppercase text-slate-400 ml-3 mb-3">Denumire Registru</label>
+                        <textarea value={form.continut} onChange={e => setForm({...form, continut: e.target.value})} className="w-full p-8 bg-slate-50 rounded-[2.5rem] border-none font-bold h-56 resize-none outline-none shadow-inner" placeholder="EX: REGISTRU DE PROCESE VERBALE..." />
+                    </div>
+                    <div>
+                        <label className="block text-[11px] font-black uppercase text-slate-400 ml-3 mb-3">Observații</label>
+                        <input type="text" value={form.observatii} onChange={e => setForm({...form, observatii: e.target.value})} className="w-full p-6 bg-slate-50 rounded-2xl border-none font-bold outline-none shadow-inner" />
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
+            <button onClick={handleSave} disabled={loading} className="w-full mt-14 bg-blue-600 text-white p-8 rounded-[3rem] font-black text-2xl uppercase shadow-2xl hover:bg-blue-700 transition-all active:scale-[0.96]">
+              {loading ? 'SE SALVEAZĂ ÎN BAZA DE DATE...' : 'FINALIZEAZĂ ȘI SALVEAZĂ'}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
