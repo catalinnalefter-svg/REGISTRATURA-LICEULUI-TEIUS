@@ -147,7 +147,7 @@ export default function RegistruTeius() {
         <div className="bg-white p-10 rounded-[2.5rem] shadow-2xl w-full max-w-md text-center border-t-8 border-blue-600">
           <div className="flex justify-center mb-6">
             <div className="w-20 h-20 bg-blue-50 rounded-3xl flex items-center justify-center border-2 border-blue-100 shadow-inner">
-               <img src="/logo.png" alt="Logo" className="w-14 h-14 object-contain" onError={(e) => e.target.src="https://cdn-icons-png.flaticon.com/512/2641/2641409.png"} />
+               <img src="/liceul_teoretic_teius.png" alt="Logo" className="w-14 h-14 object-contain" onError={(e) => e.target.src="https://cdn-icons-png.flaticon.com/512/2641/2641409.png"} />
             </div>
           </div>
           <h2 className="text-2xl font-black text-slate-800 mb-2 uppercase tracking-tight">Acces Registre</h2>
@@ -170,7 +170,7 @@ export default function RegistruTeius() {
         <header className="flex justify-between items-center mb-10 bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100">
           <div className="flex items-center gap-6">
              <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center border border-slate-100 shadow-sm overflow-hidden">
-                <img src="/logo.png" alt="Logo" className="w-10 h-10 object-contain" onError={(e) => e.target.src="https://cdn-icons-png.flaticon.com/512/2641/2641409.png"} />
+                <img src="/liceul_teoretic_teius.png" alt="Logo" className="w-10 h-10 object-contain" onError={(e) => e.target.src="https://cdn-icons-png.flaticon.com/512/2641/2641409.png"} />
              </div>
              <div>
                 <h1 className="text-xl font-black text-slate-900 uppercase tracking-tight">Liceul Teoretic Teiuș</h1>
@@ -334,9 +334,16 @@ export default function RegistruTeius() {
                     <input type="text" placeholder="SCRIE EMITENTUL..." value={form.emitent} onChange={e => setForm({...form, emitent: e.target.value})} className="w-full p-5 bg-slate-50 rounded-2xl font-black border-2 border-slate-100 uppercase outline-none" />
                   </div>
                   <div>
-                    <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">Conținut / Descriere</label>
-                    <textarea value={form.continut} onChange={e => setForm({...form,爆发: e.target.value})} className="w-full p-6 bg-slate-50 rounded-[2rem] border-2 border-slate-100 font-bold h-40 resize-none uppercase outline-none" placeholder="DETALII DESPRE DOCUMENT..." />
-                  </div>
+  <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">
+    Conținut / Descriere
+  </label>
+  <textarea 
+    value={form.continut} 
+    onChange={e => setForm({...form, continut: e.target.value})} // <--- Aici era eroarea
+    className="w-full p-6 bg-slate-50 rounded-[2rem] border-2 border-slate-100 font-bold h-40 resize-none uppercase outline-none" 
+    placeholder="DETALII DESPRE DOCUMENT..." 
+  />
+</div>
                 </div>
                 <div className="space-y-6">
                   <div>
