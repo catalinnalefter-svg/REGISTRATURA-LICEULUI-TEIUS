@@ -125,20 +125,19 @@ export default function RegistruTeius() {
       <div className="max-w-7xl mx-auto">
         {/* Header conform pozei */}
        {/* START HEADER */}
+       {/* HEADER - MODIFICAT PENTRU SIGLĂ */}
         <header className="flex justify-between items-center mb-10 bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100">
           <div className="flex items-center gap-5">
-            {/* Caseta pentru Siglă */}
-            <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center shadow-md border border-slate-50 overflow-hidden">
+            {/* Caseta pentru Siglă - Am eliminat textul LTT */}
+            <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center overflow-hidden">
               <img 
                 src="/liceul_teoretic_teius.png" 
                 alt="Logo Liceu" 
-                className="w-12 h-12 object-contain"
+                className="w-full h-full object-contain"
                 onError={(e) => {
-                  e.target.style.display = 'none'; // Ascunde imaginea dacă lipsește fișierul
+                  e.target.style.display = 'none'; 
                 }}
               />
-              {/* Text de rezervă dacă poza nu se încarcă */}
-              <span className="font-black text-blue-600 text-xl tracking-tighter">LTT</span>
             </div>
             
             <div>
@@ -163,7 +162,6 @@ export default function RegistruTeius() {
             </button>
           </div>
         </header>
-        {/* SFARSIT HEADER */}
 
         {/* Tab Selection */}
         <div className="flex gap-4 mb-8">
