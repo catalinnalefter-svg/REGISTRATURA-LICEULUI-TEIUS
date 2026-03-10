@@ -195,25 +195,35 @@ export default function RegistruClient() {
                 </tr>
               </thead>
               <tbody className="text-[11px] font-bold text-slate-700">
-                {data.filter(i => (i.continut || '').toLowerCase().includes(search.toLowerCase())).map((item) => (
-                  <tr key={item.id} className="border-b border-slate-50 hover:bg-slate-50/30 transition-colors group">
-                    <td className="px-8 py-6">
-                      <span className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase text-white shadow-sm ${item.tip === 'INTRARE' ? 'bg-[#10b981]' : item.tip === 'IESIRE' ? 'bg-[#3b82f6]' : 'bg-[#f97316]'}`}>{item.tip || (activeTab === 'decizii' ? 'DECIZIE' : 'REGISTRU')}</span>
-                    </td>
-                    <td className="px-8 py-6 text-blue-600 font-black text-sm">#{item.numar_inregistrare}</td>
-                    <td className="px-8 py-6 text-slate-500">{item.creat_la || item.data_emitere || item.data_inceput}</td>
-                    <td className="px-8 py-6 uppercase">{item.emitent || '-'}</td>
-                    <td className="px-8 py-6 italic font-medium max-w-xs">{item.continut}</td>
-                    <td className="px-8 py-6"><span className="bg-slate-100 px-3 py-1 rounded-lg text-[10px] text-slate-500 uppercase font-black">{item.compartiment}</span></td>
-                    <td className="px-8 py-6 text-slate-400 uppercase text-[10px]">{item.creat_de}</td>
-                    <td className="px-8 py-6 text-slate-400">{item.data_expedire || '-'}</td>
-                    <td className="px-8 py-6 text-blue-400">{item.conex_ind || '-'}</td>
-                    <td className="px-8 py-6 text-center">
-                      <button onClick={() => handleEdit(item)} className="text-slate-200 hover:text-blue-500 transition-all transform hover:scale-125"><Edit2 size={16}/></button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
+  {data.filter(i => (i.continut || '').toLowerCase().includes(search.toLowerCase())).map((item) => (
+    <tr key={item.id} className="border-b border-slate-50 hover:bg-slate-50/30 transition-colors group">
+      {/* Celula TIP cu culori dinamice */}
+      <td className="px-8 py-6">
+        <span className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase text-white shadow-sm ${
+          item.tip === 'INTRARE' ? 'bg-[#10b981]' : // Verde
+          item.tip === 'IESIRE' ? 'bg-[#3b82f6]' :  // Albastru
+          'bg-[#f97316]'                            // Portocaliu (Rezervat)
+        }`}>
+          {item.tip || 'INTRARE'}
+        </span>
+      </td>
+
+      <td className="px-8 py-6 text-blue-600 font-black text-sm">#{item.numar_inregistrare}</td>
+      <td className="px-8 py-6 text-slate-500">{item.creat_la}</td>
+      <td className="px-8 py-6 uppercase">{item.emitent || '-'}</td>
+      <td className="px-8 py-6 italic font-medium max-w-xs">{item.continut}</td>
+      <td className="px-8 py-6 text-slate-500">{item.compartiment}</td>
+      <td className="px-8 py-6 text-slate-400 uppercase text-[9px] font-black">{item.creat_de}</td>
+      <td className="px-8 py-6 text-slate-400">{item.data_expedire || '-'}</td>
+      <td className="px-8 py-6 text-blue-400">{item.conex_ind || '-'}</td>
+      <td className="px-8 py-6 text-center">
+        <button onClick={() => handleEdit(item)} className="text-slate-200 hover:text-blue-500 transition-all">
+          <Edit2 size={16}/>
+        </button>
+      </td>
+    </tr>
+  ))}
+</tbody>
             </table>
           </div>
         </div>
