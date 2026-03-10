@@ -12,7 +12,6 @@ export default function RegistruClient() {
   const [data, setData] = useState([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(false);
-  
   const [showForm, setShowForm] = useState(false);
   const [formType, setFormType] = useState('INTRARE');
   const [editingId, setEditingId] = useState(null);
@@ -40,20 +39,17 @@ export default function RegistruClient() {
 
   useEffect(() => { if (isAuth) fetchData(); }, [isAuth, fetchData]);
 
-  // Funcție Export Excel (CSV)
   const exportToExcel = () => {
-    const headers = activeTab === 'general' ? "Tip,Nr,Data,Emitent,Continut,Destinatar,Compartiment\n" : "Nr,Data,Continut,Observatii\n";
+    const headers = activeTab === 'general' ? "Tip,Nr,Data,Emitent,Continut,Destinatar,Compartiment,Creat De\n" : "Nr,Data,Continut,Observatii\n";
     const rows = data.map(i => {
       return activeTab === 'general' 
-        ? `${i.tip},${i.numar_inregistrare},${i.creat_la},${i.emitent},${i.continut},${i.destinatar},${i.compartiment}`
+        ? `${i.tip},${i.numar_inregistrare},${i.creat_la},${i.emitent},${i.continut},${i.destinatar},${i.compartiment},${i.creat_de}`
         : `${i.numar_inregistrare},${i.data_emitere || i.data_inceput},${i.continut},${i.observatii}`;
     }).join("\n");
-    
     const blob = new Blob([headers + rows], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement("a");
+    const link = document.body.appendChild(document.createElement("a"));
     link.href = URL.createObjectURL(blob);
-    link.setAttribute("download", `Export_${activeTab}_2026.csv`);
-    document.body.appendChild(link);
+    link.download = `Export_${activeTab}_2026.csv`;
     link.click();
     document.body.removeChild(link);
   };
@@ -83,10 +79,9 @@ export default function RegistruClient() {
     setLoading(true);
     try {
       let table = activeTab === 'general' ? 'documente' : (activeTab === 'decizii' ? 'registrul_deciziilor' : 'registrul_registrelor');
-      
       let payload = { 
         continut: form.continut, 
-        creat_de: 'ing. Lefter C.', 
+        creat_de: currentUser, // Salvăm utilizatorul activ aici
         anul: 2026,
         compartiment: form.compartiment || currentUser
       };
@@ -99,16 +94,9 @@ export default function RegistruClient() {
         payload = { ...payload, numar_inregistrare: parseInt(form.nr_manual), data_inceput: form.data, data_sfarsit: form.data_sfarsit || null, observatii: form.observatii };
       }
 
-      const { error } = editingId 
-        ? await supabase.from(table).update(payload).eq('id', editingId)
-        : await supabase.from(table).insert([payload]);
-
+      const { error } = editingId ? await supabase.from(table).update(payload).eq('id', editingId) : await supabase.from(table).insert([payload]);
       if (error) throw error;
-      
-      fetchData();
-      setShowForm(false);
-      setEditingId(null);
-      setForm({ data: new Date().toISOString().split('T')[0], emitent: '', continut: '', destinatar: '', data_exped: '', conex: '', indicativ_dosar: '', compartiment: '', observatii: '', tip_decizie: 'DECIZIE', data_sfarsit: '', nr_manual: '' });
+      fetchData(); setShowForm(false); setEditingId(null);
     } catch (err) { alert(err.message); }
     setLoading(false);
   };
@@ -118,7 +106,7 @@ export default function RegistruClient() {
       <div className="min-h-screen bg-[#f0f4f8] flex items-center justify-center p-6">
         <div className="bg-white p-10 rounded-[3rem] shadow-xl w-full max-w-md text-center border border-white">
           <h2 className="text-2xl font-black text-blue-600 mb-6 uppercase tracking-tighter">Acces Registratură</h2>
-          <select className="w-full p-4 bg-slate-50 rounded-2xl mb-4 font-bold outline-none border border-slate-100" value={currentUser} onChange={e => setCurrentUser(e.target.value)}>
+          <select className="w-full p-4 bg-slate-50 rounded-2xl mb-4 font-bold outline-none border border-slate-100 shadow-inner" value={currentUser} onChange={e => setCurrentUser(e.target.value)}>
             <option value="">Alege Departamentul...</option>
             <option value="SECRETARIAT">SECRETARIAT</option>
             <option value="CONTABILITATE">CONTABILITATE</option>
@@ -137,13 +125,21 @@ export default function RegistruClient() {
     <div className="min-h-screen bg-[#f0f4f8] p-4 md:p-8 font-sans text-slate-800">
       <div className="max-w-[1600px] mx-auto">
         
-        {/* HEADER */}
+        {/* HEADER ACTUALIZAT CONFORM CERINȚEI */}
         <header className="bg-white rounded-[2.5rem] p-6 mb-8 flex flex-col md:flex-row justify-between items-center shadow-sm border border-white">
           <div className="flex items-center gap-4">
             <img src="/liceul teoretic teius.png" className="w-12 h-12" alt="Logo" />
             <div>
               <h1 className="text-xl font-black text-[#1e3a8a] uppercase tracking-tight leading-none">REGISTRATURA <span className="text-blue-500">LICEULUI TEORETIC TEIUȘ</span></h1>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1 italic">UTILIZATOR ACTIV: <span className="text-blue-600">{currentUser}</span></p>
+              <div className="flex items-center gap-2 mt-1">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                  <Check size={12} className="text-blue-500"/> Creat de ing. Lefter C.
+                </p>
+                <span className="text-slate-200">|</span>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                  UTILIZATOR ACTIV: <span className="text-blue-600 font-black">{currentUser}</span>
+                </p>
+              </div>
             </div>
           </div>
 
@@ -154,13 +150,13 @@ export default function RegistruClient() {
           </nav>
 
           <div className="flex gap-2">
-            <button onClick={exportToExcel} className="bg-[#10b981] text-white px-6 py-3 rounded-2xl font-black text-[10px] uppercase flex items-center gap-2 hover:bg-[#059669] shadow-sm transition-all"><Download size={16}/> Export Excel</button>
+            <button onClick={exportToExcel} className="bg-[#10b981] text-white px-6 py-3 rounded-2xl font-black text-[10px] uppercase flex items-center gap-2 hover:bg-[#059669] shadow-sm"><Download size={16}/> Export Excel</button>
             <button onClick={() => window.location.reload()} className="bg-slate-50 text-slate-400 px-6 py-3 rounded-2xl font-black text-[10px] uppercase hover:text-red-500 transition-all">Ieșire</button>
           </div>
         </header>
 
-        {/* CARDURI ORIGINALE PENTRU CREARE */}
-        {activeTab === 'general' ? (
+        {/* CARDURI DE CREARE */}
+        {activeTab === 'general' && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
             {[ {t: 'INTRARE', c: 'bg-[#10b981]'}, {t: 'IESIRE', c: 'bg-[#3b82f6]'}, {t: 'REZERVAT', c: 'bg-[#f97316]'} ].map(card => (
               <div key={card.t} onClick={() => { setFormType(card.t); setEditingId(null); setShowForm(true); }} className="bg-white p-8 rounded-[3rem] shadow-sm border border-white hover:shadow-md transition-all cursor-pointer group">
@@ -170,18 +166,14 @@ export default function RegistruClient() {
               </div>
             ))}
           </div>
-        ) : (
-          <button onClick={() => { setEditingId(null); setShowForm(true); }} className="w-full mb-10 p-8 bg-white rounded-[3rem] border-2 border-dashed border-slate-200 text-slate-400 font-black uppercase text-[10px] tracking-[0.3em] hover:border-blue-500 hover:text-blue-500 transition-all">
-            Adaugă în Registrul de {activeTab === 'decizii' ? 'Decizii' : 'Registre'}
-          </button>
         )}
 
-        {/* TABEL CU COLOANE ȘI CULORI CONFORM IMAGINII */}
+        {/* TABEL COMPLETAT CU DESTINATAR ȘI UTILIZATOR */}
         <div className="bg-white rounded-[3rem] shadow-sm border border-white overflow-hidden">
           <div className="p-8 border-b border-slate-50 bg-white">
             <div className="bg-slate-50 p-4 rounded-3xl flex items-center gap-3 border border-slate-100 max-w-xl shadow-inner">
               <Search className="text-slate-300" size={20}/>
-              <input type="text" placeholder="Caută după nr, emitent sau conținut..." className="bg-transparent w-full outline-none font-bold text-slate-600 text-sm" value={search} onChange={e => setSearch(e.target.value)} />
+              <input type="text" placeholder="Caută în registru..." className="bg-transparent w-full outline-none font-bold text-slate-600 text-sm" value={search} onChange={e => setSearch(e.target.value)} />
             </div>
           </div>
 
@@ -190,80 +182,66 @@ export default function RegistruClient() {
               <thead>
                 <tr className="bg-slate-50/50 text-[9px] font-black uppercase text-slate-400 tracking-widest border-b border-slate-50">
                   <th className="px-8 py-5">Tip</th><th className="px-8 py-5">Nr. Înregistrare</th><th className="px-8 py-5">Data Inreg.</th>
-                  <th className="px-8 py-5">Emitent</th><th className="px-8 py-5">Conținut</th><th className="px-8 py-5">Compartiment</th>
-                  <th className="px-8 py-5">Creat De</th><th className="px-8 py-5">Data Exped.</th><th className="px-8 py-5">Conex/Ind.</th><th className="px-8 py-5 text-center">Editare</th>
+                  <th className="px-8 py-5">Emitent</th><th className="px-8 py-5">Conținut</th><th className="px-8 py-5">Destinatar</th>
+                  <th className="px-8 py-5">Compartiment</th><th className="px-8 py-5">Creat De</th><th className="px-8 py-5">Conex/Ind.</th><th className="px-8 py-5 text-center">Editare</th>
                 </tr>
               </thead>
               <tbody className="text-[11px] font-bold text-slate-700">
-  {data.filter(i => (i.continut || '').toLowerCase().includes(search.toLowerCase())).map((item) => (
-    <tr key={item.id} className="border-b border-slate-50 hover:bg-slate-50/30 transition-colors group">
-      {/* Celula TIP cu culori dinamice */}
-      <td className="px-8 py-6">
-        <span className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase text-white shadow-sm ${
-          item.tip === 'INTRARE' ? 'bg-[#10b981]' : // Verde
-          item.tip === 'IESIRE' ? 'bg-[#3b82f6]' :  // Albastru
-          'bg-[#f97316]'                            // Portocaliu (Rezervat)
-        }`}>
-          {item.tip || 'INTRARE'}
-        </span>
-      </td>
-
-      <td className="px-8 py-6 text-blue-600 font-black text-sm">#{item.numar_inregistrare}</td>
-      <td className="px-8 py-6 text-slate-500">{item.creat_la}</td>
-      <td className="px-8 py-6 uppercase">{item.emitent || '-'}</td>
-      <td className="px-8 py-6 italic font-medium max-w-xs">{item.continut}</td>
-      <td className="px-8 py-6 text-slate-500">{item.compartiment}</td>
-      <td className="px-8 py-6 text-slate-400 uppercase text-[9px] font-black">{item.creat_de}</td>
-      <td className="px-8 py-6 text-slate-400">{item.data_expedire || '-'}</td>
-      <td className="px-8 py-6 text-blue-400">{item.conex_ind || '-'}</td>
-      <td className="px-8 py-6 text-center">
-        <button onClick={() => handleEdit(item)} className="text-slate-200 hover:text-blue-500 transition-all">
-          <Edit2 size={16}/>
-        </button>
-      </td>
-    </tr>
-  ))}
-</tbody>
+                {data.filter(i => (i.continut || '').toLowerCase().includes(search.toLowerCase())).map((item) => (
+                  <tr key={item.id} className="border-b border-slate-50 hover:bg-slate-50/30 transition-colors group">
+                    <td className="px-8 py-6">
+                      <span className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase text-white shadow-sm ${item.tip === 'INTRARE' ? 'bg-[#10b981]' : item.tip === 'IESIRE' ? 'bg-[#3b82f6]' : 'bg-[#f97316]'}`}>{item.tip || 'DOC'}</span>
+                    </td>
+                    <td className="px-8 py-6 text-blue-600 font-black text-sm">#{item.numar_inregistrare}</td>
+                    <td className="px-8 py-6 text-slate-500 font-medium">{item.creat_la || item.data_emitere || item.data_inceput}</td>
+                    <td className="px-8 py-6 uppercase">{item.emitent || '-'}</td>
+                    <td className="px-8 py-6 italic font-medium max-w-xs">{item.continut}</td>
+                    <td className="px-8 py-6 uppercase text-slate-600">{item.destinatar || '-'}</td>
+                    <td className="px-8 py-6"><span className="bg-slate-100 px-3 py-1 rounded-lg text-[10px] text-slate-500 uppercase font-black">{item.compartiment}</span></td>
+                    <td className="px-8 py-6 text-slate-400 uppercase text-[10px] font-black">{item.creat_de}</td>
+                    <td className="px-8 py-6 text-blue-400 font-medium">{item.conex_ind || '-'}</td>
+                    <td className="px-8 py-6 text-center">
+                      <button onClick={() => handleEdit(item)} className="text-slate-200 hover:text-blue-500 transition-all transform hover:scale-125"><Edit2 size={16}/></button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
             </table>
           </div>
         </div>
       </div>
 
-      {/* MODAL FORMULAR */}
+      {/* FORMULARUL "DATE REGISTRU" */}
       {showForm && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-[4rem] p-12 w-full max-w-[950px] shadow-2xl relative">
+          <div className="bg-white rounded-[4rem] p-12 w-full max-w-[950px] shadow-2xl relative animate-in zoom-in duration-200">
             <div className="flex justify-between items-start mb-10">
               <div>
                 <h2 className="text-4xl font-black text-[#1e293b] uppercase tracking-tighter mb-4">{editingId ? 'Editare' : 'Date Registru'}</h2>
-                {activeTab === 'general' && (
-                  <div className="flex gap-2">
-                    {['INTRARE', 'IESIRE', 'REZERVAT'].map(t => (
-                      <button key={t} onClick={() => setFormType(t)} className={`px-8 py-3 rounded-2xl font-black text-[11px] uppercase transition-all ${formType === t ? 'bg-[#3b82f6] text-white shadow-lg' : 'bg-[#f1f5f9] text-[#94a3b8]'}`}>{t}</button>
-                    ))}
-                  </div>
-                )}
+                <div className="flex gap-2">
+                  {['INTRARE', 'IESIRE', 'REZERVAT'].map(t => (
+                    <button key={t} onClick={() => setFormType(t)} className={`px-8 py-3 rounded-2xl font-black text-[11px] uppercase transition-all ${formType === t ? 'bg-[#3b82f6] text-white shadow-lg' : 'bg-[#f1f5f9] text-[#94a3b8]'}`}>{t}</button>
+                  ))}
+                </div>
               </div>
               <button onClick={() => { setShowForm(false); setEditingId(null); }} className="bg-[#f1f5f9] p-4 rounded-3xl text-slate-400 hover:text-red-500 transition-all"><X size={32}/></button>
             </div>
 
-            <div className="grid grid-cols-2 gap-x-12 gap-y-8 text-slate-800">
+            <div className="grid grid-cols-2 gap-x-12 gap-y-8">
               <div className="space-y-6">
                 <div>
                   <label className="text-[11px] font-black uppercase text-[#1e293b] mb-3 block">Data Document</label>
                   <input type="date" value={form.data} onChange={e => setForm({...form, data: e.target.value})} className="w-full p-6 bg-[#f8fafc] rounded-[2rem] font-black text-xl border-none outline-none shadow-inner" />
                 </div>
-                {activeTab === 'general' && (
-                  <div>
-                    <label className="text-[11px] font-black uppercase text-[#1e293b] mb-3 block">Emitent</label>
-                    <div className="flex gap-2 mb-3">
-                      {['DIN OFICIU', 'ISJ ALBA', 'MINISTERUL'].map(e => (
-                        <button key={e} onClick={() => setForm({...form, emitent: e})} className="px-4 py-2 bg-blue-50 text-blue-600 rounded-xl font-black text-[10px] uppercase">{e}</button>
-                      ))}
-                    </div>
-                    <input type="text" placeholder="SCRIE EMITENTUL..." className="w-full p-6 bg-[#f8fafc] rounded-[2rem] font-black text-xl border-none outline-none" value={form.emitent} onChange={e => setForm({...form, emitent: e.target.value})} />
+                <div>
+                  <label className="text-[11px] font-black uppercase text-[#1e293b] mb-3 block">Emitent</label>
+                  <div className="flex gap-2 mb-3">
+                    {['DIN OFICIU', 'ISJ ALBA', 'MINISTERUL EDUCAȚIEI'].map(e => (
+                      <button key={e} onClick={() => setForm({...form, emitent: e})} className="px-4 py-2 bg-blue-50 text-blue-600 rounded-xl font-black text-[10px] uppercase">{e}</button>
+                    ))}
                   </div>
-                )}
+                  <input type="text" placeholder="SCRIE EMITENTUL..." className="w-full p-6 bg-[#f8fafc] rounded-[2rem] font-black text-xl border-none outline-none" value={form.emitent} onChange={e => setForm({...form, emitent: e.target.value})} />
+                </div>
                 <div>
                   <label className="text-[11px] font-black uppercase text-[#1e293b] mb-3 block">Conținut / Descriere</label>
                   <textarea placeholder="DETALII..." className="w-full p-6 bg-[#f8fafc] rounded-[3rem] font-black text-xl border-none outline-none h-40 resize-none" value={form.continut} onChange={e => setForm({...form, continut: e.target.value})} />
@@ -274,33 +252,34 @@ export default function RegistruClient() {
                 <div>
                   <label className="text-[11px] font-black uppercase text-[#1e293b] mb-3 block">Compartiment</label>
                   <div className="flex gap-2 mb-3">
-                    {['SECRETARIAT', 'CONTABILITATE', 'ADMINISTRATIV'].map(c => (
+                    {['SECRETARIAT', 'CONTABILITATE', 'APP', 'ALTELE'].map(c => (
                       <button key={c} onClick={() => setForm({...form, compartiment: c})} className="px-4 py-2 bg-orange-50 text-orange-600 rounded-xl font-black text-[10px] uppercase">{c}</button>
                     ))}
                   </div>
                   <input type="text" placeholder="SCRIE COMPARTIMENT..." className="w-full p-6 bg-[#f8fafc] rounded-[2rem] font-black text-xl border-none outline-none uppercase" value={form.compartiment} onChange={e => setForm({...form, compartiment: e.target.value})} />
                 </div>
-                {activeTab === 'general' ? (
-                  <div className="grid grid-cols-2 gap-4">
-                    <input type="date" value={form.data_exped} onChange={e => setForm({...form, data_exped: e.target.value})} className="p-6 bg-[#f8fafc] rounded-2xl font-black text-lg border-none outline-none" />
-                    <input type="text" placeholder="DESTINATAR..." className="p-6 bg-[#f8fafc] rounded-2xl font-black text-lg border-none outline-none uppercase" value={form.destinatar} onChange={e => setForm({...form, destinatar: e.target.value})} />
-                  </div>
-                ) : activeTab === 'registre' && (
-                  <input type="number" placeholder="NR REGISTRU MANUAL" className="w-full p-6 bg-blue-50 rounded-2xl font-black text-2xl text-blue-700 outline-none border-none text-center shadow-inner" value={form.nr_manual} onChange={e => setForm({...form, nr_manual: e.target.value})} />
-                )}
+                <div className="grid grid-cols-2 gap-4">
+                   <div>
+                    <label className="text-[9px] font-black uppercase text-slate-400 mb-2 block ml-4">Data Expedire</label>
+                    <input type="date" value={form.data_exped} onChange={e => setForm({...form, data_exped: e.target.value})} className="w-full p-5 bg-[#f8fafc] rounded-2xl font-black text-lg border-none outline-none" />
+                   </div>
+                   <div>
+                    <label className="text-[9px] font-black uppercase text-slate-400 mb-2 block ml-4">Destinatar</label>
+                    <input type="text" placeholder="CĂTRE..." className="w-full p-5 bg-[#f8fafc] rounded-2xl font-black text-lg border-none outline-none uppercase" value={form.destinatar} onChange={e => setForm({...form, destinatar: e.target.value})} />
+                   </div>
+                </div>
                 
-                {/* Legături Document */}
-                <div className="bg-[#eff6ff] p-8 rounded-[3.5rem] border border-blue-100">
+                <div className="bg-[#eff6ff] p-8 rounded-[3.5rem] border border-blue-100 shadow-sm">
                   <h3 className="text-[#3b82f6] font-black uppercase text-[10px] text-center mb-6 tracking-widest">Legături Document (Conex)</h3>
                   <div className="grid grid-cols-2 gap-4">
-                    <input type="text" placeholder="NR. CONEX" className="w-full p-5 bg-white rounded-3xl font-black text-xl border-none outline-none text-blue-900" value={form.conex} onChange={e => setForm({...form, conex: e.target.value})} />
-                    <input type="text" placeholder="INDICATIV DOSAR" className="w-full p-5 bg-white rounded-3xl font-black text-xl border-none outline-none text-blue-900" value={form.indicativ_dosar} onChange={e => setForm({...form, indicativ_dosar: e.target.value})} />
+                    <input type="text" placeholder="NR. CONEX" className="w-full p-5 bg-white rounded-3xl font-black text-xl border-none outline-none text-blue-900 shadow-sm" value={form.conex} onChange={e => setForm({...form, conex: e.target.value})} />
+                    <input type="text" placeholder="INDICATIV DOSAR" className="w-full p-5 bg-white rounded-3xl font-black text-xl border-none outline-none text-blue-900 shadow-sm" value={form.indicativ_dosar} onChange={e => setForm({...form, indicativ_dosar: e.target.value})} />
                   </div>
                 </div>
               </div>
             </div>
 
-            <button onClick={handleSave} disabled={loading} className="w-full mt-10 bg-[#3b82f6] text-white p-8 rounded-[2.5rem] font-black text-2xl uppercase tracking-widest shadow-2xl shadow-blue-200 hover:scale-[1.01] transition-all">
+            <button onClick={handleSave} disabled={loading} className="w-full mt-10 bg-[#3b82f6] text-white p-8 rounded-[2.5rem] font-black text-2xl uppercase tracking-widest shadow-2xl shadow-blue-200 hover:scale-[1.01] active:scale-95 transition-all">
               {loading ? 'SE SALVEAZĂ...' : (editingId ? 'Salvează Modificările' : 'Salvează în Registru')}
             </button>
           </div>
