@@ -8,6 +8,7 @@ export default function RegistruClient() {
   const [isAuth, setIsAuth] = useState(false);
   const [pass, setPass] = useState('');
   const [currentUser, setCurrentUser] = useState('');
+  const [activeTab, setActiveTab] = useState('general'); 
   const [data, setData] = useState([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(false);
@@ -30,9 +31,10 @@ export default function RegistruClient() {
   const [form, setForm] = useState(initialFormState);
 
   const fetchData = useCallback(async () => {
-    const { data: result } = await supabase.from('documente').select('*').order('numar_inregistrare', { ascending: false });
+    let table = activeTab === 'general' ? 'documente' : (activeTab === 'decizii' ? 'registrul_deciziilor' : 'registrul_registrelor');
+    const { data: result } = await supabase.from(table).select('*').order('numar_inregistrare', { ascending: false });
     setData(result || []);
-  }, []);
+  }, [activeTab]);
 
   useEffect(() => { if (isAuth) fetchData(); }, [isAuth, fetchData]);
 
@@ -43,10 +45,31 @@ export default function RegistruClient() {
     setShowForm(true);
   };
 
+  const exportToExcel = () => {
+    const tableHeaders = ["Tip", "Nr. Inreg.", "Data Inreg.", "Emitent", "Conținut", "Compartiment", "Creat De", "Destinatar", "Data Exped.", "Conex/Ind."];
+    let html = `<html><head><meta charset="utf-8"><style>th{background:#f1f5f9;}</style></head><body><table border="1"><tr>${tableHeaders.map(h => `<th>${h}</th>`).join('')}</tr>`;
+    
+    data.forEach(i => {
+      html += `<tr>
+        <td>${i.tip || ''}</td><td>${i.numar_inregistrare}</td><td>${i.creat_la || i.data_emitere || ''}</td>
+        <td>${i.emitent || ''}</td><td>${i.continut || ''}</td><td>${i.compartiment || ''}</td>
+        <td>${i.creat_de || ''}</td><td>${i.destinatar || ''}</td><td>${i.data_expedire || ''}</td><td>${i.conex_ind || ''}</td>
+      </tr>`;
+    });
+    html += "</table></body></html>";
+
+    const blob = new Blob([html], { type: 'application/vnd.ms-excel' });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `Registru_${activeTab.toUpperCase()}_2026.xls`;
+    link.click();
+  };
+
   const handleSave = async () => {
     if (!form.continut) return alert('Introduceți descrierea documentului!');
     setLoading(true);
     try {
+      let table = activeTab === 'general' ? 'documente' : (activeTab === 'decizii' ? 'registrul_deciziilor' : 'registrul_registrelor');
       const payload = { 
         tip: formType,
         creat_la: form.data,
@@ -62,8 +85,8 @@ export default function RegistruClient() {
       };
 
       const { data: saved, error } = editingId 
-        ? await supabase.from('documente').update(payload).eq('id', editingId).select()
-        : await supabase.from('documente').insert([payload]).select();
+        ? await supabase.from(table).update(payload).eq('id', editingId).select()
+        : await supabase.from(table).insert([payload]).select();
 
       if (error) throw error;
       if (!editingId && saved) setLastRegNumber(saved[0].numar_inregistrare);
@@ -96,9 +119,9 @@ export default function RegistruClient() {
 
   return (
     <div className="min-h-screen bg-[#f0f4f8] p-4 md:p-8 font-sans text-slate-800">
-      <div className="max-w-[1700px] mx-auto">
+      <div className="max-w-[1750px] mx-auto">
         
-        {/* HEADER */}
+        {/* HEADER ACTUALIZAT */}
         <header className="bg-white rounded-[2.5rem] p-6 mb-8 flex flex-col md:flex-row justify-between items-center shadow-sm border border-white">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white font-black text-xl italic">LTT</div>
@@ -111,25 +134,37 @@ export default function RegistruClient() {
               </div>
             </div>
           </div>
-          <button onClick={() => window.location.reload()} className="bg-slate-50 text-slate-400 px-6 py-3 rounded-2xl font-black text-[10px] uppercase hover:text-red-500 transition-all">Ieșire</button>
+
+          <nav className="flex gap-2 bg-slate-50 p-1.5 rounded-2xl border border-slate-100 my-4 md:my-0">
+            {['general', 'decizii', 'registre'].map(tab => (
+              <button key={tab} onClick={() => setActiveTab(tab)} className={`px-8 py-2.5 rounded-xl font-black text-[10px] uppercase transition-all ${activeTab === tab ? 'bg-blue-600 text-white shadow-md' : 'text-slate-400 hover:bg-white'}`}>{tab}</button>
+            ))}
+          </nav>
+
+          <div className="flex gap-2">
+            <button onClick={exportToExcel} className="bg-[#10b981] text-white px-6 py-3 rounded-2xl font-black text-[10px] uppercase flex items-center gap-2 hover:bg-[#059669] shadow-sm"><Download size={16}/> Export Excel</button>
+            <button onClick={() => window.location.reload()} className="bg-slate-50 text-slate-400 px-6 py-3 rounded-2xl font-black text-[10px] uppercase hover:text-red-500 transition-all">Ieșire</button>
+          </div>
         </header>
 
-        {/* BUTOANE TIP DOC */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-          {[ {t: 'INTRARE', c: 'bg-[#10b981]'}, {t: 'IESIRE', c: 'bg-[#3b82f6]'}, {t: 'REZERVAT', c: 'bg-[#f97316]'} ].map(card => (
-            <div key={card.t} onClick={() => handleOpenNew(card.t)} className="bg-white p-8 rounded-[3rem] shadow-sm border border-white hover:shadow-md transition-all cursor-pointer group">
-              <div className={`${card.c} w-12 h-12 rounded-2xl flex items-center justify-center text-white mb-4 shadow-lg group-hover:scale-110 transition-transform`}><Plus size={24} strokeWidth={3}/></div>
-              <h2 className="text-3xl font-black uppercase text-[#0f172a] leading-none">{card.t}</h2>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Creare înregistrare</p>
-            </div>
-          ))}
-        </div>
+        {/* CARDURI ACTIUNE (DOAR PENTRU GENERAL) */}
+        {activeTab === 'general' && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+            {[ {t: 'INTRARE', c: 'bg-[#10b981]'}, {t: 'IESIRE', c: 'bg-[#3b82f6]'}, {t: 'REZERVAT', c: 'bg-[#f97316]'} ].map(card => (
+              <div key={card.t} onClick={() => handleOpenNew(card.t)} className="bg-white p-8 rounded-[3rem] shadow-sm border border-white hover:shadow-md transition-all cursor-pointer group">
+                <div className={`${card.c} w-12 h-12 rounded-2xl flex items-center justify-center text-white mb-4 shadow-lg group-hover:scale-110 transition-transform`}><Plus size={24} strokeWidth={3}/></div>
+                <h2 className="text-3xl font-black uppercase text-[#0f172a] leading-none">{card.t}</h2>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Creare înregistrare</p>
+              </div>
+            ))}
+          </div>
+        )}
 
-        {/* TABEL COMPLET */}
+        {/* TABEL CU TOATE COLOANELE CERUTE */}
         <div className="bg-white rounded-[3rem] shadow-sm border border-white overflow-hidden">
           <div className="p-8 border-b border-slate-50 flex items-center gap-3">
              <Search className="text-slate-300" size={20}/>
-             <input type="text" placeholder="Caută după nr, emitent sau conținut..." className="w-full outline-none font-bold text-slate-600 text-sm" value={search} onChange={e => setSearch(e.target.value)} />
+             <input type="text" placeholder={`Caută în Registru ${activeTab.toUpperCase()}...`} className="w-full outline-none font-bold text-slate-600 text-sm" value={search} onChange={e => setSearch(e.target.value)} />
           </div>
 
           <div className="overflow-x-auto">
@@ -153,16 +188,16 @@ export default function RegistruClient() {
                 {data.filter(i => (i.continut || '').toLowerCase().includes(search.toLowerCase())).map((item) => (
                   <tr key={item.id} className="border-b border-slate-50 hover:bg-slate-50/30 transition-colors">
                     <td className="px-6 py-6">
-                      <span className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase text-white shadow-sm ${item.tip === 'INTRARE' ? 'bg-[#10b981]' : item.tip === 'IESIRE' ? 'bg-[#3b82f6]' : 'bg-[#f97316]'}`}>{item.tip}</span>
+                      <span className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase text-white shadow-sm ${item.tip === 'INTRARE' ? 'bg-[#10b981]' : item.tip === 'IESIRE' ? 'bg-[#3b82f6]' : 'bg-[#f97316]'}`}>{item.tip || 'DOC'}</span>
                     </td>
                     <td className="px-6 py-6 text-blue-600 font-black text-sm">#{item.numar_inregistrare}</td>
-                    <td className="px-6 py-6 text-slate-500">{item.creat_la}</td>
-                    <td className="px-6 py-6 uppercase">{item.emitent}</td>
+                    <td className="px-6 py-6 text-slate-500 font-medium">{item.creat_la || item.data_emitere}</td>
+                    <td className="px-6 py-6 uppercase">{item.emitent || '-'}</td>
                     <td className="px-6 py-6 italic max-w-[200px] truncate">{item.continut}</td>
                     <td className="px-6 py-6 uppercase"><span className="bg-slate-100 px-3 py-1 rounded-lg text-[9px]">{item.compartiment}</span></td>
                     <td className="px-6 py-6 text-slate-400 font-black uppercase">{item.creat_de}</td>
-                    <td className="px-6 py-6 uppercase">{item.destinatar || '-'}</td>
-                    <td className="px-6 py-6 text-slate-400">{item.data_expedire}</td>
+                    <td className="px-6 py-6 uppercase text-slate-600">{item.destinatar || '-'}</td>
+                    <td className="px-6 py-6 text-slate-400 font-medium">{item.data_expedire || '-'}</td>
                     <td className="px-6 py-6 text-blue-400">{item.conex_ind || '-'}</td>
                     <td className="px-6 py-6 text-center"><button onClick={() => { setEditingId(item.id); setForm(item); setShowForm(true); }} className="text-slate-200 hover:text-blue-500 transition-all"><Edit2 size={16}/></button></td>
                   </tr>
@@ -173,10 +208,10 @@ export default function RegistruClient() {
         </div>
       </div>
 
-      {/* FORMULAR DIN IMAGINE */}
+      {/* FORMULAR ACTUALIZAT (DESIGN FIDEL) */}
       {showForm && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-[4rem] p-12 w-full max-w-[1000px] shadow-2xl relative">
+          <div className="bg-white rounded-[4rem] p-12 w-full max-w-[1000px] shadow-2xl relative animate-in zoom-in duration-200">
             <div className="flex justify-between items-start mb-10">
               <h2 className="text-4xl font-black text-[#1e293b] uppercase tracking-tighter">Date Registru</h2>
               <button onClick={() => setShowForm(false)} className="bg-[#f1f5f9] p-4 rounded-3xl text-slate-400 hover:text-red-500 transition-all"><X size={32}/></button>
@@ -207,8 +242,8 @@ export default function RegistruClient() {
                 <div>
                   <label className="text-[11px] font-black uppercase text-[#1e293b] mb-3 block">Compartiment</label>
                   <div className="flex gap-2 mb-3">
-                    {['SECRETARIAT', 'CONTABILITATE', 'APP', 'ALTELE'].map(c => (
-                      <button key={c} onClick={() => setForm({...form, compartiment: c})} className="px-4 py-2 bg-orange-50 text-orange-600 rounded-xl font-black text-[10px] uppercase">{c}</button>
+                    {['SECRETARIAT', 'CONTABILITATE', 'ADMINISTRATIV', 'ACHIZIȚII'].map(c => (
+                      <button key={c} onClick={() => setForm({...form, compartment: c})} className="px-4 py-2 bg-orange-50 text-orange-600 rounded-xl font-black text-[10px] uppercase">{c}</button>
                     ))}
                   </div>
                   <input type="text" placeholder="SCRIE COMPARTIMENT..." className="w-full p-6 bg-[#f8fafc] rounded-[2rem] font-black text-xl border-none outline-none uppercase" value={form.compartiment} onChange={e => setForm({...form, compartment: e.target.value})} />
@@ -234,14 +269,14 @@ export default function RegistruClient() {
               </div>
             </div>
 
-            <button onClick={handleSave} disabled={loading} className="w-full mt-10 bg-[#3b82f6] text-white p-8 rounded-[2.5rem] font-black text-2xl uppercase tracking-widest shadow-2xl shadow-blue-200 hover:scale-[1.01] active:scale-95 transition-all">
+            <button onClick={handleSave} disabled={loading} className="w-full mt-10 bg-[#3b82f6] text-white p-8 rounded-[2.5rem] font-black text-2xl uppercase tracking-widest shadow-2xl shadow-blue-200 hover:scale-[1.01] transition-all">
               {loading ? 'SE SALVEAZĂ...' : 'Salvează în Registru'}
             </button>
           </div>
         </div>
       )}
 
-      {/* FIȘA DE CONFIRMARE */}
+      {/* ANUNȚ NUMĂR (FIȘĂ) */}
       {lastRegNumber && (
         <div className="fixed inset-0 bg-blue-900/60 backdrop-blur-md flex items-center justify-center z-[60] p-4">
           <div className="bg-white rounded-[4rem] p-16 text-center shadow-2xl animate-in zoom-in duration-300 max-w-lg w-full">
