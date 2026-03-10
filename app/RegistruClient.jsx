@@ -29,16 +29,18 @@ export default function RegistruTeius() {
     compartiment: '', observatii: ''
   });
 
-  const fetchData = useCallback(async () => {
+ const fetchData = useCallback(async () => {
     setLoading(true);
     let tableName = 'documente';
+    let columnToSort = 'numar_inregistrare'; // Sortăm după numărul alocat
+
     if (activeTab === 'decizii') tableName = 'registrul_deciziilor';
     if (activeTab === 'registre') tableName = 'registrul_registrelor';
 
     const { data: result, error } = await supabase
       .from(tableName)
       .select('*')
-      .order('id', { ascending: false });
+      .order(columnToSort, { ascending: false }); // 'false' înseamnă descendent (3, 2, 1...)
     
     if (!error) setData(result || []);
     setLoading(false);
