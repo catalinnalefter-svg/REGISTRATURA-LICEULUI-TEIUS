@@ -27,13 +27,19 @@ export default function RegistruTeius() {
     observatii: ''
   });
 
+  // FETCH DATA DINAMIC ÎN FUNCȚIE DE TAB
   const fetchData = useCallback(async () => {
+    setLoading(true);
+    let tableName = activeTab === 'general' ? 'documente' : 'registrul_deciziilor';
+    
     const { data: result, error } = await supabase
-      .from('documente')
+      .from(tableName)
       .select('*')
-      .order('numar_inregistrare', { ascending: false });
+      .order(activeTab === 'general' ? 'numar_inregistrare' : 'created_at', { ascending: false });
+    
     if (!error) setData(result || []);
-  }, []);
+    setLoading(false);
+  }, [activeTab]);
 
   useEffect(() => { if (isAuth) fetchData(); }, [isAuth, fetchData]);
 
@@ -43,38 +49,46 @@ export default function RegistruTeius() {
     else alert("Parolă incorectă!");
   };
 
-  // FUNCȚIA DE EXPORT EXCEL PE COLOANE (FORMAT XML PENTRU EXCEL)
   const exportToExcel = () => {
-    const headers = ['Tip', 'Nr. Inreg', 'Data Inreg', 'Emitent', 'Continut', 'Compartiment', 'Creat De', 'Destinatar', 'Data Exped', 'Conex/Ind'];
+    const isGeneral = activeTab === 'general';
+    const headers = isGeneral 
+      ? ['Tip', 'Nr. Inreg', 'Data Inreg', 'Emitent', 'Continut', 'Compartiment', 'Creat De', 'Destinatar', 'Data Exped', 'Conex/Ind']
+      : ['Nr. Decizie', 'Data', 'Continut', 'Observatii', 'Creat De'];
     
-    // Generăm rândurile pentru Excel
-    const rows = data.map(i => `
-      <Row>
-        <Cell><Data ss:Type="String">${i.tip || ''}</Data></Cell>
-        <Cell><Data ss:Type="Number">${i.numar_inregistrare || 0}</Data></Cell>
-        <Cell><Data ss:Type="String">${i.creat_la || ''}</Data></Cell>
-        <Cell><Data ss:Type="String">${(i.emitent || '').replace(/&/g, '&amp;')}</Data></Cell>
-        <Cell><Data ss:Type="String">${(i.continut || '').replace(/&/g, '&amp;')}</Data></Cell>
-        <Cell><Data ss:Type="String">${(i.compartiment || '').replace(/&/g, '&amp;')}</Data></Cell>
-        <Cell><Data ss:Type="String">${i.creat_de || ''}</Data></Cell>
-        <Cell><Data ss:Type="String">${(i.destinatar || '').replace(/&/g, '&amp;')}</Data></Cell>
-        <Cell><Data ss:Type="String">${i.data_expediere || ''}</Data></Cell>
-        <Cell><Data ss:Type="String">${i.conex_ind || ''}/${i.indicativ_dosar || ''}</Data></Cell>
-      </Row>`).join('');
+    const rows = data.map(i => {
+      if (isGeneral) {
+        return `
+          <Row>
+            <Cell><Data ss:Type="String">${i.tip || ''}</Data></Cell>
+            <Cell><Data ss:Type="Number">${i.numar_inregistrare || 0}</Data></Cell>
+            <Cell><Data ss:Type="String">${i.creat_la || ''}</Data></Cell>
+            <Cell><Data ss:Type="String">${(i.emitent || '').replace(/&/g, '&amp;')}</Data></Cell>
+            <Cell><Data ss:Type="String">${(i.continut || '').replace(/&/g, '&amp;')}</Data></Cell>
+            <Cell><Data ss:Type="String">${(i.compartiment || '').replace(/&/g, '&amp;')}</Data></Cell>
+            <Cell><Data ss:Type="String">${i.creat_de || ''}</Data></Cell>
+            <Cell><Data ss:Type="String">${(i.destinatar || '').replace(/&/g, '&amp;')}</Data></Cell>
+            <Cell><Data ss:Type="String">${i.data_expediere || ''}</Data></Cell>
+            <Cell><Data ss:Type="String">${i.conex_ind || ''}/${i.indicativ_dosar || ''}</Data></Cell>
+          </Row>`;
+      } else {
+        return `
+          <Row>
+            <Cell><Data ss:Type="Number">${i.numar_inregistrare || 0}</Data></Cell>
+            <Cell><Data ss:Type="String">${i.creat_la || ''}</Data></Cell>
+            <Cell><Data ss:Type="String">${(i.continut || '').replace(/&/g, '&amp;')}</Data></Cell>
+            <Cell><Data ss:Type="String">${(i.observatii || '').replace(/&/g, '&amp;')}</Data></Cell>
+            <Cell><Data ss:Type="String">${i.creat_de || ''}</Data></Cell>
+          </Row>`;
+      }
+    }).join('');
 
     const excelTemplate = `
       <?xml version="1.0"?>
       <?mso-application progid="Excel.Sheet"?>
-      <Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
-        xmlns:o="urn:schemas-microsoft-com:office:office"
-        xmlns:x="urn:schemas-microsoft-com:office:excel"
-        xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
-        xmlns:html="http://www.w3.org/TR/REC-html40">
-        <Worksheet ss:Name="Registru General">
+      <Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+        <Worksheet ss:Name="${activeTab.toUpperCase()}">
           <Table>
-            <Row>
-              ${headers.map(h => `<Cell><Data ss:Type="String">${h}</Data></Cell>`).join('')}
-            </Row>
+            <Row>${headers.map(h => `<Cell><Data ss:Type="String">${h}</Data></Cell>`).join('')}</Row>
             ${rows}
           </Table>
         </Worksheet>
@@ -84,14 +98,16 @@ export default function RegistruTeius() {
     const url = URL.createObjectURL(blob);
     const link = document.body.appendChild(document.createElement('a'));
     link.href = url;
-    link.download = `Registru_General_${new Date().toLocaleDateString()}.xls`;
+    link.download = `Export_${activeTab}_${new Date().toLocaleDateString()}.xls`;
     link.click();
     document.body.removeChild(link);
   };
 
   const handleSave = async () => {
     setLoading(true);
-    const payload = {
+    let tableName = activeTab === 'general' ? 'documente' : 'registrul_deciziilor';
+    
+    const payload = activeTab === 'general' ? {
       tip: formType,
       creat_la: form.data,
       emitent: (form.emitent || '').toUpperCase(),
@@ -102,11 +118,16 @@ export default function RegistruTeius() {
       data_expediere: form.data_expediere || null,
       conex_ind: form.conex,
       indicativ_dosar: form.indicativ_dosar
+    } : {
+      creat_la: form.data,
+      continut: (form.continut || '').toUpperCase(),
+      observatii: (form.observatii || '').toUpperCase(),
+      creat_de: currentUser
     };
 
     const { data: savedData, error } = editingId 
-        ? await supabase.from('documente').update(payload).eq('id', editingId).select() 
-        : await supabase.from('documente').insert([payload]).select();
+        ? await supabase.from(tableName).update(payload).eq('id', editingId).select() 
+        : await supabase.from(tableName).insert([payload]).select();
 
     if (error) {
       alert("Eroare: " + error.message);
@@ -165,9 +186,21 @@ export default function RegistruTeius() {
 
         <div className="flex gap-4 mb-8">
             <button onClick={() => setActiveTab('general')} className={`flex-1 p-4 rounded-[1.5rem] font-black uppercase text-xs transition-all border-b-4 ${activeTab === 'general' ? 'bg-white border-blue-600 text-blue-600 shadow-md' : 'bg-slate-100 border-transparent text-slate-400'}`}>Registru General</button>
-            <button className="flex-1 p-4 rounded-[1.5rem] font-black uppercase text-xs bg-slate-100 text-slate-400 opacity-50 cursor-not-allowed">Decizii / Note</button>
+            {/* ACTIVARE TAB DECIZII */}
+            <button onClick={() => setActiveTab('decizii')} className={`flex-1 p-4 rounded-[1.5rem] font-black uppercase text-xs transition-all border-b-4 ${activeTab === 'decizii' ? 'bg-white border-blue-600 text-blue-600 shadow-md' : 'bg-slate-100 border-transparent text-slate-400'}`}>Decizii / Note</button>
             <button className="flex-1 p-4 rounded-[1.5rem] font-black uppercase text-xs bg-slate-100 text-slate-400 opacity-50 cursor-not-allowed">Registru Registre</button>
         </div>
+
+        {/* BUTON ADAUGARE PENTRU DECIZII */}
+        {activeTab === 'decizii' && (
+          <div className="mb-10">
+            <button onClick={() => { setEditingId(null); setShowForm(true); }} className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 text-left hover:shadow-xl transition-all w-full md:w-1/3">
+              <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-white mb-4 bg-blue-600"><Plus size={24} strokeWidth={3}/></div>
+              <h3 className="font-black text-2xl text-slate-800 mb-1">Adaugă Decizie / Notă</h3>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Creare înregistrare nouă în registrul deciziilor</p>
+            </button>
+          </div>
+        )}
 
         {activeTab === 'general' && (
           <div className="grid grid-cols-3 gap-6 mb-10">
@@ -181,6 +214,7 @@ export default function RegistruTeius() {
           </div>
         )}
 
+        {/* TABEL UNIVERSAL */}
         <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden">
           <div className="p-6 border-b border-slate-50 flex justify-between items-center">
              <div className="flex items-center gap-3 bg-slate-50 px-5 py-3 rounded-2xl w-96 border border-slate-100">
@@ -191,39 +225,54 @@ export default function RegistruTeius() {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead className="bg-slate-50/50 text-[9px] font-black uppercase text-slate-400">
-                <tr>
-                  <th className="px-4 py-5">Tip</th>
-                  <th className="px-4 py-5">Nr. Inreg.</th>
-                  <th className="px-4 py-5">Data Inreg.</th>
-                  <th className="px-4 py-5">Emitent</th>
-                  <th className="px-4 py-5">Conținut</th>
-                  <th className="px-4 py-5">Compartiment</th>
-                  <th className="px-4 py-5">Creat De</th>
-                  <th className="px-4 py-5">Destinatar</th>
-                  <th className="px-4 py-5">Data Exped.</th>
-                  <th className="px-4 py-5">Conex/Ind.</th>
-                  <th className="px-4 py-5 text-right">Editare</th>
-                </tr>
+                {activeTab === 'general' ? (
+                  <tr>
+                    <th className="px-4 py-5">Tip</th>
+                    <th className="px-4 py-5">Nr. Inreg.</th>
+                    <th className="px-4 py-5">Data Inreg.</th>
+                    <th className="px-4 py-5">Emitent</th>
+                    <th className="px-4 py-5">Conținut</th>
+                    <th className="px-4 py-5">Compartiment</th>
+                    <th className="px-4 py-5">Creat De</th>
+                    <th className="px-4 py-5">Destinatar</th>
+                    <th className="px-4 py-5 text-right">Editare</th>
+                  </tr>
+                ) : (
+                  <tr>
+                    <th className="px-4 py-5">Nr. Decizie</th>
+                    <th className="px-4 py-5">Data</th>
+                    <th className="px-4 py-5">Conținut Decizie</th>
+                    <th className="px-4 py-5">Observații</th>
+                    <th className="px-4 py-5">Creat De</th>
+                    <th className="px-4 py-5 text-right">Editare</th>
+                  </tr>
+                )}
               </thead>
               <tbody className="divide-y divide-slate-50 text-[11px] font-bold text-slate-600">
                 {data.filter(i => (i.continut || '').toLowerCase().includes(search.toLowerCase())).map(item => (
                   <tr key={item.id} className="hover:bg-blue-50/30 transition-colors">
-                    <td className="px-4 py-4">
-                      <span className={`px-3 py-1.5 rounded-xl text-[9px] font-black text-white uppercase tracking-wider ${item.tip==='INTRARE'?'bg-emerald-500':item.tip==='IESIRE'?'bg-blue-500':'bg-orange-500'}`}>
-                        {item.tip}
-                      </span>
-                    </td>
-                    <td className="px-4 py-4 text-blue-600 font-black">{item.numar_inregistrare}</td>
-                    <td className="px-4 py-4">{item.creat_la}</td>
-                    <td className="px-4 py-4 truncate max-w-[100px] uppercase">{item.emitent}</td>
-                    <td className="px-4 py-4 truncate max-w-[150px] uppercase">{item.continut}</td>
-                    <td className="px-4 py-4 uppercase">{item.compartiment}</td>
-                    <td className="px-4 py-4 text-slate-400">{item.creat_de}</td>
-                    <td className="px-4 py-4 uppercase">{item.destinatar}</td>
-                    <td className="px-4 py-4">{item.data_expediere || '-'}</td>
-                    <td className="px-4 py-4">{item.conex_ind || item.indicativ_dosar ? `${item.conex_ind || ''} / ${item.indicativ_dosar || ''}` : '-'}</td>
+                    {activeTab === 'general' ? (
+                      <>
+                        <td className="px-4 py-4"><span className={`px-3 py-1.5 rounded-xl text-[9px] font-black text-white uppercase tracking-wider ${item.tip==='INTRARE'?'bg-emerald-500':item.tip==='IESIRE'?'bg-blue-500':'bg-orange-500'}`}>{item.tip}</span></td>
+                        <td className="px-4 py-4 text-blue-600 font-black">{item.numar_inregistrare}</td>
+                        <td className="px-4 py-4">{item.creat_la}</td>
+                        <td className="px-4 py-4 truncate max-w-[100px] uppercase">{item.emitent}</td>
+                        <td className="px-4 py-4 truncate max-w-[150px] uppercase">{item.continut}</td>
+                        <td className="px-4 py-4 uppercase">{item.compartiment}</td>
+                        <td className="px-4 py-4 text-slate-400">{item.creat_de}</td>
+                        <td className="px-4 py-4 uppercase">{item.destinatar}</td>
+                      </>
+                    ) : (
+                      <>
+                        <td className="px-4 py-4 text-blue-600 font-black">{item.numar_inregistrare}</td>
+                        <td className="px-4 py-4">{item.creat_la}</td>
+                        <td className="px-4 py-4 uppercase">{item.continut}</td>
+                        <td className="px-4 py-4 uppercase">{item.observatii || '-'}</td>
+                        <td className="px-4 py-4 text-slate-400">{item.creat_de}</td>
+                      </>
+                    )}
                     <td className="px-4 py-4 text-right">
-                      <button onClick={() => { setFormType(item.tip); setEditingId(item.id); setForm({...item, data: item.creat_la, conex: item.conex_ind}); setShowForm(true); }} className="text-slate-300 hover:text-blue-600"><Edit2 size={14}/></button>
+                      <button onClick={() => { setEditingId(item.id); setForm({...item, data: item.creat_la}); setShowForm(true); }} className="text-slate-300 hover:text-blue-600"><Edit2 size={14}/></button>
                     </td>
                   </tr>
                 ))}
@@ -240,7 +289,7 @@ export default function RegistruTeius() {
                 <CheckCircle2 size={60} strokeWidth={2.5} />
               </div>
               <h2 className="text-2xl font-black text-slate-800 uppercase mb-2">Înregistrare Reușită!</h2>
-              <p className="text-slate-400 font-bold mb-8 uppercase text-xs tracking-widest">Numărul alocat în registru este:</p>
+              <p className="text-slate-400 font-bold mb-8 uppercase text-xs tracking-widest">Numărul alocat este:</p>
               <div className="bg-slate-50 rounded-[2rem] p-8 mb-10 border-2 border-slate-100">
                 <span className="text-7xl font-black text-blue-600 tracking-tighter">#{allocatedNumber}</span>
               </div>
@@ -253,53 +302,46 @@ export default function RegistruTeius() {
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-50 p-6 text-slate-900">
           <div className="bg-white rounded-[3rem] p-10 w-full max-w-5xl shadow-2xl relative border-[12px] border-slate-50">
             <button onClick={() => setShowForm(false)} className="absolute top-8 right-8 text-slate-300 hover:text-red-500 transition-colors"><X size={32} strokeWidth={3}/></button>
-            <h2 className="text-3xl font-black text-slate-800 mb-6 uppercase tracking-tighter">Date Registru</h2>
-            <div className="flex gap-3 mb-8">
-              {['INTRARE', 'IESIRE', 'REZERVAT'].map(t => (
-                <button key={t} onClick={() => setFormType(t)} className={`px-8 py-2 rounded-full font-black text-[10px] uppercase transition-all ${formType === t ? 'bg-blue-600 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>{t}</button>
-              ))}
-            </div>
+            <h2 className="text-3xl font-black text-slate-800 mb-6 uppercase tracking-tighter">
+              {activeTab === 'general' ? 'Date Registru General' : 'Date Decizii / Note'}
+            </h2>
+            
             <div className="grid grid-cols-2 gap-12">
               <div className="space-y-6">
                 <div>
                   <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">Data Document</label>
                   <input type="date" value={form.data} onChange={e => setForm({...form, data: e.target.value})} className="w-full p-5 bg-slate-50 rounded-2xl font-black border-2 border-slate-100 outline-none focus:border-blue-500" />
                 </div>
-                <div>
-                  <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">Emitent</label>
-                  <div className="flex gap-2 mb-3">
-                     {['DIN OFICIU', 'ISJ ALBA', 'MINISTERUL EDUCAȚIEI'].map(e => (
-                       <button key={e} onClick={() => setForm({...form, emitent: e})} className="px-4 py-2 bg-blue-50 text-blue-600 rounded-xl text-[9px] font-black hover:bg-blue-600 hover:text-white border border-blue-100 uppercase">{e}</button>
-                     ))}
+                {activeTab === 'general' && (
+                  <div>
+                    <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">Emitent</label>
+                    <input type="text" placeholder="SCRIE EMITENTUL..." value={form.emitent} onChange={e => setForm({...form, emitent: e.target.value})} className="w-full p-5 bg-slate-50 rounded-2xl font-black border-2 border-slate-100 outline-none focus:border-blue-500 uppercase" />
                   </div>
-                  <input type="text" placeholder="SCRIE EMITENTUL..." value={form.emitent} onChange={e => setForm({...form, emitent: e.target.value})} className="w-full p-5 bg-slate-50 rounded-2xl font-black border-2 border-slate-100 outline-none focus:border-blue-500 uppercase" />
-                </div>
+                )}
                 <div>
-                  <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">Conținut</label>
+                  <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">Conținut / Obiect</label>
                   <textarea value={form.continut} onChange={e => setForm({...form, continut: e.target.value})} className="w-full p-6 bg-slate-50 rounded-[2.5rem] border-2 border-slate-100 font-bold h-48 resize-none outline-none focus:border-blue-500 uppercase" />
                 </div>
               </div>
+
               <div className="space-y-6">
-                <div>
-                  <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">Compartiment</label>
-                  <div className="flex gap-2 mb-3">
-                     {['SECRETARIAT', 'CONTABILITATE', 'APP', 'ALTELE'].map(c => (
-                       <button key={c} onClick={() => setForm({...form, compartiment: c})} className="px-4 py-2 bg-orange-50 text-orange-700 rounded-xl text-[9px] font-black hover:bg-orange-600 hover:text-white border border-orange-100 uppercase">{c}</button>
-                     ))}
-                  </div>
-                  <input type="text" placeholder="SCRIE COMPARTIMENT..." value={form.compartiment} onChange={e => setForm({...form, compartiment: e.target.value})} className="w-full p-5 bg-slate-50 rounded-2xl font-black border-2 border-slate-100 outline-none focus:border-blue-500 uppercase" />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                   <input type="date" value={form.data_expediere} onChange={e => setForm({...form, data_expediere: e.target.value})} className="w-full p-5 bg-slate-50 rounded-2xl border-2 border-slate-100 font-black outline-none" />
-                   <input type="text" placeholder="DESTINATAR" value={form.destinatar} onChange={e => setForm({...form, destinatar: e.target.value})} className="w-full p-5 bg-slate-50 rounded-2xl border-2 border-slate-100 font-black outline-none uppercase" />
-                </div>
-                <div className="p-8 bg-blue-50/40 rounded-[3rem] border-2 border-blue-100">
-                    <p className="text-[10px] font-black text-blue-600 uppercase mb-6">Legături Document</p>
-                    <div className="grid grid-cols-2 gap-6">
-                      <input type="text" placeholder="NR. CONEX" value={form.conex} onChange={e => setForm({...form, conex: e.target.value})} className="w-full p-4 bg-white rounded-2xl font-black shadow-sm outline-none" />
-                      <input type="text" placeholder="IND. DOSAR" value={form.indicativ_dosar} onChange={e => setForm({...form, indicativ_dosar: e.target.value})} className="w-full p-4 bg-white rounded-2xl font-black shadow-sm outline-none" />
+                {activeTab === 'general' ? (
+                  <>
+                    <div>
+                      <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">Compartiment</label>
+                      <input type="text" placeholder="SCRIE COMPARTIMENT..." value={form.compartiment} onChange={e => setForm({...form, compartiment: e.target.value})} className="w-full p-5 bg-slate-50 rounded-2xl font-black border-2 border-slate-100 outline-none focus:border-blue-500 uppercase" />
                     </div>
-                </div>
+                    <div>
+                      <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">Destinatar</label>
+                      <input type="text" placeholder="DESTINATAR" value={form.destinatar} onChange={e => setForm({...form, destinatar: e.target.value})} className="w-full p-5 bg-slate-50 rounded-2xl border-2 border-slate-100 font-black outline-none uppercase" />
+                    </div>
+                  </>
+                ) : (
+                  <div>
+                    <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">Observații</label>
+                    <textarea value={form.observatii} onChange={e => setForm({...form, observatii: e.target.value})} className="w-full p-6 bg-slate-50 rounded-[2.5rem] border-2 border-slate-100 font-bold h-48 resize-none outline-none focus:border-blue-500 uppercase" />
+                  </div>
+                )}
               </div>
             </div>
             <button onClick={handleSave} disabled={loading} className="w-full bg-blue-600 hover:bg-blue-700 text-white p-6 rounded-[2rem] font-black text-lg uppercase shadow-xl shadow-blue-200 mt-10 transition-all">{loading ? 'SALVARE...' : 'Salvează în Registru'}</button>
