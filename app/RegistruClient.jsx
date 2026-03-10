@@ -242,63 +242,95 @@ export default function RegistruTeius() {
 
       {/* FORMULAR MODAL CONFORM POZEI */}
       {showForm && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-50 p-6">
-          <div className="bg-white rounded-[3rem] p-10 w-full max-w-4xl shadow-2xl relative border-[12px] border-slate-50">
-            <button onClick={() => setShowForm(false)} className="absolute top-8 right-8 text-slate-300 hover:text-red-500 transition-colors"><X size={28}/></button>
-            
-            <h2 className="text-3xl font-black text-slate-800 mb-8 uppercase tracking-tighter">Date Registru <span className="text-blue-600">{activeTab === 'general' ? formType : activeTab}</span></h2>
+       {/* FORMULAR MODAL PENTRU REGISTRU GENERAL - CONFORM POZEI */}
+{showForm && activeTab === 'general' && (
+  <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-50 p-6">
+    <div className="bg-white rounded-[3rem] p-10 w-full max-w-5xl shadow-2xl relative border-[12px] border-slate-50">
+      <button onClick={() => setShowForm(false)} className="absolute top-8 right-8 text-slate-300 hover:text-red-500 transition-colors">
+        <X size={32} strokeWidth={3}/>
+      </button>
+      
+      <h2 className="text-3xl font-black text-slate-800 mb-6 uppercase tracking-tighter">Date Registru</h2>
 
-            <div className="grid grid-cols-2 gap-10">
-              <div className="space-y-6">
-                <div>
-                    <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">Data Document (Z-L-A)</label>
-                    <input type="date" value={form.data} onChange={e => setForm({...form, data: e.target.value})} className="w-full p-4 bg-slate-50 rounded-2xl font-black border-2 border-slate-50 outline-none focus:border-blue-500 transition-all text-sm" />
-                </div>
+      {/* Butoane Tip (Intrare/Iesire/Rezervat) */}
+      <div className="flex gap-3 mb-8">
+        {['INTRARE', 'IESIRE', 'REZERVAT'].map(t => (
+          <button 
+            key={t} 
+            onClick={() => setFormType(t)}
+            className={`px-8 py-2 rounded-full font-black text-[10px] uppercase transition-all ${formType === t ? 'bg-blue-600 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}
+          >
+            {t}
+          </button>
+        ))}
+      </div>
 
-                <div>
-                    <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">Emitent / Instituție</label>
-                    <input type="text" placeholder="SCRIE EMITENTUL..." value={form.emitent} onChange={e => setForm({...form, emitent: e.target.value})} className="w-full p-4 bg-slate-50 rounded-2xl font-black border-2 border-slate-50 outline-none focus:border-blue-500 transition-all text-sm uppercase" />
-                </div>
+      <div className="grid grid-cols-2 gap-12">
+        {/* COLOANA STÂNGA */}
+        <div className="space-y-6">
+          <div>
+            <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">Data Document (Z-L-A)</label>
+            <input type="date" value={form.data} onChange={e => setForm({...form, data: e.target.value})} className="w-full p-5 bg-slate-50 rounded-2xl font-black border-2 border-slate-50 outline-none focus:border-blue-500 transition-all text-sm" />
+          </div>
 
-                <div>
-                    <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">Conținut / Descriere</label>
-                    <textarea value={form.continut} onChange={e => setForm({...form, continut: e.target.value})} className="w-full p-5 bg-slate-50 rounded-[2rem] border-2 border-slate-50 font-bold h-32 resize-none outline-none focus:border-blue-500 transition-all text-sm" placeholder="DETALII DESPRE DOCUMENT..." />
-                </div>
-              </div>
-
-              <div className="space-y-6">
-                 <div>
-                    <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">Compartiment Destinatar</label>
-                    <select value={form.compartiment} onChange={e => setForm({...form, compartiment: e.target.value})} className="w-full p-4 bg-slate-50 rounded-2xl font-black border-2 border-slate-50 outline-none focus:border-blue-500 transition-all text-sm">
-                      <option value="">ALEGE COMPARTIMENT...</option>
-                      {listaCompartimente.map(c => <option key={c} value={c}>{c}</option>)}
-                    </select>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                    <div>
-                        <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">Nr. Conex</label>
-                        <input type="text" placeholder="EX: 45" value={form.conex} onChange={e => setForm({...form, conex: e.target.value})} className="w-full p-4 bg-slate-50 rounded-2xl border-2 border-slate-50 font-black text-sm outline-none" />
-                    </div>
-                    <div>
-                        <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">Indicativ Dosar</label>
-                        <input type="text" placeholder="EX: IV-C" value={form.indicativ_dosar} onChange={e => setForm({...form, indicativ_dosar: e.target.value})} className="w-full p-4 bg-slate-50 rounded-2xl border-2 border-slate-50 font-black text-sm outline-none" />
-                    </div>
-                </div>
-
-                <div className="p-6 bg-blue-50/50 rounded-[2rem] border-2 border-blue-100 border-dashed">
-                    <p className="text-[9px] font-black text-blue-400 uppercase mb-2 text-center">Informații adiționale</p>
-                    <input type="text" placeholder="OBSERVAȚII..." value={form.observatii} onChange={e => setForm({...form, observatii: e.target.value})} className="w-full p-3 bg-white rounded-xl border-none font-bold text-xs outline-none text-center" />
-                </div>
-              </div>
+          <div>
+            <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">Emitent</label>
+            <div className="flex gap-2 mb-3">
+               {['DIN OFICIU', 'ISJ ALBA', 'MINISTERUL EDUCAȚIEI'].map(e => (
+                 <button key={e} onClick={() => setForm({...form, emitent: e})} className="px-4 py-2 bg-blue-50 text-blue-600 rounded-xl text-[9px] font-black hover:bg-blue-600 hover:text-white transition-all border border-blue-100 uppercase">{e}</button>
+               ))}
             </div>
+            <input type="text" placeholder="SCRIE EMITENTUL..." value={form.emitent} onChange={e => setForm({...form, emitent: e.target.value.toUpperCase()})} className="w-full p-5 bg-slate-50 rounded-2xl font-black border-2 border-slate-50 outline-none focus:border-blue-500 transition-all text-sm uppercase" />
+          </div>
 
-            <button onClick={handleSave} disabled={loading} className="w-full bg-blue-600 hover:bg-blue-700 text-white p-5 rounded-[1.5rem] font-black text-sm uppercase shadow-xl shadow-blue-200 mt-10 transition-all transform hover:scale-[1.01]">
-              {loading ? 'SE SALVEAZĂ...' : 'Salvează în Registru'}
-            </button>
+          <div>
+            <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">Conținut / Descriere</label>
+            <textarea value={form.continut} onChange={e => setForm({...form, continut: e.target.value.toUpperCase()})} className="w-full p-6 bg-slate-50 rounded-[2.5rem] border-2 border-slate-50 font-bold h-48 resize-none outline-none focus:border-blue-500 transition-all text-sm" placeholder="DETALII DESPRE DOCUMENT..." />
           </div>
         </div>
-      )}
+
+        {/* COLOANA DREAPTĂ */}
+        <div className="space-y-6">
+          <div>
+            <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">Compartiment</label>
+            <div className="flex gap-2 mb-3">
+               {['SECRETARIAT', 'CONTABILITATE', 'APP', 'ALTELE'].map(c => (
+                 <button key={c} onClick={() => setForm({...form, compartiment: c})} className="px-4 py-2 bg-orange-50 text-orange-700 rounded-xl text-[9px] font-black hover:bg-orange-600 hover:text-white transition-all border border-orange-100 uppercase">{c}</button>
+               ))}
+            </div>
+            <input type="text" placeholder="SCRIE COMPARTIMENT..." value={form.compartiment} onChange={e => setForm({...form, compartiment: e.target.value.toUpperCase()})} className="w-full p-5 bg-slate-50 rounded-2xl font-black border-2 border-slate-50 outline-none focus:border-blue-500 transition-all text-sm uppercase" />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+             <div>
+                <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">Data Expediere</label>
+                <input type="date" value={form.data_expediere} onChange={e => setForm({...form, data_expediere: e.target.value})} className="w-full p-5 bg-slate-50 rounded-2xl border-2 border-slate-50 font-black text-sm outline-none" />
+             </div>
+             <div>
+                <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">Destinatar</label>
+                <input type="text" placeholder="CĂTRE..." value={form.destinatar} onChange={e => setForm({...form, destinatar: e.target.value.toUpperCase()})} className="w-full p-5 bg-slate-50 rounded-2xl border-2 border-slate-50 font-black text-sm outline-none uppercase" />
+             </div>
+          </div>
+
+          <div className="p-8 bg-blue-50/40 rounded-[3rem] border-2 border-blue-100 relative">
+              <p className="text-[10px] font-black text-blue-600 uppercase mb-6">Legături Document (Conex/Dosar)</p>
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <label className="text-[8px] font-black text-blue-300 uppercase ml-1 mb-1 block">Nr. Conex</label>
+                  <input type="text" placeholder="EX: 45" value={form.conex} onChange={e => setForm({...form, conex: e.target.value})} className="w-full p-4 bg-white rounded-2xl font-black text-sm outline-none border-none shadow-sm" />
+                </div>
+                <div>
+                  <label className="text-[8px] font-black text-blue-300 uppercase ml-1 mb-1 block">Indicativ Dosar</label>
+                  <input type="text" placeholder="EX: IV-C" value={form.indicativ_dosar} onChange={e => setForm({...form, indicativ_dosar: e.target.value})} className="w-full p-4 bg-white rounded-2xl font-black text-sm outline-none border-none shadow-sm" />
+                </div>
+              </div>
+          </div>
+        </div>
+      </div>
+
+      <button onClick={handleSave} disabled={loading} className="w-full bg-blue-600 hover:bg-blue-700 text-white p-6 rounded-[2rem] font-black text-lg uppercase shadow-xl shadow-blue-200 mt-10 transition-all transform hover:scale-[1.01]">
+        {loading ? 'SE SALVEAZĂ...' : 'Salvează în Registru'}
+      </button>
     </div>
-  );
-}
+  </div>
+)}
