@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Plus, Search, X, Edit2, LogOut, Download } from 'lucide-react';
+import { Search, X, Edit2, LogOut, Download, Plus, FileText, ClipboardList } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 export default function RegistruTeius() {
@@ -16,233 +16,265 @@ export default function RegistruTeius() {
   const [formType, setFormType] = useState('INTRARE');
   const [editingId, setEditingId] = useState(null);
 
-  const listaEmitenti = ["ISJ ALBA", "MINISTERUL EDUCAȚIEI", "PRIMĂRIA TEIUȘ", "ALTA INSTITUȚIE", "PERSOANĂ FIZICĂ"];
   const listaCompartimente = ["SECRETARIAT", "CONTABILITATE", "ADMINISTRATIV", "DIRECTOR", "ACHIZIȚII", "RESURSE UMANE"];
 
   const [form, setForm] = useState({
-    numar_manual: '', data: new Date().toISOString().split('T')[0], data_final: '',
-    emitent: '', continut: '', destinatar: '', data_exped: '', conex: '',
-    indicativ_dosar: '', compartiment: '', observatii: '', tip_document_spec: 'DECIZIE'
+    data: new Date().toISOString().split('T')[0],
+    emitent: '', continut: '', destinatar: '', 
+    data_expediere: '', conex: '', indicativ_dosar: '', 
+    compartiment: '', observatii: '', tip_document_spec: 'DECIZIE',
+    numar_manual: '', data_final: ''
   });
 
   const fetchData = useCallback(async () => {
     let table = activeTab === 'general' ? 'documente' : (activeTab === 'decizii' ? 'registrul_deciziilor' : 'registrul_registrelor');
     const { data: result, error } = await supabase.from(table).select('*').order('created_at', { ascending: false });
-    if (!error) setData(result || []);
+    if (error) {
+        console.error("Eroare incarcare date:", error.message);
+        setData([]);
+    } else {
+        setData(result || []);
+    }
   }, [activeTab]);
 
   useEffect(() => { if (isAuth) fetchData(); }, [isAuth, fetchData]);
 
-  // EXPORT CSV (Fără pachete externe, compatibil Excel)
-  const exportToExcel = () => {
-    let headers = [];
-    let rows = [];
+  const handleLogin = () => {
+    if (pass === 'liceulteius2026') setIsAuth(true);
+    else alert("Parolă incorectă!");
+  };
 
-    if (activeTab === 'general') {
-      headers = ['Tip', 'Nr_Inreg', 'Data', 'Emitent', 'Continut', 'Compartiment'];
-      rows = data.map(i => [i.tip, i.numar_inregistrare, i.creat_la, i.emitent, i.continut, i.compartiment]);
-    } else if (activeTab === 'decizii') {
-      headers = ['Tip', 'Nr_Doc', 'Data', 'Continut', 'Observatii'];
-      rows = data.map(i => [i.tip_document, i.numar_inregistrare, i.data_emitere, i.continut, i.observatii]);
-    } else {
-      headers = ['Nr_Reg', 'Data_Inceput', 'Continut', 'Data_Sfarsit', 'Observatii'];
-      rows = data.map(i => [i.numar_manual, i.data_inceput, i.continut, i.data_sfarsit, i.observatii]);
-    }
+  const exportToCSV = () => {
+    let headers = activeTab === 'general' 
+      ? ['Tip', 'Nr', 'Data', 'Emitent', 'Continut', 'Compartiment'] 
+      : ['Tip/Nr', 'Data', 'Continut', 'Observatii'];
+    
+    const rows = data.map(i => activeTab === 'general' 
+      ? [i.tip, i.numar_inregistrare, i.creat_la, i.emitent, i.continut, i.compartiment]
+      : [i.numar_inregistrare || i.numar_manual, i.data_emitere || i.data_inceput, i.continut, i.observatii]);
 
-    const content = [headers, ...rows].map(e => e.map(v => `"${v || ''}"`).join(",")).join("\n");
-    const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
+    const csvContent = "data:text/csv;charset=utf-8," + [headers, ...rows].map(e => e.join(",")).join("\n");
     const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `Registru_${activeTab}_2026.csv`);
+    link.setAttribute("href", encodeURI(csvContent));
+    link.setAttribute("download", `export_${activeTab}.csv`);
     document.body.appendChild(link);
     link.click();
-    document.body.removeChild(link);
   };
 
   const handleSave = async () => {
     setLoading(true);
-    try {
-      let table = activeTab === 'general' ? 'documente' : (activeTab === 'decizii' ? 'registrul_deciziilor' : 'registrul_registrelor');
-      let payload = { continut: form.continut, creat_de: currentUser, anul: 2026, observatii: form.observatii };
+    let table = activeTab === 'general' ? 'documente' : (activeTab === 'decizii' ? 'registrul_deciziilor' : 'registrul_registrelor');
+    
+    // Payload adaptat sa evite erorile de coloane lipsa (observatii/numar_manual)
+    let payload = { 
+        continut: form.continut, 
+        creat_de: currentUser
+    };
 
-      if (activeTab === 'general') {
+    if (activeTab === 'general') {
         Object.assign(payload, {
-          tip: formType, creat_la: form.data, emitent: form.emitent, destinatar: form.destinatar,
-          data_expedire: form.data_exped || null, conex_ind: form.conex, indicativ_dosar: form.indicativ_dosar, compartiment: form.compartiment
+            tip: formType,
+            creat_la: form.data,
+            emitent: form.emitent,
+            destinatar: form.destinatar,
+            compartiment: form.compartiment,
+            indicativ_dosar: form.indicativ_dosar
         });
-      } else if (activeTab === 'decizii') {
-        Object.assign(payload, { tip_document: form.tip_document_spec, data_emitere: form.data });
-      } else if (activeTab === 'registre') {
-        Object.assign(payload, { numar_manual: form.numar_manual, data_inceput: form.data, data_sfarsit: form.data_final || null });
-      }
+    }
 
-      const { error } = editingId ? await supabase.from(table).update(payload).eq('id', editingId) : await supabase.from(table).insert([payload]);
-      if (error) throw error;
-      fetchData();
-      setShowForm(false);
-    } catch (err) { alert(err.message); }
+    const { error } = editingId 
+        ? await supabase.from(table).update(payload).eq('id', editingId) 
+        : await supabase.from(table).insert([payload]);
+
+    if (error) alert("Eroare: " + error.message);
+    else { setShowForm(false); fetchData(); }
     setLoading(false);
   };
 
   if (!isAuth) {
     return (
-      <div className="min-h-screen bg-slate-100 flex items-center justify-center p-6 text-slate-900">
-        <div className="bg-white p-8 rounded-[2rem] shadow-xl w-full max-w-sm text-center">
-          <h2 className="text-lg font-black text-blue-600 mb-6 uppercase">Login Gestiune L.T. Teiuș</h2>
-          <select className="w-full p-3 bg-slate-50 rounded-xl mb-4 font-bold border outline-none" value={currentUser} onChange={e => setCurrentUser(e.target.value)}>
-            <option value="">Alege Departamentul...</option>
+      <div className="min-h-screen bg-[#f1f5f9] flex items-center justify-center p-6">
+        <div className="bg-white p-10 rounded-[2.5rem] shadow-2xl w-full max-w-md text-center border-t-8 border-blue-600">
+          <h2 className="text-2xl font-black text-slate-800 mb-2 uppercase tracking-tight">Acces Registre</h2>
+          <p className="text-blue-600 font-bold mb-8 text-sm">LICEUL TEORETIC TEIUȘ</p>
+          
+          <select className="w-full p-4 bg-slate-50 rounded-2xl mb-4 font-bold border-2 border-slate-100 outline-none focus:border-blue-500 transition-all" value={currentUser} onChange={e => setCurrentUser(e.target.value)}>
+            <option value="">Alege utilizatorul...</option>
             {listaCompartimente.map(dep => <option key={dep} value={dep}>{dep}</option>)}
           </select>
-          <input type="password" placeholder="Parola" className="w-full p-3 bg-slate-50 rounded-xl mb-4 text-center font-bold border outline-none" value={pass} onChange={e => setPass(e.target.value)} />
-          <button onClick={() => pass === 'liceulteius2026' ? setIsAuth(true) : alert("Eronat")} className="w-full bg-blue-600 text-white p-3 rounded-xl font-black uppercase">Intră</button>
+
+          <input 
+            type="password" 
+            placeholder="Introduceți parola" 
+            className="w-full p-4 bg-slate-50 rounded-2xl mb-6 text-center font-bold border-2 border-slate-100 outline-none focus:border-blue-500 transition-all" 
+            value={pass} 
+            onChange={e => setPass(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleLogin()}
+          />
+          
+          <button onClick={handleLogin} className="w-full bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-2xl font-black uppercase shadow-lg shadow-blue-200 transition-all transform hover:scale-[1.02]">
+            Intră în Sistem
+          </button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] p-4 text-slate-800">
-      <div className="max-w-[1700px] mx-auto">
-        <header className="flex justify-between items-center mb-6 bg-white p-4 rounded-2xl shadow-sm border">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center font-black text-white text-xs">LTT</div>
+    <div className="min-h-screen bg-[#f8fafc] p-6 text-slate-800 font-sans">
+      <div className="max-w-7xl mx-auto">
+        {/* Header conform pozei */}
+        <header className="flex justify-between items-center mb-10 bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100">
+          <div className="flex items-center gap-5">
+            <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center font-black text-white shadow-lg shadow-blue-100">LT</div>
             <div>
-              <h1 className="text-md font-black text-blue-900 uppercase leading-none">LICEUL TEORETIC TEIUȘ</h1>
-              <p className="text-[9px] font-bold text-slate-400 mt-1 uppercase">Realizat de ing. Lefter C.</p>
+              <h1 className="text-xl font-black text-slate-900 uppercase tracking-tight leading-none">Registratură Liceul Teoretic Teiuș</h1>
+              <div className="flex items-center gap-2 mt-2">
+                <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Utilizator activ: {currentUser}</p>
+              </div>
             </div>
           </div>
-          <div className="flex gap-1 bg-slate-100 p-1 rounded-xl border">
-            {['general', 'decizii', 'registre'].map(tab => (
-              <button key={tab} onClick={() => setActiveTab(tab)} className={`px-4 py-2 rounded-lg font-black text-[9px] uppercase transition-all ${activeTab === tab ? 'bg-blue-600 text-white shadow-md' : 'text-slate-400'}`}>
-                {tab === 'decizii' ? 'Decizii / Note' : tab === 'registre' ? 'Registru Registre' : 'Registru General'}
+          <div className="flex gap-3">
+            <button onClick={exportToCSV} className="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3 rounded-2xl font-black text-xs uppercase flex items-center gap-2 transition-all shadow-md shadow-emerald-100">
+                <Download size={18}/> Export Excel
+            </button>
+            <button onClick={() => window.location.reload()} className="bg-slate-100 text-slate-400 p-3 rounded-2xl hover:bg-red-50 hover:text-red-500 transition-all"><LogOut size={20}/></button>
+          </div>
+        </header>
+
+        {/* Tab Selection */}
+        <div className="flex gap-4 mb-8">
+            <button onClick={() => setActiveTab('general')} className={`flex-1 p-4 rounded-[1.5rem] font-black uppercase text-xs transition-all border-b-4 ${activeTab === 'general' ? 'bg-white border-blue-600 text-blue-600 shadow-md' : 'bg-slate-100 border-transparent text-slate-400'}`}>Registru General</button>
+            <button onClick={() => setActiveTab('decizii')} className={`flex-1 p-4 rounded-[1.5rem] font-black uppercase text-xs transition-all border-b-4 ${activeTab === 'decizii' ? 'bg-white border-blue-600 text-blue-600 shadow-md' : 'bg-slate-100 border-transparent text-slate-400'}`}>Decizii / Note</button>
+            <button onClick={() => setActiveTab('registre')} className={`flex-1 p-4 rounded-[1.5rem] font-black uppercase text-xs transition-all border-b-4 ${activeTab === 'registre' ? 'bg-white border-blue-600 text-blue-600 shadow-md' : 'bg-slate-100 border-transparent text-slate-400'}`}>Registru Registre</button>
+        </div>
+
+        {/* Carduri actiune conform pozei */}
+        {activeTab === 'general' && (
+          <div className="grid grid-cols-3 gap-6 mb-10">
+            {[
+              { t: 'INTRARE', color: 'bg-emerald-500', shadow: 'shadow-emerald-100' },
+              { t: 'IESIRE', color: 'bg-blue-500', shadow: 'shadow-blue-100' },
+              { t: 'REZERVAT', color: 'bg-orange-500', shadow: 'shadow-orange-100' }
+            ].map(item => (
+              <button key={item.t} onClick={() => { setFormType(item.t); setShowForm(true); }} className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 text-left hover:shadow-xl transition-all group">
+                <div className={`w-12 h-12 ${item.color} rounded-2xl flex items-center justify-center text-white mb-4 shadow-lg ${item.shadow} group-hover:scale-110 transition-transform`}>
+                  <Plus size={24} strokeWidth={3}/>
+                </div>
+                <h3 className="font-black text-2xl text-slate-800 mb-1">{item.t}</h3>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Creare înregistrare nouă</p>
               </button>
             ))}
           </div>
-          <button onClick={() => window.location.reload()} className="p-2.5 bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all"><LogOut size={18}/></button>
-        </header>
+        )}
 
-        <div className="flex justify-between items-center mb-6">
-            <div className="flex gap-3">
-              <button onClick={() => { setEditingId(null); setFormType('INTRARE'); setShowForm(true); }} className="bg-blue-600 text-white px-5 py-3 rounded-xl font-black text-[10px] uppercase flex items-center gap-2 shadow-md">
-                  <Plus size={16} strokeWidth={3}/> Adaugă Înregistrare
-              </button>
-              <button onClick={exportToExcel} className="bg-emerald-600 text-white px-5 py-3 rounded-xl font-black text-[10px] uppercase flex items-center gap-2 shadow-md">
-                  <Download size={16} strokeWidth={3}/> Export
-              </button>
-            </div>
-            <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-xl border w-80">
-                <Search size={16} className="text-slate-300"/>
-                <input type="text" placeholder="Caută..." className="bg-transparent outline-none font-bold text-slate-600 w-full text-xs" value={search} onChange={e => setSearch(e.target.value)} />
-            </div>
-        </div>
-
-        <div className="bg-white rounded-2xl shadow-sm overflow-hidden border">
-          <table className="w-full text-left">
-            <thead className="bg-slate-50 text-[9px] font-black uppercase text-slate-400 border-b">
-              {activeTab === 'general' ? (
-                <tr><th className="px-6 py-4">Tip</th><th className="px-6 py-4">Nr.</th><th className="px-6 py-4">Data</th><th className="px-6 py-4">Emitent</th><th className="px-6 py-4">Conținut</th><th className="px-6 py-4 text-center">Edit</th></tr>
-              ) : activeTab === 'decizii' ? (
-                <tr><th className="px-6 py-4">Tip</th><th className="px-6 py-4">Nr.</th><th className="px-6 py-4">Data</th><th className="px-6 py-4">Conținut</th><th className="px-6 py-4 text-center">Edit</th></tr>
-              ) : (
-                <tr><th className="px-6 py-4">Nr. Reg</th><th className="px-6 py-4">Început</th><th className="px-6 py-4">Conținut</th><th className="px-6 py-4">Terminare</th><th className="px-6 py-4 text-center">Edit</th></tr>
-              )}
-            </thead>
-            <tbody className="divide-y text-[10px] font-bold text-slate-600">
-              {data.filter(i => (i.continut || '').toLowerCase().includes(search.toLowerCase())).map(item => (
-                <tr key={item.id} className="hover:bg-blue-50/20 transition-colors">
-                  {activeTab === 'general' ? (
-                    <>
-                      <td className="px-6 py-3"><span className={`px-2 py-0.5 rounded text-[8px] text-white ${item.tip === 'INTRARE' ? 'bg-emerald-500' : 'bg-blue-500'}`}>{item.tip}</span></td>
-                      <td className="px-6 py-3 text-blue-600">#{item.numar_inregistrare}</td>
-                      <td className="px-6 py-3">{item.creat_la}</td>
-                      <td className="px-6 py-3 uppercase">{item.emitent}</td>
-                      <td className="px-6 py-3 italic truncate max-w-xs">{item.continut}</td>
-                    </>
-                  ) : activeTab === 'decizii' ? (
-                    <>
-                      <td className="px-6 py-3 uppercase">{item.tip_document}</td>
-                      <td className="px-6 py-3 text-blue-600">#{item.numar_inregistrare}</td>
-                      <td className="px-6 py-3">{item.data_emitere}</td>
-                      <td className="px-6 py-3 italic truncate max-w-xs">{item.continut}</td>
-                    </>
-                  ) : (
-                    <>
-                      <td className="px-6 py-3 font-black text-blue-600">{item.numar_manual}</td>
-                      <td className="px-6 py-3">{item.data_inceput}</td>
-                      <td className="px-6 py-3 italic truncate max-w-xs">{item.continut}</td>
-                      <td className="px-6 py-3">{item.data_sfarsit || 'Deschis'}</td>
-                    </>
-                  )}
-                  <td className="px-6 py-3 text-center">
-                    <button onClick={() => { setEditingId(item.id); setForm({...item}); setShowForm(true); }} className="text-slate-300 hover:text-blue-600"><Edit2 size={14}/></button>
-                  </td>
+        {/* Search & Table */}
+        <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden">
+          <div className="p-6 border-b border-slate-50 flex justify-between items-center">
+             <div className="flex items-center gap-3 bg-slate-50 px-5 py-3 rounded-2xl w-96 border border-slate-100">
+                <Search size={18} className="text-slate-300"/>
+                <input type="text" placeholder="Caută după nr, emitent sau conținut..." className="bg-transparent outline-none font-bold text-slate-600 w-full text-sm" value={search} onChange={e => setSearch(e.target.value)} />
+             </div>
+             <p className="text-[10px] font-black text-slate-300 uppercase italic">Total: {data.length} înregistrări</p>
+          </div>
+          
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead className="bg-slate-50/50 text-[10px] font-black uppercase text-slate-400">
+                <tr>
+                  <th className="px-8 py-5">Identificator</th>
+                  <th className="px-8 py-5">Data</th>
+                  <th className="px-8 py-5">Detalii Document</th>
+                  <th className="px-8 py-5">Compartiment</th>
+                  <th className="px-8 py-5 text-right">Acțiuni</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-slate-50 text-sm font-bold text-slate-600">
+                {data.length === 0 ? (
+                    <tr><td colSpan="5" className="text-center py-20 text-slate-300 font-bold italic uppercase text-xs tracking-widest">Nu există date de afișat în acest tabel</td></tr>
+                ) : (
+                    data.filter(i => (i.continut || '').toLowerCase().includes(search.toLowerCase())).map(item => (
+                    <tr key={item.id} className="hover:bg-blue-50/30 transition-colors">
+                        <td className="px-8 py-5">
+                            <span className="text-blue-600 font-black">#{item.numar_inregistrare || item.numar_manual}</span>
+                            <div className="text-[9px] uppercase text-slate-300">{item.tip || item.tip_document || 'REGISTRU'}</div>
+                        </td>
+                        <td className="px-8 py-5 text-slate-400">{item.creat_la || item.data_emitere || item.data_inceput}</td>
+                        <td className="px-8 py-5">
+                            <div className="max-w-xs truncate">{item.continut}</div>
+                            <div className="text-[10px] text-slate-400 italic font-medium">{item.emitent || 'Emitent nespecificat'}</div>
+                        </td>
+                        <td className="px-8 py-5">
+                            <span className="bg-slate-100 px-3 py-1 rounded-full text-[10px] uppercase text-slate-500">{item.compartiment || 'N/A'}</span>
+                        </td>
+                        <td className="px-8 py-5 text-right">
+                            <button onClick={() => { setEditingId(item.id); setForm({...item}); setShowForm(true); }} className="p-2 text-slate-300 hover:text-blue-600 transition-colors"><Edit2 size={16}/></button>
+                        </td>
+                    </tr>
+                    ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
+      {/* FORMULAR MODAL CONFORM POZEI */}
       {showForm && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className={`bg-white rounded-[2rem] p-6 w-full ${activeTab === 'general' ? 'max-w-3xl' : 'max-w-lg'} shadow-2xl relative border-[6px] border-slate-50`}>
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-black text-slate-900 uppercase">Gestiune {activeTab}</h2>
-              <button onClick={() => setShowForm(false)} className="text-slate-400 hover:text-red-500"><X size={20}/></button>
-            </div>
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-50 p-6">
+          <div className="bg-white rounded-[3rem] p-10 w-full max-w-4xl shadow-2xl relative border-[12px] border-slate-50">
+            <button onClick={() => setShowForm(false)} className="absolute top-8 right-8 text-slate-300 hover:text-red-500 transition-colors"><X size={28}/></button>
+            
+            <h2 className="text-3xl font-black text-slate-800 mb-8 uppercase tracking-tighter">Date Registru <span className="text-blue-600">{activeTab === 'general' ? formType : activeTab}</span></h2>
 
-            {activeTab === 'general' && (
-              <div className="flex gap-2 mb-4 bg-slate-100 p-1 rounded-xl w-fit">
-                {['INTRARE', 'IEȘIRE', 'REZERVAT'].map(t => (
-                  <button key={t} onClick={() => setFormType(t)} className={`px-4 py-1.5 rounded-lg font-black text-[9px] ${formType === t ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400'}`}>{t}</button>
-                ))}
-              </div>
-            )}
+            <div className="grid grid-cols-2 gap-10">
+              <div className="space-y-6">
+                <div>
+                    <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">Data Document (Z-L-A)</label>
+                    <input type="date" value={form.data} onChange={e => setForm({...form, data: e.target.value})} className="w-full p-4 bg-slate-50 rounded-2xl font-black border-2 border-slate-50 outline-none focus:border-blue-500 transition-all text-sm" />
+                </div>
 
-            <div className={`grid ${activeTab === 'general' ? 'grid-cols-2' : 'grid-cols-1'} gap-4 mb-6`}>
-              <div className="space-y-3">
-                <input type="date" value={form.data} onChange={e => setForm({...form, data: e.target.value})} className="w-full p-2.5 bg-slate-50 rounded-lg font-bold border outline-none text-xs" />
-                {activeTab === 'general' ? (
-                  <select value={form.emitent} onChange={e => setForm({...form, emitent: e.target.value})} className="w-full p-2.5 bg-slate-50 rounded-lg font-bold border outline-none text-xs">
-                    <option value="">Alege Emitent...</option>
-                    {listaEmitenti.map(e => <option key={e} value={e}>{e}</option>)}
-                  </select>
-                ) : activeTab === 'decizii' ? (
-                  <select value={form.tip_document_spec} onChange={e => setForm({...form, tip_document_spec: e.target.value})} className="w-full p-2.5 bg-slate-50 rounded-lg font-bold border outline-none text-xs">
-                    <option value="DECIZIE">DECIZIE</option>
-                    <option value="NOTA DE SERVICIU">NOTĂ DE SERVICIU</option>
-                  </select>
-                ) : (
-                  <input type="text" placeholder="Număr Registru" value={form.numar_manual} onChange={e => setForm({...form, numar_manual: e.target.value})} className="w-full p-2.5 bg-slate-50 rounded-lg font-bold border outline-none text-xs" />
-                )}
-                <textarea value={form.continut} onChange={e => setForm({...form, continut: e.target.value})} className="w-full p-3 bg-slate-50 rounded-lg border font-bold h-24 resize-none outline-none text-xs" placeholder="Conținut..." />
+                <div>
+                    <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">Emitent / Instituție</label>
+                    <input type="text" placeholder="SCRIE EMITENTUL..." value={form.emitent} onChange={e => setForm({...form, emitent: e.target.value})} className="w-full p-4 bg-slate-50 rounded-2xl font-black border-2 border-slate-50 outline-none focus:border-blue-500 transition-all text-sm uppercase" />
+                </div>
+
+                <div>
+                    <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">Conținut / Descriere</label>
+                    <textarea value={form.continut} onChange={e => setForm({...form, continut: e.target.value})} className="w-full p-5 bg-slate-50 rounded-[2rem] border-2 border-slate-50 font-bold h-32 resize-none outline-none focus:border-blue-500 transition-all text-sm" placeholder="DETALII DESPRE DOCUMENT..." />
+                </div>
               </div>
 
-              <div className="space-y-3">
-                {activeTab === 'general' ? (
-                  <>
-                    <select value={form.compartiment} onChange={e => setForm({...form, compartment: e.target.value})} className="w-full p-2.5 bg-slate-50 rounded-lg font-bold border outline-none text-xs">
-                      <option value="">Compartiment Destinat...</option>
+              <div className="space-y-6">
+                 <div>
+                    <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">Compartiment Destinatar</label>
+                    <select value={form.compartiment} onChange={e => setForm({...form, compartiment: e.target.value})} className="w-full p-4 bg-slate-50 rounded-2xl font-black border-2 border-slate-50 outline-none focus:border-blue-500 transition-all text-sm">
+                      <option value="">ALEGE COMPARTIMENT...</option>
                       {listaCompartimente.map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
-                    <input type="text" placeholder="Destinatar" value={form.destinatar} onChange={e => setForm({...form, destinatar: e.target.value})} className="w-full p-2.5 bg-slate-50 rounded-lg font-bold border outline-none text-xs" />
-                    <div className="grid grid-cols-2 gap-2">
-                      <input type="text" placeholder="Nr. Conex" value={form.conex} onChange={e => setForm({...form, conex: e.target.value})} className="w-full p-2 bg-white rounded-lg border font-bold text-xs outline-none" />
-                      <input type="text" placeholder="Ind. Dosar" value={form.indicativ_dosar} onChange={e => setForm({...form, indicativ_dosar: e.target.value})} className="w-full p-2 bg-white rounded-lg border font-bold text-xs outline-none" />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">Nr. Conex</label>
+                        <input type="text" placeholder="EX: 45" value={form.conex} onChange={e => setForm({...form, conex: e.target.value})} className="w-full p-4 bg-slate-50 rounded-2xl border-2 border-slate-50 font-black text-sm outline-none" />
                     </div>
-                  </>
-                ) : (
-                  <>
-                    {activeTab === 'registre' && <input type="date" value={form.data_final} onChange={e => setForm({...form, data_final: e.target.value})} className="w-full p-2.5 bg-slate-50 rounded-lg font-bold border outline-none text-xs" />}
-                    <input type="text" placeholder="Observații" value={form.observatii} onChange={e => setForm({...form, observatii: e.target.value})} className="w-full p-2.5 bg-slate-50 rounded-xl font-bold border outline-none text-xs" />
-                  </>
-                )}
+                    <div>
+                        <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">Indicativ Dosar</label>
+                        <input type="text" placeholder="EX: IV-C" value={form.indicativ_dosar} onChange={e => setForm({...form, indicativ_dosar: e.target.value})} className="w-full p-4 bg-slate-50 rounded-2xl border-2 border-slate-50 font-black text-sm outline-none" />
+                    </div>
+                </div>
+
+                <div className="p-6 bg-blue-50/50 rounded-[2rem] border-2 border-blue-100 border-dashed">
+                    <p className="text-[9px] font-black text-blue-400 uppercase mb-2 text-center">Informații adiționale</p>
+                    <input type="text" placeholder="OBSERVAȚII..." value={form.observatii} onChange={e => setForm({...form, observatii: e.target.value})} className="w-full p-3 bg-white rounded-xl border-none font-bold text-xs outline-none text-center" />
+                </div>
               </div>
             </div>
 
-            <button onClick={handleSave} disabled={loading} className="w-full bg-blue-600 text-white p-3 rounded-xl font-black text-xs uppercase shadow-md">
-              {loading ? 'Salvare...' : 'Confirmă'}
+            <button onClick={handleSave} disabled={loading} className="w-full bg-blue-600 hover:bg-blue-700 text-white p-5 rounded-[1.5rem] font-black text-sm uppercase shadow-xl shadow-blue-200 mt-10 transition-all transform hover:scale-[1.01]">
+              {loading ? 'SE SALVEAZĂ...' : 'Salvează în Registru'}
             </button>
           </div>
         </div>
