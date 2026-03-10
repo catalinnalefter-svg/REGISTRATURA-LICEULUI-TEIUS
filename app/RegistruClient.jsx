@@ -43,20 +43,48 @@ export default function RegistruTeius() {
     else alert("Parolă incorectă!");
   };
 
-  // FUNCȚIA DE EXPORT EXCEL (CSV)
+  // FUNCȚIA DE EXPORT EXCEL PE COLOANE (FORMAT XML PENTRU EXCEL)
   const exportToExcel = () => {
     const headers = ['Tip', 'Nr. Inreg', 'Data Inreg', 'Emitent', 'Continut', 'Compartiment', 'Creat De', 'Destinatar', 'Data Exped', 'Conex/Ind'];
-    const rows = data.map(i => [
-      i.tip, i.numar_inregistrare, i.creat_la, i.emitent, i.continut, i.compartiment, i.creat_de, i.destinatar, i.data_expediere, `${i.conex_ind || ''}/${i.indicativ_dosar || ''}`
-    ]);
+    
+    // Generăm rândurile pentru Excel
+    const rows = data.map(i => `
+      <Row>
+        <Cell><Data ss:Type="String">${i.tip || ''}</Data></Cell>
+        <Cell><Data ss:Type="Number">${i.numar_inregistrare || 0}</Data></Cell>
+        <Cell><Data ss:Type="String">${i.creat_la || ''}</Data></Cell>
+        <Cell><Data ss:Type="String">${(i.emitent || '').replace(/&/g, '&amp;')}</Data></Cell>
+        <Cell><Data ss:Type="String">${(i.continut || '').replace(/&/g, '&amp;')}</Data></Cell>
+        <Cell><Data ss:Type="String">${(i.compartiment || '').replace(/&/g, '&amp;')}</Data></Cell>
+        <Cell><Data ss:Type="String">${i.creat_de || ''}</Data></Cell>
+        <Cell><Data ss:Type="String">${(i.destinatar || '').replace(/&/g, '&amp;')}</Data></Cell>
+        <Cell><Data ss:Type="String">${i.data_expediere || ''}</Data></Cell>
+        <Cell><Data ss:Type="String">${i.conex_ind || ''}/${i.indicativ_dosar || ''}</Data></Cell>
+      </Row>`).join('');
 
-    const csvContent = "\uFEFF" + [headers, ...rows].map(e => e.map(cell => `"${(cell || '').toString().replace(/"/g, '""')}"`).join(",")).join("\n");
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const excelTemplate = `
+      <?xml version="1.0"?>
+      <?mso-application progid="Excel.Sheet"?>
+      <Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+        xmlns:o="urn:schemas-microsoft-com:office:office"
+        xmlns:x="urn:schemas-microsoft-com:office:excel"
+        xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
+        xmlns:html="http://www.w3.org/TR/REC-html40">
+        <Worksheet ss:Name="Registru General">
+          <Table>
+            <Row>
+              ${headers.map(h => `<Cell><Data ss:Type="String">${h}</Data></Cell>`).join('')}
+            </Row>
+            ${rows}
+          </Table>
+        </Worksheet>
+      </Workbook>`;
+
+    const blob = new Blob([excelTemplate], { type: 'application/vnd.ms-excel' });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `Registru_General_${new Date().toLocaleDateString()}.csv`);
-    document.body.appendChild(link);
+    const link = document.body.appendChild(document.createElement('a'));
+    link.href = url;
+    link.download = `Registru_General_${new Date().toLocaleDateString()}.xls`;
     link.click();
     document.body.removeChild(link);
   };
@@ -128,7 +156,6 @@ export default function RegistruTeius() {
             </div>
           </div>
           <div className="flex gap-3">
-             {/* BUTON EXPORT EXCEL */}
              <button onClick={exportToExcel} className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-2xl font-black text-xs uppercase flex items-center gap-2 transition-all shadow-lg shadow-emerald-100">
                 <Download size={18}/> Export Excel
              </button>
@@ -260,7 +287,6 @@ export default function RegistruTeius() {
                        <button key={c} onClick={() => setForm({...form, compartiment: c})} className="px-4 py-2 bg-orange-50 text-orange-700 rounded-xl text-[9px] font-black hover:bg-orange-600 hover:text-white border border-orange-100 uppercase">{c}</button>
                      ))}
                   </div>
-                  {/* SELECTOR REPARAT: legat la form.compartiment */}
                   <input type="text" placeholder="SCRIE COMPARTIMENT..." value={form.compartiment} onChange={e => setForm({...form, compartiment: e.target.value})} className="w-full p-5 bg-slate-50 rounded-2xl font-black border-2 border-slate-100 outline-none focus:border-blue-500 uppercase" />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
