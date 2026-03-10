@@ -53,30 +53,36 @@ export default function RegistruTeius() {
   };
 
   const exportToExcel = () => {
-    let csvContent = "data:text/csv;charset=utf-8,";
-    let headers = "";
-    let rows = [];
+  let headers = "";
+  let rows = [];
 
-    if (activeTab === 'general') {
-      headers = "Tip,Nr Inregistrare,Data,Emitent,Continut,Compartiment,Destinatar";
-      rows = data.map(i => `"${i.tip}","${i.numar_inregistrare}","${i.creat_la}","${i.emitent}","${i.continut}","${i.compartiment}","${i.destinatar}"`);
-    } else if (activeTab === 'decizii') {
-      headers = "Tip,Nr Document,Data,Continut,Observatii";
-      rows = data.map(i => `"${i.tip_document}","${i.numar_inregistrare}","${i.data_emitere}","${i.continut}","${i.observatii}"`);
-    } else {
-      headers = "Nr Registru,Data Inceput,Continut,Data Terminare,Observatii";
-      rows = data.map(i => `"${i.numar_inregistrare}","${i.data_inceput}","${i.continut}","${i.data_sfarsit}","${i.observatii}"`);
-    }
+  // 1. Definim antetele și rândurile folosind separatorul ";"
+  if (activeTab === 'general') {
+    headers = "Tip;Nr Inregistrare;Data;Emitent;Continut;Compartiment;Destinatar";
+    rows = data.map(i => `"${i.tip}";"${i.numar_inregistrare}";"${i.creat_la}";"${i.emitent}";"${i.continut}";"${i.compartiment}";"${i.destinatar}"`);
+  } else if (activeTab === 'decizii') {
+    headers = "Tip;Nr Document;Data;Continut;Observatii";
+    rows = data.map(i => `"${i.tip_document}";"${i.numar_inregistrare}";"${i.data_emitere}";"${i.continut}";"${i.observatii}"`);
+  } else {
+    headers = "Nr Registru;Data Inceput;Continut;Data Terminare;Observatii";
+    rows = data.map(i => `"${i.numar_inregistrare}";"${i.data_inceput}";"${i.continut}";"${i.data_sfarsit}";"${i.observatii}"`);
+  }
 
-    const finalCsv = csvContent + headers + "\n" + rows.join("\n");
-    const encodedUri = encodeURI(finalCsv);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `Export_${activeTab}_${new Date().toLocaleDateString()}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
+  // 2. Construim conținutul final
+  const csvContent = headers + "\n" + rows.join("\n");
+  
+  // 3. Adăugăm BOM (\uFEFF) pentru ca Excel să recunoască caracterele speciale (ă, î, ș, ț)
+  // și să deschidă fișierul direct în format UTF-8
+  const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  
+  const link = document.createElement("a");
+  link.setAttribute("href", url);
+  link.setAttribute("download", `Export_${activeTab}_${new Date().toLocaleDateString()}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
 
   const handleSave = async () => {
     if (activeTab === 'registre' && isNaN(form.nr_manual) && form.nr_manual !== '') {
