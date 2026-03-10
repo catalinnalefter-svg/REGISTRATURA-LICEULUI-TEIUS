@@ -124,24 +124,46 @@ export default function RegistruTeius() {
     <div className="min-h-screen bg-[#f8fafc] p-6 text-slate-800 font-sans">
       <div className="max-w-7xl mx-auto">
         {/* Header conform pozei */}
+       {/* START HEADER */}
         <header className="flex justify-between items-center mb-10 bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100">
           <div className="flex items-center gap-5">
-            <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center font-black text-white shadow-lg shadow-blue-100">LT</div>
+            {/* Caseta pentru Siglă */}
+            <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center shadow-md border border-slate-50 overflow-hidden">
+              <img 
+                src="/liceul_teoretic_teius.png" 
+                alt="Logo Liceu" 
+                className="w-12 h-12 object-contain"
+                onError={(e) => {
+                  e.target.style.display = 'none'; // Ascunde imaginea dacă lipsește fișierul
+                }}
+              />
+              {/* Text de rezervă dacă poza nu se încarcă */}
+              <span className="font-black text-blue-600 text-xl tracking-tighter">LTT</span>
+            </div>
+            
             <div>
-              <h1 className="text-xl font-black text-slate-900 uppercase tracking-tight leading-none">Registratură Liceul Teoretic Teiuș</h1>
+              <h1 className="text-xl font-black text-slate-900 uppercase tracking-tight leading-none">
+                Registratură Liceul Teoretic Teiuș
+              </h1>
               <div className="flex items-center gap-2 mt-2">
                 <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
-                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Utilizator activ: {currentUser}</p>
+                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+                  Realizat de ing. Lefter C.
+                </p>
               </div>
             </div>
           </div>
+
           <div className="flex gap-3">
             <button onClick={exportToCSV} className="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3 rounded-2xl font-black text-xs uppercase flex items-center gap-2 transition-all shadow-md shadow-emerald-100">
                 <Download size={18}/> Export Excel
             </button>
-            <button onClick={() => window.location.reload()} className="bg-slate-100 text-slate-400 p-3 rounded-2xl hover:bg-red-50 hover:text-red-500 transition-all"><LogOut size={20}/></button>
+            <button onClick={() => window.location.reload()} className="bg-slate-100 text-slate-400 p-3 rounded-2xl hover:bg-red-50 hover:text-red-500 transition-all">
+              <LogOut size={20}/>
+            </button>
           </div>
         </header>
+        {/* SFARSIT HEADER */}
 
         {/* Tab Selection */}
         <div className="flex gap-4 mb-8">
