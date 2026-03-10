@@ -223,6 +223,9 @@ export default function RegistruTeius() {
                     <th className="px-4 py-5">Conținut</th>
                     <th className="px-4 py-5">Compartiment</th>
                     <th className="px-4 py-5">Creat De</th>
+                    <th className="px-4 py-5">Destinatar</th>
+                    <th className="px-4 py-5">Data Exped.</th>
+                    <th className="px-4 py-5">Conex/Ind.</th>
                     <th className="px-4 py-5 text-right">Editare</th>
                   </tr>
                 ) : (
@@ -248,6 +251,9 @@ export default function RegistruTeius() {
                         <td className="px-4 py-4 truncate max-w-[150px] uppercase">{item.continut}</td>
                         <td className="px-4 py-4 uppercase">{item.compartiment}</td>
                         <td className="px-4 py-4 text-slate-400">{item.creat_de}</td>
+                        <td className="px-4 py-4 uppercase">{item.destinatar}</td>
+                        <td className="px-4 py-4">{item.data_expediere || '-'}</td>
+                        <td className="px-4 py-4">{item.conex_ind || item.indicativ_dosar ? `${item.conex_ind || ''} / ${item.indicativ_dosar || ''}` : '-'}</td>
                       </>
                     ) : (
                       <>
@@ -287,7 +293,6 @@ export default function RegistruTeius() {
             <h2 className="text-3xl font-black text-slate-800 mb-6 uppercase tracking-tighter">{activeTab === 'general' ? 'Date Registru' : 'Date Decizie'}</h2>
             
             {activeTab === 'general' ? (
-              /* FORMULAR REGISTRU GENERAL - REINTEGRAT EXACT */
               <>
                 <div className="flex gap-3 mb-8">
                   {['INTRARE', 'IESIRE', 'REZERVAT'].map(t => (
@@ -339,7 +344,6 @@ export default function RegistruTeius() {
                 </div>
               </>
             ) : (
-              /* FORMULAR DECIZII - VARIANTĂ SIMPLIFICATĂ */
               <div className="grid grid-cols-2 gap-12">
                 <div className="space-y-6">
                   <div>
