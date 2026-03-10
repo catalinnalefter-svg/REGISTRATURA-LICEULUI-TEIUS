@@ -52,7 +52,6 @@ export default function RegistruTeius() {
     else alert("Parolă incorectă!");
   };
 
-  // FUNCȚIE EXPORT UNIVERSALĂ
   const exportToExcel = () => {
     let csvContent = "data:text/csv;charset=utf-8,";
     let headers = "";
@@ -198,7 +197,7 @@ export default function RegistruTeius() {
 
         {activeTab !== 'general' && (
           <div className="mb-10">
-            <button onClick={() => { setEditingId(null); setForm({ data: new Date().toISOString().split('T')[0], data_sfarsit: '', nr_manual: '', emitent: '', continut: '', destinatar: '', data_expediere: '', conex: '', indicativ_dosar: '', compartiment: '', observatii: '' }); setShowForm(true); }} className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 text-left hover:shadow-xl transition-all w-full md:w-1/3">
+            <button onClick={() => { setEditingId(null); setForm({ data: new Date().toISOString().split('T')[0], data_sfarsit: '', nr_manual: '', emitent: '', continut: '', destinatar: '', data_expediere: '', conex: '', indicativ_dosar: '', compartiment: currentUser, observatii: '' }); setShowForm(true); }} className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 text-left hover:shadow-xl transition-all w-full md:w-1/3">
               <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-white mb-4 bg-blue-600"><Plus size={24} strokeWidth={3}/></div>
               <h3 className="font-black text-2xl text-slate-800 mb-1">{activeTab === 'decizii' ? 'Adaugă Decizie/Notă' : 'Adaugă Registru'}</h3>
             </button>
@@ -208,7 +207,7 @@ export default function RegistruTeius() {
         {activeTab === 'general' && (
           <div className="grid grid-cols-3 gap-6 mb-10">
             {['INTRARE', 'IESIRE', 'REZERVAT'].map(t => (
-              <button key={t} onClick={() => { setFormType(t); setEditingId(null); setShowForm(true); }} className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 text-left hover:shadow-xl transition-all">
+              <button key={t} onClick={() => { setFormType(t); setEditingId(null); setForm({...form, compartiment: currentUser, data: new Date().toISOString().split('T')[0]}); setShowForm(true); }} className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 text-left hover:shadow-xl transition-all">
                 <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white mb-4 ${t==='INTRARE'?'bg-emerald-500':t==='IESIRE'?'bg-blue-500':'bg-orange-500'}`}><Plus size={24} strokeWidth={3}/></div>
                 <h3 className="font-black text-2xl text-slate-800 mb-1 uppercase">{t}</h3>
               </button>
@@ -336,18 +335,31 @@ export default function RegistruTeius() {
                   </div>
                   <div>
                     <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">Conținut / Descriere</label>
-                    <textarea value={form.continut} onChange={e => setForm({...form, continut: e.target.value})} className="w-full p-6 bg-slate-50 rounded-[2rem] border-2 border-slate-100 font-bold h-40 resize-none uppercase outline-none" placeholder="DETALII DESPRE DOCUMENT..." />
+                    <textarea value={form.continut} onChange={e => setForm({...form,爆发: e.target.value})} className="w-full p-6 bg-slate-50 rounded-[2rem] border-2 border-slate-100 font-bold h-40 resize-none uppercase outline-none" placeholder="DETALII DESPRE DOCUMENT..." />
                   </div>
                 </div>
                 <div className="space-y-6">
                   <div>
                     <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">Compartiment</label>
                     <div className="flex gap-2 mb-2 flex-wrap">
-                       {['SECRETARIAT', 'CONTABILITATE', 'APP', 'ALTELE'].map(c => (
-                         <button key={c} onClick={() => setForm({...form, compartment: c})} className="px-3 py-1.5 bg-orange-50 text-orange-700 rounded-lg text-[9px] font-black uppercase">{c}</button>
+                       {listaCompartimente.map(c => (
+                         <button 
+                           key={c} 
+                           type="button"
+                           onClick={() => setForm({...form, compartiment: c})} 
+                           className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all ${form.compartiment === c ? 'bg-orange-600 text-white shadow-md' : 'bg-orange-50 text-orange-700 hover:bg-orange-100'}`}
+                         >
+                           {c}
+                         </button>
                        ))}
                     </div>
-                    <input type="text" placeholder="SCRIE COMPARTIMENT..." value={form.compartiment} onChange={e => setForm({...form, compartment: e.target.value})} className="w-full p-5 bg-slate-50 rounded-2xl font-black border-2 border-slate-100 uppercase outline-none" />
+                    <input 
+                      type="text" 
+                      placeholder="SCRIE SAU ALEGE COMPARTIMENT..." 
+                      value={form.compartiment || ''} 
+                      onChange={e => setForm({...form, compartiment: e.target.value})} 
+                      className="w-full p-5 bg-slate-50 rounded-2xl font-black border-2 border-slate-100 uppercase outline-none focus:border-orange-200 transition-all" 
+                    />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                      <div>
