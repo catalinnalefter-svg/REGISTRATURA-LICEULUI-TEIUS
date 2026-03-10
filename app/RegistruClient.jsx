@@ -15,8 +15,6 @@ export default function RegistruTeius() {
   const [showForm, setShowForm] = useState(false);
   const [formType, setFormType] = useState('INTRARE');
   const [editingId, setEditingId] = useState(null);
-  
-  // Stat pentru afișarea numărului alocat după salvare
   const [allocatedNumber, setAllocatedNumber] = useState(null);
 
   const listaCompartimente = ["SECRETARIAT", "CONTABILITATE", "ADMINISTRATIV", "DIRECTOR", "ACHIZIȚII", "RESURSE UMANE"];
@@ -25,7 +23,8 @@ export default function RegistruTeius() {
     data: new Date().toISOString().split('T')[0],
     emitent: '', continut: '', destinatar: '', 
     data_expediere: '', conex: '', indicativ_dosar: '', 
-    compartiment: '', observatii: ''
+    compartiment: '', 
+    observatii: ''
   });
 
   const fetchData = useCallback(async () => {
@@ -44,6 +43,24 @@ export default function RegistruTeius() {
     else alert("Parolă incorectă!");
   };
 
+  // FUNCȚIA DE EXPORT EXCEL (CSV)
+  const exportToExcel = () => {
+    const headers = ['Tip', 'Nr. Inreg', 'Data Inreg', 'Emitent', 'Continut', 'Compartiment', 'Creat De', 'Destinatar', 'Data Exped', 'Conex/Ind'];
+    const rows = data.map(i => [
+      i.tip, i.numar_inregistrare, i.creat_la, i.emitent, i.continut, i.compartiment, i.creat_de, i.destinatar, i.data_expediere, `${i.conex_ind || ''}/${i.indicativ_dosar || ''}`
+    ]);
+
+    const csvContent = "\uFEFF" + [headers, ...rows].map(e => e.map(cell => `"${(cell || '').toString().replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Registru_General_${new Date().toLocaleDateString()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const handleSave = async () => {
     setLoading(true);
     const payload = {
@@ -59,7 +76,6 @@ export default function RegistruTeius() {
       indicativ_dosar: form.indicativ_dosar
     };
 
-    // Cerem bazei de date să returneze rândul inserat pentru a vedea numărul alocat
     const { data: savedData, error } = editingId 
         ? await supabase.from('documente').update(payload).eq('id', editingId).select() 
         : await supabase.from('documente').insert([payload]).select();
@@ -67,17 +83,12 @@ export default function RegistruTeius() {
     if (error) {
       alert("Eroare: " + error.message);
     } else {
-      // Dacă este o înregistrare nouă, afișăm numărul alocat
       if (!editingId && savedData && savedData[0]) {
         setAllocatedNumber(savedData[0].numar_inregistrare);
       }
-      
       setShowForm(false);
       setEditingId(null);
-      setForm({
-        data: new Date().toISOString().split('T')[0],
-        emitent: '', continut: '', destinatar: '', data_expediere: '', conex: '', indicativ_dosar: '', compartiment: '', observatii: ''
-      });
+      setForm({ data: new Date().toISOString().split('T')[0], emitent: '', continut: '', destinatar: '', data_expediere: '', conex: '', indicativ_dosar: '', compartiment: '', observatii: '' });
       fetchData();
     }
     setLoading(false);
@@ -116,7 +127,13 @@ export default function RegistruTeius() {
               </div>
             </div>
           </div>
-          <button onClick={() => window.location.reload()} className="bg-slate-100 text-slate-400 p-3 rounded-2xl hover:bg-red-50 hover:text-red-500 transition-all"><LogOut size={20}/></button>
+          <div className="flex gap-3">
+             {/* BUTON EXPORT EXCEL */}
+             <button onClick={exportToExcel} className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-2xl font-black text-xs uppercase flex items-center gap-2 transition-all shadow-lg shadow-emerald-100">
+                <Download size={18}/> Export Excel
+             </button>
+             <button onClick={() => window.location.reload()} className="bg-slate-100 text-slate-400 p-3 rounded-2xl hover:bg-red-50 hover:text-red-500 transition-all"><LogOut size={20}/></button>
+          </div>
         </header>
 
         <div className="flex gap-4 mb-8">
@@ -137,12 +154,11 @@ export default function RegistruTeius() {
           </div>
         )}
 
-        {/* TABEL REGISTRU GENERAL */}
         <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden">
           <div className="p-6 border-b border-slate-50 flex justify-between items-center">
              <div className="flex items-center gap-3 bg-slate-50 px-5 py-3 rounded-2xl w-96 border border-slate-100">
                 <Search size={18} className="text-slate-300"/>
-                <input type="text" placeholder="Caută în tabel..." className="bg-transparent outline-none font-bold text-slate-600 w-full text-sm" value={search} onChange={e => setSearch(e.target.value)} />
+                <input type="text" placeholder="Caută..." className="bg-transparent outline-none font-bold text-slate-600 w-full text-sm" value={search} onChange={e => setSearch(e.target.value)} />
              </div>
           </div>
           <div className="overflow-x-auto">
@@ -190,7 +206,6 @@ export default function RegistruTeius() {
         </div>
       </div>
 
-      {/* MODAL AFISARE NUMAR ALOCAT (PAGINA NOUĂ DUPĂ SALVARE) */}
       {allocatedNumber && (
         <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-xl flex items-center justify-center z-[100] p-6 text-slate-900">
            <div className="bg-white rounded-[3rem] p-12 w-full max-w-lg text-center shadow-2xl border-[12px] border-emerald-50">
@@ -202,18 +217,12 @@ export default function RegistruTeius() {
               <div className="bg-slate-50 rounded-[2rem] p-8 mb-10 border-2 border-slate-100">
                 <span className="text-7xl font-black text-blue-600 tracking-tighter">#{allocatedNumber}</span>
               </div>
-              <button 
-                onClick={() => setAllocatedNumber(null)} 
-                className="w-full bg-slate-900 text-white p-6 rounded-[2rem] font-black uppercase text-sm tracking-widest shadow-xl hover:bg-slate-800 transition-all"
-              >
-                Am înțeles / Închide
-              </button>
+              <button onClick={() => setAllocatedNumber(null)} className="w-full bg-slate-900 text-white p-6 rounded-[2rem] font-black uppercase text-sm tracking-widest shadow-xl">Am înțeles</button>
            </div>
         </div>
       )}
 
-      {/* FORMULAR MODAL GENERAL - NESCHIMBAT VIZUAL */}
-      {showForm && activeTab === 'general' && (
+      {showForm && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-50 p-6 text-slate-900">
           <div className="bg-white rounded-[3rem] p-10 w-full max-w-5xl shadow-2xl relative border-[12px] border-slate-50">
             <button onClick={() => setShowForm(false)} className="absolute top-8 right-8 text-slate-300 hover:text-red-500 transition-colors"><X size={32} strokeWidth={3}/></button>
@@ -248,10 +257,11 @@ export default function RegistruTeius() {
                   <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">Compartiment</label>
                   <div className="flex gap-2 mb-3">
                      {['SECRETARIAT', 'CONTABILITATE', 'APP', 'ALTELE'].map(c => (
-                       <button key={c} onClick={() => setForm({...form, compartment: c})} className="px-4 py-2 bg-orange-50 text-orange-700 rounded-xl text-[9px] font-black hover:bg-orange-600 hover:text-white border border-orange-100 uppercase">{c}</button>
+                       <button key={c} onClick={() => setForm({...form, compartiment: c})} className="px-4 py-2 bg-orange-50 text-orange-700 rounded-xl text-[9px] font-black hover:bg-orange-600 hover:text-white border border-orange-100 uppercase">{c}</button>
                      ))}
                   </div>
-                  <input type="text" placeholder="SCRIE COMPARTIMENT..." value={form.compartiment} onChange={e => setForm({...form, compartment: e.target.value})} className="w-full p-5 bg-slate-50 rounded-2xl font-black border-2 border-slate-100 outline-none focus:border-blue-500 uppercase" />
+                  {/* SELECTOR REPARAT: legat la form.compartiment */}
+                  <input type="text" placeholder="SCRIE COMPARTIMENT..." value={form.compartiment} onChange={e => setForm({...form, compartiment: e.target.value})} className="w-full p-5 bg-slate-50 rounded-2xl font-black border-2 border-slate-100 outline-none focus:border-blue-500 uppercase" />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                    <input type="date" value={form.data_expediere} onChange={e => setForm({...form, data_expediere: e.target.value})} className="w-full p-5 bg-slate-50 rounded-2xl border-2 border-slate-100 font-black outline-none" />
