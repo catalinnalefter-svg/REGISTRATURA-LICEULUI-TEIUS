@@ -180,7 +180,7 @@ export default function RegistruTeius() {
              </div>
              <div>
                 <h1 className="text-xl font-black text-slate-900 uppercase tracking-tight">Liceul Teoretic Teiuș</h1>
-                <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">Sistem de Gestiune Registre</p>
+                <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">Sistem de Gestiune Registre, realizat de ing. Lefter C.</p>
              </div>
           </div>
           <div className="flex items-center gap-4">
