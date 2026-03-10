@@ -48,11 +48,29 @@ export default function RegistruTeius() {
   useEffect(() => { if (isAuth) fetchData(); }, [isAuth, fetchData]);
 
   // EXPORT EXCEL
-  const exportToExcel = () => {
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, activeTab);
-    XLSX.writeFile(wb, `Export_${activeTab}_2026.xlsx`);
+const exportToExcel = () => {
+    // Generăm capul de tabel în funcție de tab-ul activ
+    let headers = [];
+    if (activeTab === 'general') headers = ['Tip', 'Nr Inregistrare', 'Data', 'Emitent', 'Continut', 'Compartiment'];
+    else if (activeTab === 'decizii') headers = ['Tip', 'Nr Document', 'Data', 'Continut', 'Observatii'];
+    else headers = ['Nr Registru', 'Data Inceput', 'Continut', 'Data Sfarsit', 'Observatii'];
+
+    const rows = data.map(item => {
+      if (activeTab === 'general') return [item.tip, item.numar_inregistrare, item.creat_la, item.emitent, item.continut, item.compartiment];
+      if (activeTab === 'decizii') return [item.tip_document, item.numar_inregistrare, item.data_emitere, item.continut, item.observatii];
+      return [item.numar_manual, item.data_inceput, item.continut, item.data_sfarsit, item.observatii];
+    });
+
+    let csvContent = "data:text/csv;charset=utf-8," 
+      + headers.join(",") + "\n"
+      + rows.map(e => e.join(",")).join("\n");
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `Export_${activeTab}.csv`);
+    document.body.appendChild(link);
+    link.click();
   };
 
   const handleOpenForm = (type = 'INTRARE') => {
