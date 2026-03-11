@@ -284,7 +284,7 @@ export default function RegistruTeius() {
                         <td className="px-4 py-4 uppercase">{item.destinatar}</td>
                         <td className="px-4 py-4">{item.data_expediere || '-'}</td>
                         <td className="px-4 py-4">{item.conex_ind}</td>
-                         
+                         <td className="px-4 py-4 text-slate-400">{item.creat_de}</td>
                       </>
                     ) : activeTab === 'registre' ? (
                       <>
@@ -313,7 +313,7 @@ export default function RegistruTeius() {
                         }
                         setShowForm(true); 
                       }} className="text-slate-300 hover:text-blue-600"><Edit2 size={14}/></button>
-                      <td className="px-4 py-4 text-slate-400">{item.creat_de}</td>
+                      
                     </td>
                   </tr>
                 ))}
