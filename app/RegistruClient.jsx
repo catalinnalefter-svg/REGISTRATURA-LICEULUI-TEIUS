@@ -19,7 +19,11 @@ export default function RegistruTeius() {
   const [allocatedNumber, setAllocatedNumber] = useState(null);
 
   const listaCompartimente = ["SECRETARIAT", "CONTABILITATE", "ADMINISTRATIV", "DIRECTOR", "ACHIZIȚII", "RESURSE UMANE"];
-
+const formatDate = (dateString) => {
+  if (!dateString || dateString === '-') return '-';
+  const [year, month, day] = dateString.split('-');
+  return `${day}-${month}-${year}`;
+};
   const [form, setForm] = useState({
     data: new Date().toISOString().split('T')[0],
     data_sfarsit: '',
@@ -274,20 +278,20 @@ export default function RegistruTeius() {
     item.tip === 'IESIRE' ? 'bg-blue-600' : 
     'bg-orange-500'}`}>{item.tip}</span></td>
                         <td className="px-4 py-4 text-blue-600 font-black">{item.numar_inregistrare}</td>
-                        <td className="px-4 py-4">{item.creat_la}</td>
+                        <td className="px-4 py-4">{formatDate(item.creat_la)}</td>
                         <td className="px-4 py-4 uppercase">{item.emitent}</td>
                       <td className="px-4 py-4 uppercase whitespace-normal break-words min-w-[300px]">  {item.continut}</td>
                         <td className="px-4 py-4 uppercase">{item.compartiment}</td>                       
                         <td className="px-4 py-4 uppercase">{item.destinatar}</td>
-                        <td className="px-4 py-4">{item.data_expediere || '-'}</td>
+                        <td className="px-4 py-4">{formatDate(item.data_expediere)}</td>
                         <td className="px-4 py-4">{item.conex_ind}</td>                        
                       </>
                     ) : activeTab === 'registre' ? (
                       <>
                         <td className="px-4 py-4 text-blue-600 font-black">{item.numar_inregistrare}</td>
-                        <td className="px-4 py-4">{item.data_inceput}</td>
+                        <td className="px-4 py-4">{formatDate(item.data_inceput)}</td>
                         <td className="px-4 py-4 uppercase">{item.continut}</td>
-                        <td className="px-4 py-4">{item.data_sfarsit || '-'}</td>
+                        <td className="px-4 py-4">{formatDate(item.data_sfarsit)}</td>
                         <td className="px-4 py-4 uppercase">{item.observatii || '-'}</td>
                       </>
                     ) : (
