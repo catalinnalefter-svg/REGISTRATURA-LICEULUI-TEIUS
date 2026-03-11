@@ -312,8 +312,7 @@ export default function RegistruTeius() {
                           setForm({...item, data: item.data_emitere || item.creat_la});
                         }
                         setShowForm(true); 
-                      }} className="text-slate-300 hover:text-blue-600"><Edit2 size={14}/></button>
-                      
+                      }} className="text-slate-300 hover:text-blue-600"><Edit2 size={14}/></button>                      
                     </td>
                     <td className="px-4 py-4 text-[10px] text-slate-400 italic font-medium">
                       {item.creat_de || 'SISTEM'}
