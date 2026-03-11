@@ -238,7 +238,7 @@ export default function RegistruTeius() {
                     <th className="px-4 py-5">Tip</th><th className="px-4 py-5">Nr. Înregistrare</th>
                     <th className="px-4 py-5">Data Inreg.</th><th className="px-4 py-5">Emitent</th>
                     <th className="px-4 py-5">Conținut</th><th className="px-4 py-5">Compartiment</th>
-                    <th className="px-4 py-5">Creat De</th><th className="px-4 py-5">Destinatar</th>
+                    <th className="px-4 py-5">Destinatar</th>
                     <th className="px-4 py-5">Data Exped.</th><th className="px-4 py-5">Conex/Ind.</th>
                     <th className="px-4 py-5 text-right">Editare</th>
                     <th className="px-4 py-5">Creat De</th>
