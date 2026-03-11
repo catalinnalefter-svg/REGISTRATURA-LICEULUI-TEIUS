@@ -275,7 +275,9 @@ export default function RegistruTeius() {
                         <td className="px-4 py-4 text-blue-600 font-black">{item.numar_inregistrare}</td>
                         <td className="px-4 py-4">{item.creat_la}</td>
                         <td className="px-4 py-4 uppercase">{item.emitent}</td>
-                        <td className="px-4 py-4 uppercase truncate max-w-[200px]">{item.continut}</td>
+                      <td className="px-4 py-4 uppercase whitespace-normal break-words min-w-[300px]">
+  {item.continut}
+</td>
                         <td className="px-4 py-4 uppercase">{item.compartiment}</td>
                         <td className="px-4 py-4 text-slate-400">{item.creat_de}</td>
                         <td className="px-4 py-4 uppercase">{item.destinatar}</td>
