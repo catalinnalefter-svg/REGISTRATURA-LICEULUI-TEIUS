@@ -216,7 +216,7 @@ export default function RegistruTeius() {
           <div className="grid grid-cols-3 gap-6 mb-10">
             {['INTRARE', 'IESIRE', 'REZERVAT'].map(t => (
               <button key={t} onClick={() => { setFormType(t); setEditingId(null); setForm({...form, compartiment: currentUser, data: new Date().toISOString().split('T')[0]}); setShowForm(true); }} className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 text-left hover:shadow-xl transition-all">
-                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white mb-4 ${t==='INTRARE'?'bg-emerald-500':t==='IESIRE'?'bg-blue-500':'bg-orange-500'}`}><Plus size={24} strokeWidth={3}/></div>
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white mb-4 ${t==='INTRARE'?'bg-emerald-500':t==='IESIRE'?'bg-blue-500':t==='REZERVAT'?'bg-orange-500'}`}><Plus size={24} strokeWidth={3}/></div>
                 <h3 className="font-black text-2xl text-slate-800 mb-1 uppercase">{t}</h3>
               </button>
             ))}
