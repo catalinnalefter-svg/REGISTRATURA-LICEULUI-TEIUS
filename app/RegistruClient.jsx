@@ -276,15 +276,11 @@ export default function RegistruTeius() {
                         <td className="px-4 py-4 text-blue-600 font-black">{item.numar_inregistrare}</td>
                         <td className="px-4 py-4">{item.creat_la}</td>
                         <td className="px-4 py-4 uppercase">{item.emitent}</td>
-                      <td className="px-4 py-4 uppercase whitespace-normal break-words min-w-[300px]">
-  {item.continut}
-</td>
-                        <td className="px-4 py-4 uppercase">{item.compartiment}</td>
-                       
+                      <td className="px-4 py-4 uppercase whitespace-normal break-words min-w-[300px]">  {item.continut}</td>
+                        <td className="px-4 py-4 uppercase">{item.compartiment}</td>                       
                         <td className="px-4 py-4 uppercase">{item.destinatar}</td>
                         <td className="px-4 py-4">{item.data_expediere || '-'}</td>
-                        <td className="px-4 py-4">{item.conex_ind}</td>
-                        
+                        <td className="px-4 py-4">{item.conex_ind}</td>                        
                       </>
                     ) : activeTab === 'registre' ? (
                       <>
@@ -314,9 +310,7 @@ export default function RegistruTeius() {
                         setShowForm(true); 
                       }} className="text-slate-300 hover:text-blue-600"><Edit2 size={14}/></button>                      
                     </td>
-                    <td className="px-4 py-4 text-[10px] text-slate-400 italic font-medium">
-                      {item.creat_de || 'SISTEM'}
-                    </td>
+                    <td className="px-4 py-4 text-[10px] text-slate-400 italic font-medium">                      {item.creat_de || 'SISTEM'}                    </td>
                   </tr>
                 ))}
               </tbody>
