@@ -269,8 +269,8 @@ export default function RegistruTeius() {
     >
                     {activeTab === 'general' ? (
                       <>
-                        <td className="px-4 py-4"><span className={`px-3 py-1.5 rounded-xl text-[9px] font-black text-white ${item.tip === 'INTRARE' ? 'bg-blue-600' : 
-    item.tip === 'IESIRE' ? 'bg-emerald-500' : 
+                        <td className="px-4 py-4"><span className={`px-3 py-1.5 rounded-xl text-[9px] font-black text-white ${item.tip === 'INTRARE' ? 'bg-emerald-500' : 
+    item.tip === 'IESIRE' ? 'bg-blue-600' : 
     'bg-orange-500'}`}>{item.tip}</span></td>
                         <td className="px-4 py-4 text-blue-600 font-black">{item.numar_inregistrare}</td>
                         <td className="px-4 py-4">{item.creat_la}</td>
