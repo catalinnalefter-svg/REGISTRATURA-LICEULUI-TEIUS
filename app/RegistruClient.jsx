@@ -261,8 +261,8 @@ export default function RegistruTeius() {
                   <tr 
       key={item.id} 
       className={`transition-colors ${
-        item.tip === 'INTRARE' ? 'bg-blue-50/50 hover:bg-blue-100/50' : 
-        item.tip === 'IESIRE' ? 'bg-emerald-50/50 hover:bg-emerald-100/50' : 
+        item.tip === 'INTRARE' ? 'bg-emerald-50/50 hover:bg-emerald-100/50' : 
+        item.tip === 'IESIRE' ?   'bg-blue-50/50 hover:bg-blue-100/50' :
         item.tip === 'REZERVAT' ? 'bg-orange-50/50 hover:bg-orange-100/50' : 
         'hover:bg-slate-50'
       }`}
