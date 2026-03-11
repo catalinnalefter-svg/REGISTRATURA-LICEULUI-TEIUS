@@ -258,7 +258,15 @@ export default function RegistruTeius() {
               </thead>
               <tbody className="divide-y divide-slate-50 text-[11px] font-bold text-slate-600">
                 {data.filter(i => (i.continut || '').toLowerCase().includes(search.toLowerCase())).map(item => (
-                  <tr key={item.id} className="hover:bg-blue-50/30 transition-colors">
+                  <tr 
+      key={item.id} 
+      className={`transition-colors ${
+        item.tip === 'INTRARE' ? 'bg-blue-50/50 hover:bg-blue-100/50' : 
+        item.tip === 'IESIRE' ? 'bg-emerald-50/50 hover:bg-emerald-100/50' : 
+        item.tip === 'REZERVAT' ? 'bg-orange-50/50 hover:bg-orange-100/50' : 
+        'hover:bg-slate-50'
+      }`}
+    >
                     {activeTab === 'general' ? (
                       <>
                         <td className="px-4 py-4"><span className={`px-3 py-1.5 rounded-xl text-[9px] font-black text-white ${item.tip==='INTRARE'?'bg-emerald-500':'bg-blue-500'}`}>{item.tip}</span></td>
