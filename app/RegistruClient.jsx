@@ -26,6 +26,7 @@ const formatDate = (dateString) => {
 };
   const [form, setForm] = useState({
     data: new Date().toISOString().split('T')[0],
+    tip_document: formType,
     data_sfarsit: '',
     nr_manual: '',
     emitent: '', continut: '', destinatar: '', 
@@ -103,7 +104,7 @@ const formatDate = (dateString) => {
 
     if (activeTab === 'general') {
       payload = {
-        tip: formType,
+        tip_document: formType,
         creat_la: form.data,
         emitent: form.emitent.toUpperCase(),
         continut: form.continut.toUpperCase(),
@@ -266,9 +267,9 @@ const formatDate = (dateString) => {
                   <tr 
       key={item.id} 
       className={`transition-colors ${
-        item.tip === 'INTRARE' ? 'bg-emerald-50/50 hover:bg-emerald-100/50' : 
-        item.tip === 'IESIRE' ?   'bg-blue-50/50 hover:bg-blue-100/50' :
-        item.tip === 'REZERVAT' ? 'bg-orange-50/50 hover:bg-orange-100/50' : 
+        item.tip_document === 'INTRARE' ? 'bg-emerald-50/50 hover:bg-emerald-100/50' : 
+        item.tip_document === 'IESIRE' ?   'bg-blue-50/50 hover:bg-blue-100/50' :
+        item.tip_document === 'REZERVAT' ? 'bg-orange-50/50 hover:bg-orange-100/50' : 
         'hover:bg-slate-50'
       }`}
     >
