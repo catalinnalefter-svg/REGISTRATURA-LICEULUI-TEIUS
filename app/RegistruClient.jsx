@@ -294,15 +294,21 @@ const formatDate = (dateString) => {
                         <td className="px-4 py-4">{formatDate(item.data_sfarsit)}</td>
                         <td className="px-4 py-4 uppercase">{item.observatii || '-'}</td>
                       </>
-                    ) : (
-                      <>
-                        <td className="px-4 py-4"><span className="px-3 py-1.5 rounded-xl text-[9px] font-black bg-slate-100 text-slate-600">{item.tip_document}</span></td>
-                        <td className="px-4 py-4 text-blue-600 font-black">{item.numar_inregistrare}</td>
-                        <td className="px-4 py-4">{formatDate(item.data_emitere)}</td>
-                        <td className="px-4 py-4 uppercase">{item.continut}</td>
-                        <td className="px-4 py-4 uppercase">{item.observatii || '-'}</td>
-                      </>
-                    )}
+                   ) : (
+  <>
+    <td className="px-4 py-4">
+      <span className={`px-3 py-1.5 rounded-xl text-[9px] font-black text-white ${
+        item.tip_document === 'DECIZIE' ? 'bg-indigo-600' : 'bg-fuchsia-600'
+      }`}>
+        {item.tip_document}
+      </span>
+    </td>
+    <td className="px-4 py-4 text-blue-600 font-black">{item.numar_inregistrare}</td>
+    <td className="px-4 py-4">{formatDate(item.data_emitere)}</td>
+    <td className="px-4 py-4 uppercase">{item.continut}</td>
+    <td className="px-4 py-4 uppercase">{item.observatii || '-'}</td>
+  </>
+)}
                     <td className="px-4 py-4 text-right">
                       <button onClick={() => { 
                         setEditingId(item.id); 
