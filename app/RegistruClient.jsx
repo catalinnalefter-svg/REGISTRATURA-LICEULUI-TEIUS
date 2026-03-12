@@ -41,7 +41,7 @@ const formatDate = (dateString) => {
 
     if (activeTab === 'decizii') tableName = 'registrul_deciziilor';
     if (activeTab === 'registre') tableName = 'registrul_registrelor';
-
+if (activeTab === 'delegatii') tableName = 'registrul_delegatiilor'; // Linia nouă
     const { data: result, error } = await supabase
       .from(tableName)
       .select('*')
@@ -70,6 +70,9 @@ const formatDate = (dateString) => {
   } else if (activeTab === 'decizii') {
     headers = "Tip;Nr Document;Data;Continut;Observatii";
     rows = data.map(i => `"${i.tip_document}";"${i.numar_inregistrare}";"${i.data_emitere}";"${i.continut}";"${i.observatii}"`);
+} else if (activeTab === 'delegatii') {
+  headers = "Nr;Nume si Prenume;Ruta;Data;Creat De";
+ rows = data.map(i => `"${i.numar_inregistrare}";"${i.nume_prenume}";"${i.ruta}";"${formatDate(i.data_delegatie)}";"${i.creat_de}"`);
   } else {
     headers = "Nr Registru;Data Inceput;Continut;Data Terminare;Observatii";
     rows = data.map(i => `"${i.numar_inregistrare}";"${i.data_inceput}";"${i.continut}";"${i.data_sfarsit}";"${i.observatii}"`);
@@ -115,6 +118,13 @@ const formatDate = (dateString) => {
         conex_ind: form.conex,
         indicativ_dosar: form.indicativ_dosar
       };
+} else if (activeTab === 'delegatii') {
+    payload = {
+        nume_prenume: form.emitent.toUpperCase(), // Refolosim câmpul emitent din state-ul existent sau adăugăm unul nou
+        ruta: form.destinatar.toUpperCase(),     // Refolosim destinatar pentru rută
+        data_delegatie: form.data,
+        creat_de: currentUser
+    };
     } else if (activeTab === 'registre') {
       payload = {
         numar_inregistrare: parseInt(form.nr_manual) || null,
@@ -206,6 +216,7 @@ const formatDate = (dateString) => {
             <button onClick={() => setActiveTab('general')} className={`flex-1 p-4 rounded-[1.5rem] font-black uppercase text-xs transition-all border-b-4 ${activeTab === 'general' ? 'bg-white border-blue-600 text-blue-600 shadow-md' : 'bg-slate-100 border-transparent text-slate-400'}`}>Registru General</button>
             <button onClick={() => setActiveTab('decizii')} className={`flex-1 p-4 rounded-[1.5rem] font-black uppercase text-xs transition-all border-b-4 ${activeTab === 'decizii' ? 'bg-white border-blue-600 text-blue-600 shadow-md' : 'bg-slate-100 border-transparent text-slate-400'}`}>Decizii / Note</button>
             <button onClick={() => setActiveTab('registre')} className={`flex-1 p-4 rounded-[1.5rem] font-black uppercase text-xs transition-all border-b-4 ${activeTab === 'registre' ? 'bg-white border-blue-600 text-blue-600 shadow-md' : 'bg-slate-100 border-transparent text-slate-400'}`}>Registru Registre</button>
+<button onClick={() => setActiveTab('delegatii')} className={`flex-1 p-4 rounded-[1.5rem] font-black uppercase text-xs transition-all border-b-4 ${activeTab === 'delegatii' ? 'bg-white border-blue-600 text-blue-600 shadow-md' : 'bg-slate-100 border-transparent text-slate-400'}`}>Delegații</button>
         </div>
 
         {activeTab !== 'general' && (
@@ -227,7 +238,29 @@ const formatDate = (dateString) => {
             ))}
           </div>
         )}
-
+{activeTab === 'delegatii' && (
+  <div className="mb-10">
+    <button 
+      onClick={() => { 
+        setEditingId(null); 
+        setForm({ 
+          data: new Date().toISOString().split('T')[0], 
+          emitent: '', // Nume Prenume
+          destinatar: '', // Ruta
+          continut: '', 
+          observatii: '' 
+        }); 
+        setShowForm(true); 
+      }} 
+      className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 text-left hover:shadow-xl transition-all w-full md:w-1/3"
+    >
+      <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-white mb-4 bg-blue-600">
+        <Plus size={24} strokeWidth={3}/>
+      </div>
+      <h3 className="font-black text-2xl text-slate-800 mb-1">Adaugă Delegație</h3>
+    </button>
+  </div>
+)}
         <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden mb-12">
           <div className="p-6 border-b border-slate-50 flex justify-between items-center">
              <div className="flex items-center gap-3 bg-slate-50 px-5 py-3 rounded-2xl w-96 border border-slate-100">
@@ -254,6 +287,15 @@ const formatDate = (dateString) => {
                     <th className="px-4 py-5">Conținut</th><th className="px-4 py-5">Data Terminare</th>
                     <th className="px-4 py-5">Observații</th><th className="px-4 py-5 text-right">Editare</th>
                   </tr>
+) : activeTab === 'delegatii' ? (
+    <tr>
+      <th className="px-4 py-5">Nr.</th>
+      <th className="px-4 py-5">Nume și Prenume</th>
+      <th className="px-4 py-5">Ruta</th>
+      <th className="px-4 py-5">Data</th>
+      <th className="px-4 py-5 text-right">Editare</th>
+      <th className="px-4 py-5">Creat De</th>
+    </tr>
                 ) : (
                   <tr>
                     <th className="px-4 py-5">Tip</th><th className="px-4 py-5">Nr. Document</th>
@@ -263,67 +305,75 @@ const formatDate = (dateString) => {
                 )}
               </thead>
               <tbody className="divide-y divide-slate-50 text-[11px] font-bold text-slate-600">
-                {data.filter(i => (i.continut || '').toLowerCase().includes(search.toLowerCase())).map(item => (
-                  <tr 
-      key={item.id} 
-      className={`transition-colors ${
-        item.tip_document === 'INTRARE' ? 'bg-emerald-50/50 hover:bg-emerald-100/50' : 
-        item.tip_document === 'IESIRE' ?   'bg-blue-50/50 hover:bg-blue-100/50' :
-        item.tip_document === 'REZERVAT' ? 'bg-orange-50/50 hover:bg-orange-100/50' : 
-        'hover:bg-slate-50'
-      }`}
-    >
-                    {activeTab === 'general' ? (
-                      <>
-                        <td className="px-4 py-4"><span className={`px-3 py-1.5 rounded-xl text-[9px] font-black text-white ${item.tip_document === 'INTRARE' ? 'bg-emerald-500' : 
-    item.tip_document === 'IESIRE' ? 'bg-blue-600' : 
-    'bg-orange-500'}`}>{item.tip_document}</span></td>
-                        <td className="px-4 py-4 text-blue-600 font-black">{item.numar_inregistrare}</td>
-                        <td className="px-4 py-4">{formatDate(item.creat_la)}</td>
-                        <td className="px-4 py-4 uppercase">{item.emitent}</td>
-                      <td className="px-4 py-4 uppercase whitespace-normal break-words min-w-[300px]">  {item.continut}</td>
-                        <td className="px-4 py-4 uppercase">{item.compartiment}</td>                       
-                        <td className="px-4 py-4 uppercase">{item.destinatar}</td>
-                        <td className="px-4 py-4">{formatDate(item.data_expediere)}</td>
-                        <td className="px-4 py-4">{item.conex_ind}</td>                        
-                      </>
-                    ) : activeTab === 'registre' ? (
-                      <>
-                        <td className="px-4 py-4 text-blue-600 font-black">{item.numar_inregistrare}</td>
-                        <td className="px-4 py-4">{formatDate(item.data_inceput)}</td>
-                        <td className="px-4 py-4 uppercase">{item.continut}</td>
-                        <td className="px-4 py-4">{formatDate(item.data_sfarsit)}</td>
-                        <td className="px-4 py-4 uppercase">{item.observatii || '-'}</td>
-                      </>
-                   ) : (
-  <>
-    <td className="px-4 py-4">
-      <span className={`px-3 py-1.5 rounded-xl text-[9px] font-black text-white ${
-        item.tip_document === 'DECIZIE' ? 'bg-indigo-600' : 'bg-fuchsia-600'
-      }`}>
-        {item.tip_document}
-      </span>
+                {data.filter(item => 
+  (item.numar_inregistrare?.toString() || '').includes(search) ||
+  (item.emitent || item.nume_prenume || '').toLowerCase().includes(search.toLowerCase()) ||
+  (item.continut || item.ruta || '').toLowerCase().includes(search.toLowerCase())
+).map((item) => (
+  <tr key={item.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-all text-[11px]">
+    
+    {/* LOGICA DE COLOANE SPECIFICE TABURILOR */}
+    {activeTab === 'delegatii' ? (
+      <>
+        <td className="px-4 py-4 text-blue-600 font-black">{item.numar_inregistrare}</td>
+        <td className="px-4 py-4 uppercase font-bold text-slate-800">{item.nume_prenume}</td>
+        <td className="px-4 py-4 uppercase">{item.ruta}</td>
+        <td className="px-4 py-4">{formatDate(item.data_delegatie)}</td>
+      </>
+    ) : activeTab === 'general' ? (
+      <>
+        <td className="px-4 py-4 text-blue-600 font-black">{item.numar_inregistrare}</td>
+        <td className="px-4 py-4">
+          <span className={`px-3 py-1.5 rounded-xl text-[9px] font-black text-white ${item.tip_document === 'INTRARE' ? 'bg-emerald-500' : 'bg-blue-600'}`}>
+            {item.tip_document}
+          </span>
+        </td>
+        <td className="px-4 py-4">{formatDate(item.creat_la)}</td>
+        <td className="px-4 py-4 uppercase font-bold text-slate-800">{item.emitent}</td>
+        <td className="px-4 py-4 uppercase">{item.continut}</td>
+        <td className="px-4 py-4 uppercase font-medium text-slate-500">{item.destinatar}</td>
+      </>
+    ) : activeTab === 'registre' ? (
+      <>
+        <td className="px-4 py-4 text-blue-600 font-black">{item.numar_inregistrare}</td>
+        <td className="px-4 py-4 uppercase font-bold text-slate-800">{item.continut}</td>
+        <td className="px-4 py-4">{formatDate(item.data_inceput)}</td>
+        <td className="px-4 py-4">{formatDate(item.data_sfarsit) || '-'}</td>
+        <td className="px-4 py-4 uppercase">{item.observatii || '-'}</td>
+      </>
+    ) : (
+      <>
+        <td className="px-4 py-4 text-blue-600 font-black">{item.numar_inregistrare}</td>
+        <td className="px-4 py-4">
+          <span className="px-3 py-1.5 rounded-xl text-[9px] font-black text-white bg-purple-600">
+            {item.tip_document}
+          </span>
+        </td>
+        <td className="px-4 py-4">{formatDate(item.data_emitere)}</td>
+        <td className="px-4 py-4 uppercase font-bold text-slate-800">{item.continut}</td>
+        <td className="px-4 py-4 uppercase">{item.observatii || '-'}</td>
+      </>
+    )}
+
+    {/* COLOANELE COMUNE (EDITARE SI CREAT DE) CARE APAR LA TOATE */}
+    <td className="px-4 py-4 text-right">
+      <button onClick={() => { 
+        setEditingId(item.id); 
+        if(activeTab === 'delegatii') {
+          setForm({...item, data: item.data_delegatie, emitent: item.nume_prenume, destinatar: item.ruta});
+        } else if(activeTab === 'registre') {
+          setForm({...item, data: item.data_inceput, nr_manual: item.numar_inregistrare});
+        } else {
+          setForm({...item, data: item.data_emitere || item.creat_la});
+        }
+        setShowForm(true); 
+      }} className="text-slate-300 hover:text-blue-600 transition-colors">
+        <Edit2 size={14}/>
+      </button>
     </td>
-    <td className="px-4 py-4 text-blue-600 font-black">{item.numar_inregistrare}</td>
-    <td className="px-4 py-4">{formatDate(item.data_emitere)}</td>
-    <td className="px-4 py-4 uppercase">{item.continut}</td>
-    <td className="px-4 py-4 uppercase">{item.observatii || '-'}</td>
-  </>
-)}
-                    <td className="px-4 py-4 text-right">
-                      <button onClick={() => { 
-                        setEditingId(item.id); 
-                        if(activeTab === 'registre') {
-                          setForm({...item, data: item.data_inceput, nr_manual: item.numar_inregistrare});
-                        } else {
-                          setForm({...item, data: item.data_emitere || item.creat_la});
-                        }
-                        setShowForm(true); 
-                      }} className="text-slate-300 hover:text-blue-600"><Edit2 size={14}/></button>                      
-                    </td>
-                    <td className="px-4 py-4 text-[10px] text-slate-400 italic font-medium">                      {item.creat_de || 'SISTEM'}                    </td>
-                  </tr>
-                ))}
+    <td className="px-4 py-4 font-bold text-slate-400 text-[10px]">{item.creat_de}</td>
+  </tr>
+))}
               </tbody>
             </table>
           </div>
@@ -341,7 +391,40 @@ const formatDate = (dateString) => {
             <h2 className="text-3xl font-black text-slate-800 mb-6 uppercase tracking-tighter">
                 {activeTab === 'general' ? 'Date Registru' : activeTab === 'decizii' ? 'Date Decizie / Notă' : 'Date Registru Registre'}
             </h2>
-            
+            {activeTab === 'delegatii' ? (
+  <div className="space-y-8">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div>
+        <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">Nume și Prenume</label>
+        <input 
+          type="text" 
+          placeholder="INTRODUCEȚI NUMELE..." 
+          value={form.emitent} 
+          onChange={e => setForm({...form, emitent: e.target.value})} 
+          className="w-full p-5 bg-slate-50 rounded-2xl font-black border-2 border-slate-100 uppercase outline-none" 
+        />
+      </div>
+      <div>
+        <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">Data Delegației</label>
+        <input 
+          type="date" 
+          value={form.data} 
+          onChange={e => setForm({...form, data: e.target.value})} 
+          className="w-full p-5 bg-slate-50 rounded-2xl font-black border-2 border-slate-100 outline-none" 
+        />
+      </div>
+    </div>
+    <div>
+      <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">Ruta (Destinația)</label>
+      <input 
+        type="text" 
+        placeholder="EX: TEIUȘ - ALBA IULIA - TEIUȘ" 
+        value={form.destinatar} 
+        onChange={e => setForm({...form, destinatar: e.target.value})} 
+        className="w-full p-5 bg-slate-50 rounded-2xl font-black border-2 border-slate-100 uppercase outline-none" 
+      />
+    </div>
+  </div>
             {activeTab === 'general' ? (
               <div className="grid grid-cols-2 gap-12">
                 <div className="space-y-6">
