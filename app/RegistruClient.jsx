@@ -70,7 +70,7 @@ const formatDate = (dateString) => {
   } else if (activeTab === 'decizii') {
     headers = "Tip;Nr Document;Data;Continut;Observatii";
     rows = data.map(i => `"${i.tip_document}";"${i.numar_inregistrare}";"${i.data_emitere}";"${i.continut}";"${i.observatii}"`);
-    else if (activeTab === 'delegatii') {
+   } else if (activeTab === 'delegatii') {
       headers = "Nr;Nume si Prenume;Ruta;Data";
   rows = data.map(i => `"${i.numar_inregistrare}";"${i.nume_prenume}";"${i.ruta}";"${i.data_delegatie}"`);
       
