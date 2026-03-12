@@ -19,11 +19,13 @@ export default function RegistruTeius() {
   const [allocatedNumber, setAllocatedNumber] = useState(null);
 
   const listaCompartimente = ["SECRETARIAT", "CONTABILITATE", "ADMINISTRATIV", "DIRECTOR", "ACHIZIȚII", "RESURSE UMANE"];
-const formatDate = (dateString) => {
-  if (!dateString || dateString === '-') return '-';
-  const [year, month, day] = dateString.split('-');
-  return `${day}-${month}-${year}`;
-};
+
+  const formatDate = (dateString) => {
+    if (!dateString || dateString === '-') return '-';
+    const [year, month, day] = dateString.split('-');
+    return `${day}-${month}-${year}`;
+  };
+
   const [form, setForm] = useState({
     data: new Date().toISOString().split('T')[0],
     tip_document: formType,
@@ -34,18 +36,19 @@ const formatDate = (dateString) => {
     compartiment: '', observatii: ''
   });
 
- const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     let tableName = 'documente';
-    let columnToSort = 'numar_inregistrare'; // Sortăm după numărul alocat
+    let columnToSort = 'numar_inregistrare';
 
     if (activeTab === 'decizii') tableName = 'registrul_deciziilor';
     if (activeTab === 'registre') tableName = 'registrul_registrelor';
+    if (activeTab === 'delegatii') tableName = 'registru_delegatii'; [cite: 1]
 
     const { data: result, error } = await supabase
       .from(tableName)
       .select('*')
-      .order(columnToSort, { ascending: false }); // 'false' înseamnă descendent (3, 2, 1...)
+      .order(columnToSort, { ascending: false });
     
     if (!error) setData(result || []);
     setLoading(false);
@@ -60,36 +63,33 @@ const formatDate = (dateString) => {
   };
 
   const exportToExcel = () => {
-  let headers = "";
-  let rows = [];
+    let headers = "";
+    let rows = [];
 
-  // 1. Definim antetele și rândurile folosind separatorul ";"
-  if (activeTab === 'general') {
-    headers = "Tip;Nr Inregistrare;Data;Emitent;Continut;Compartiment;Destinatar";
-    rows = data.map(i => `"${i.tip}";"${i.numar_inregistrare}";"${i.creat_la}";"${i.emitent}";"${i.continut}";"${i.compartiment}";"${i.destinatar}"`);
-  } else if (activeTab === 'decizii') {
-    headers = "Tip;Nr Document;Data;Continut;Observatii";
-    rows = data.map(i => `"${i.tip_document}";"${i.numar_inregistrare}";"${i.data_emitere}";"${i.continut}";"${i.observatii}"`);
-  } else {
-    headers = "Nr Registru;Data Inceput;Continut;Data Terminare;Observatii";
-    rows = data.map(i => `"${i.numar_inregistrare}";"${i.data_inceput}";"${i.continut}";"${i.data_sfarsit}";"${i.observatii}"`);
-  }
+    if (activeTab === 'general') {
+      headers = "Tip;Nr Inregistrare;Data;Emitent;Continut;Compartiment;Destinatar";
+      rows = data.map(i => `"${i.tip_document}";"${i.numar_inregistrare}";"${i.creat_la}";"${i.emitent}";"${i.continut}";"${i.compartiment}";"${i.destinatar}"`);
+    } else if (activeTab === 'decizii') {
+      headers = "Tip;Nr Document;Data;Continut;Observatii";
+      rows = data.map(i => `"${i.tip_document}";"${i.numar_inregistrare}";"${i.data_emitere}";"${i.continut}";"${i.observatii}"`);
+    } else if (activeTab === 'delegatii') { [cite: 1]
+      headers = "Nr Delegatie;Data;Titular;Ruta/Scop;Creat De";
+      rows = data.map(i => `"${i.numar_inregistrare}";"${i.data_emitere}";"${i.emitent}";"${i.destinatar}";"${i.creat_de}"`);
+    } else {
+      headers = "Nr Registru;Data Inceput;Continut;Data Terminare;Observatii";
+      rows = data.map(i => `"${i.numar_inregistrare}";"${i.data_inceput}";"${i.continut}";"${i.data_sfarsit}";"${i.observatii}"`);
+    }
 
-  // 2. Construim conținutul final
-  const csvContent = headers + "\n" + rows.join("\n");
-  
-  // 3. Adăugăm BOM (\uFEFF) pentru ca Excel să recunoască caracterele speciale (ă, î, ș, ț)
-  // și să deschidă fișierul direct în format UTF-8
-  const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  
-  const link = document.createElement("a");
-  link.setAttribute("href", url);
-  link.setAttribute("download", `Export_${activeTab}_${new Date().toLocaleDateString()}.csv`);
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-};
+    const csvContent = headers + "\n" + rows.join("\n");
+    const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Export_${activeTab}_${new Date().toLocaleDateString()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   const handleSave = async () => {
     if (activeTab === 'registre' && isNaN(form.nr_manual) && form.nr_manual !== '') {
@@ -98,7 +98,11 @@ const formatDate = (dateString) => {
     }
 
     setLoading(true);
-    const tableName = activeTab === 'general' ? 'documente' : (activeTab === 'decizii' ? 'registrul_deciziilor' : 'registrul_registrelor');
+    const tableName = 
+      activeTab === 'general' ? 'documente' : 
+      activeTab === 'decizii' ? 'registrul_deciziilor' : 
+      activeTab === 'delegatii' ? 'registru_delegatii' : [cite: 1]
+      'registrul_registrelor';
     
     let payload = {};
 
@@ -122,6 +126,15 @@ const formatDate = (dateString) => {
         data_sfarsit: form.data_sfarsit || null,
         continut: form.continut.toUpperCase(),
         observatii: form.observatii.toUpperCase(),
+        creat_de: currentUser,
+        anul: new Date().getFullYear(),
+        compartiment: currentUser
+      };
+    } else if (activeTab === 'delegatii') { [cite: 1]
+      payload = {
+        data_emitere: form.data,
+        emitent: form.emitent.toUpperCase(),
+        destinatar: form.destinatar.toUpperCase(),
         creat_de: currentUser,
         anul: new Date().getFullYear(),
         compartiment: currentUser
@@ -205,6 +218,7 @@ const formatDate = (dateString) => {
         <div className="flex gap-4 mb-8">
             <button onClick={() => setActiveTab('general')} className={`flex-1 p-4 rounded-[1.5rem] font-black uppercase text-xs transition-all border-b-4 ${activeTab === 'general' ? 'bg-white border-blue-600 text-blue-600 shadow-md' : 'bg-slate-100 border-transparent text-slate-400'}`}>Registru General</button>
             <button onClick={() => setActiveTab('decizii')} className={`flex-1 p-4 rounded-[1.5rem] font-black uppercase text-xs transition-all border-b-4 ${activeTab === 'decizii' ? 'bg-white border-blue-600 text-blue-600 shadow-md' : 'bg-slate-100 border-transparent text-slate-400'}`}>Decizii / Note</button>
+            <button onClick={() => setActiveTab('delegatii')} className={`flex-1 p-4 rounded-[1.5rem] font-black uppercase text-xs transition-all border-b-4 ${activeTab === 'delegatii' ? 'bg-white border-blue-600 text-blue-600 shadow-md' : 'bg-slate-100 border-transparent text-slate-400'}`}>Delegații</button> 
             <button onClick={() => setActiveTab('registre')} className={`flex-1 p-4 rounded-[1.5rem] font-black uppercase text-xs transition-all border-b-4 ${activeTab === 'registre' ? 'bg-white border-blue-600 text-blue-600 shadow-md' : 'bg-slate-100 border-transparent text-slate-400'}`}>Registru Registre</button>
         </div>
 
@@ -212,7 +226,9 @@ const formatDate = (dateString) => {
           <div className="mb-10">
             <button onClick={() => { setEditingId(null); setForm({ data: new Date().toISOString().split('T')[0], data_sfarsit: '', nr_manual: '', emitent: '', continut: '', destinatar: '', data_expediere: '', conex: '', indicativ_dosar: '', compartiment: currentUser, observatii: '' }); setShowForm(true); }} className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 text-left hover:shadow-xl transition-all w-full md:w-1/3">
               <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-white mb-4 bg-blue-600"><Plus size={24} strokeWidth={3}/></div>
-              <h3 className="font-black text-2xl text-slate-800 mb-1">{activeTab === 'decizii' ? 'Adaugă Decizie/Notă' : 'Adaugă Registru'}</h3>
+              <h3 className="font-black text-2xl text-slate-800 mb-1">
+                {activeTab === 'decizii' ? 'Adaugă Decizie/Notă' : activeTab === 'delegatii' ? 'Adaugă Delegație' : 'Adaugă Registru'} 
+              </h3>
             </button>
           </div>
         )}
@@ -254,6 +270,12 @@ const formatDate = (dateString) => {
                     <th className="px-4 py-5">Conținut</th><th className="px-4 py-5">Data Terminare</th>
                     <th className="px-4 py-5">Observații</th><th className="px-4 py-5 text-right">Editare</th>
                   </tr>
+                ) : activeTab === 'delegatii' ? ( 
+                  <tr>
+                    <th className="px-4 py-5">Nr. Delegație</th><th className="px-4 py-5">Data</th>
+                    <th className="px-4 py-5">Titular Delegație</th><th className="px-4 py-5">Ruta / Scop</th>
+                    <th className="px-4 py-5 text-right">Editare</th><th className="px-4 py-5">Creat De</th>
+                  </tr>
                 ) : (
                   <tr>
                     <th className="px-4 py-5">Tip</th><th className="px-4 py-5">Nr. Document</th>
@@ -263,25 +285,23 @@ const formatDate = (dateString) => {
                 )}
               </thead>
               <tbody className="divide-y divide-slate-50 text-[11px] font-bold text-slate-600">
-                {data.filter(i => (i.continut || '').toLowerCase().includes(search.toLowerCase())).map(item => (
+                {data.filter(i => (i.continut || i.emitent || '').toLowerCase().includes(search.toLowerCase())).map(item => (
                   <tr 
-      key={item.id} 
-      className={`transition-colors ${
-        item.tip_document === 'INTRARE' ? 'bg-emerald-50/50 hover:bg-emerald-100/50' : 
-        item.tip_document === 'IESIRE' ?   'bg-blue-50/50 hover:bg-blue-100/50' :
-        item.tip_document === 'REZERVAT' ? 'bg-orange-50/50 hover:bg-orange-100/50' : 
-        'hover:bg-slate-50'
-      }`}
-    >
+                    key={item.id} 
+                    className={`transition-colors ${
+                      item.tip_document === 'INTRARE' ? 'bg-emerald-50/50 hover:bg-emerald-100/50' : 
+                      item.tip_document === 'IESIRE' ?   'bg-blue-50/50 hover:bg-blue-100/50' :
+                      item.tip_document === 'REZERVAT' ? 'bg-orange-50/50 hover:bg-orange-100/50' : 
+                      'hover:bg-slate-50'
+                    }`}
+                  >
                     {activeTab === 'general' ? (
                       <>
-                        <td className="px-4 py-4"><span className={`px-3 py-1.5 rounded-xl text-[9px] font-black text-white ${item.tip_document === 'INTRARE' ? 'bg-emerald-500' : 
-    item.tip_document === 'IESIRE' ? 'bg-blue-600' : 
-    'bg-orange-500'}`}>{item.tip_document}</span></td>
+                        <td className="px-4 py-4"><span className={`px-3 py-1.5 rounded-xl text-[9px] font-black text-white ${item.tip_document === 'INTRARE' ? 'bg-emerald-500' : item.tip_document === 'IESIRE' ? 'bg-blue-600' : 'bg-orange-500'}`}>{item.tip_document}</span></td>
                         <td className="px-4 py-4 text-blue-600 font-black">{item.numar_inregistrare}</td>
                         <td className="px-4 py-4">{formatDate(item.creat_la)}</td>
                         <td className="px-4 py-4 uppercase">{item.emitent}</td>
-                      <td className="px-4 py-4 uppercase whitespace-normal break-words min-w-[300px]">  {item.continut}</td>
+                        <td className="px-4 py-4 uppercase whitespace-normal break-words min-w-[300px]">{item.continut}</td>
                         <td className="px-4 py-4 uppercase">{item.compartiment}</td>                       
                         <td className="px-4 py-4 uppercase">{item.destinatar}</td>
                         <td className="px-4 py-4">{formatDate(item.data_expediere)}</td>
@@ -295,33 +315,40 @@ const formatDate = (dateString) => {
                         <td className="px-4 py-4">{formatDate(item.data_sfarsit)}</td>
                         <td className="px-4 py-4 uppercase">{item.observatii || '-'}</td>
                       </>
-                   ) : (
-  <>
-    <td className="px-4 py-4">
-      <span className={`px-3 py-1.5 rounded-xl text-[9px] font-black text-white ${
-        item.tip_document === 'DECIZIE' ? 'bg-indigo-600' : 'bg-fuchsia-600'
-      }`}>
-        {item.tip_document}
-      </span>
-    </td>
-    <td className="px-4 py-4 text-blue-600 font-black">{item.numar_inregistrare}</td>
-    <td className="px-4 py-4">{formatDate(item.data_emitere)}</td>
-    <td className="px-4 py-4 uppercase">{item.continut}</td>
-    <td className="px-4 py-4 uppercase">{item.observatii || '-'}</td>
-  </>
-)}
+                    ) : activeTab === 'delegatii' ? ( 
+                      <>
+                        <td className="px-4 py-4 text-blue-600 font-black">{item.numar_inregistrare}</td>
+                        <td className="px-4 py-4">{formatDate(item.data_emitere)}</td>
+                        <td className="px-4 py-4 uppercase font-black">{item.emitent}</td>
+                        <td className="px-4 py-4 uppercase">{item.destinatar}</td>
+                      </>
+                    ) : (
+                      <>
+                        <td className="px-4 py-4">
+                          <span className={`px-3 py-1.5 rounded-xl text-[9px] font-black text-white ${item.tip_document === 'DECIZIE' ? 'bg-indigo-600' : 'bg-fuchsia-600'}`}>
+                            {item.tip_document}
+                          </span>
+                        </td>
+                        <td className="px-4 py-4 text-blue-600 font-black">{item.numar_inregistrare}</td>
+                        <td className="px-4 py-4">{formatDate(item.data_emitere)}</td>
+                        <td className="px-4 py-4 uppercase">{item.continut}</td>
+                        <td className="px-4 py-4 uppercase">{item.observatii || '-'}</td>
+                      </>
+                    )}
                     <td className="px-4 py-4 text-right">
                       <button onClick={() => { 
                         setEditingId(item.id); 
                         if(activeTab === 'registre') {
                           setForm({...item, data: item.data_inceput, nr_manual: item.numar_inregistrare});
+                        } else if(activeTab === 'delegatii') { 
+                          setForm({...item, data: item.data_emitere});
                         } else {
                           setForm({...item, data: item.data_emitere || item.creat_la});
                         }
                         setShowForm(true); 
                       }} className="text-slate-300 hover:text-blue-600"><Edit2 size={14}/></button>                      
                     </td>
-                    <td className="px-4 py-4 text-[10px] text-slate-400 italic font-medium">                      {item.creat_de || 'SISTEM'}                    </td>
+                    <td className="px-4 py-4 text-[10px] text-slate-400 italic font-medium">{item.creat_de || 'SISTEM'}</td>
                   </tr>
                 ))}
               </tbody>
@@ -339,7 +366,7 @@ const formatDate = (dateString) => {
           <div className="bg-white rounded-[3rem] p-10 w-full max-w-5xl shadow-2xl relative border-[12px] border-slate-50">
             <button onClick={() => setShowForm(false)} className="absolute top-8 right-8 text-slate-300 hover:text-red-500 transition-colors"><X size={32}/></button>
             <h2 className="text-3xl font-black text-slate-800 mb-6 uppercase tracking-tighter">
-                {activeTab === 'general' ? 'Date Registru' : activeTab === 'decizii' ? 'Date Decizie / Notă' : 'Date Registru Registre'}
+                {activeTab === 'general' ? 'Date Registru' : activeTab === 'decizii' ? 'Date Decizie / Notă' : activeTab === 'delegatii' ? 'Date Delegație' : 'Date Registru Registre'} 
             </h2>
             
             {activeTab === 'general' ? (
@@ -364,49 +391,23 @@ const formatDate = (dateString) => {
                     <input type="text" placeholder="SCRIE EMITENTUL..." value={form.emitent} onChange={e => setForm({...form, emitent: e.target.value})} className="w-full p-5 bg-slate-50 rounded-2xl font-black border-2 border-slate-100 uppercase outline-none" />
                   </div>
                   <div>
-  <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">
-    Conținut / Descriere
-  </label>
-  <textarea 
-    value={form.continut} 
-    onChange={e => setForm({...form, continut: e.target.value})} // <--- Aici era eroarea
-    className="w-full p-6 bg-slate-50 rounded-[2rem] border-2 border-slate-100 font-bold h-40 resize-none uppercase outline-none" 
-    placeholder="DETALII DESPRE DOCUMENT..." 
-  />
-</div>
+                    <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">Conținut / Descriere</label>
+                    <textarea value={form.continut} onChange={e => setForm({...form, continut: e.target.value})} className="w-full p-6 bg-slate-50 rounded-[2rem] border-2 border-slate-100 font-bold h-40 resize-none uppercase outline-none" placeholder="DETALII DESPRE DOCUMENT..." />
+                  </div>
                 </div>
                 <div className="space-y-6">
                   <div>
                     <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">Compartiment</label>
                     <div className="flex gap-2 mb-2 flex-wrap">
                        {listaCompartimente.map(c => (
-                         <button 
-                           key={c} 
-                           type="button"
-                           onClick={() => setForm({...form, compartiment: c})} 
-                           className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all ${form.compartiment === c ? 'bg-orange-600 text-white shadow-md' : 'bg-orange-50 text-orange-700 hover:bg-orange-100'}`}
-                         >
-                           {c}
-                         </button>
+                         <button key={c} type="button" onClick={() => setForm({...form, compartment: c})} className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all ${form.compartiment === c ? 'bg-orange-600 text-white shadow-md' : 'bg-orange-50 text-orange-700 hover:bg-orange-100'}`}>{c}</button>
                        ))}
                     </div>
-                    <input 
-                      type="text" 
-                      placeholder="SCRIE SAU ALEGE COMPARTIMENT..." 
-                      value={form.compartiment || ''} 
-                      onChange={e => setForm({...form, compartiment: e.target.value})} 
-                      className="w-full p-5 bg-slate-50 rounded-2xl font-black border-2 border-slate-100 uppercase outline-none focus:border-orange-200 transition-all" 
-                    />
+                    <input type="text" placeholder="SCRIE SAU ALEGE COMPARTIMENT..." value={form.compartiment || ''} onChange={e => setForm({...form, compartment: e.target.value})} className="w-full p-5 bg-slate-50 rounded-2xl font-black border-2 border-slate-100 uppercase outline-none focus:border-orange-200 transition-all" />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
-                     <div>
-                       <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-1 block">Data Expediere</label>
-                       <input type="date" value={form.data_expediere} onChange={e => setForm({...form, data_expediere: e.target.value})} className="w-full p-4 bg-slate-50 rounded-xl border-2 border-slate-100 font-black outline-none" />
-                     </div>
-                     <div>
-                       <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-1 block">Destinatar</label>
-                       <input type="text" placeholder="CĂTRE..." value={form.destinatar} onChange={e => setForm({...form, destinatar: e.target.value})} className="w-full p-4 bg-slate-50 rounded-xl border-2 border-slate-100 font-black uppercase outline-none" />
-                     </div>
+                     <div><label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-1 block">Data Expediere</label><input type="date" value={form.data_expediere} onChange={e => setForm({...form, data_expediere: e.target.value})} className="w-full p-4 bg-slate-50 rounded-xl border-2 border-slate-100 font-black outline-none" /></div>
+                     <div><label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-1 block">Destinatar</label><input type="text" placeholder="CĂTRE..." value={form.destinatar} onChange={e => setForm({...form, destinatar: e.target.value})} className="w-full p-4 bg-slate-50 rounded-xl border-2 border-slate-100 font-black uppercase outline-none" /></div>
                   </div>
                   <div className="p-6 bg-blue-50/50 rounded-[2rem] border-2 border-blue-100">
                     <p className="text-[10px] font-black text-blue-600 uppercase mb-4 text-center">Legături Document (Conex/Dosar)</p>
@@ -420,28 +421,30 @@ const formatDate = (dateString) => {
             ) : activeTab === 'registre' ? (
               <div className="space-y-6">
                 <div className="grid grid-cols-3 gap-6">
-                  <div>
-                    <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">Nr. Registru (Manual)</label>
-                    <input type="text" placeholder="NR. REGISTRU..." value={form.nr_manual} onChange={e => setForm({...form, nr_manual: e.target.value})} className="w-full p-5 bg-slate-50 rounded-2xl font-black border-2 border-slate-100 outline-none" />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">Data Început</label>
-                    <input type="date" value={form.data} onChange={e => setForm({...form, data: e.target.value})} className="w-full p-5 bg-slate-50 rounded-2xl font-black border-2 border-slate-100 outline-none" />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">Data Terminare</label>
-                    <input type="date" value={form.data_sfarsit} onChange={e => setForm({...form, data_sfarsit: e.target.value})} className="w-full p-5 bg-slate-50 rounded-2xl font-black border-2 border-slate-100 outline-none" />
-                  </div>
+                  <div><label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">Nr. Registru (Manual)</label><input type="text" placeholder="NR. REGISTRU..." value={form.nr_manual} onChange={e => setForm({...form, nr_manual: e.target.value})} className="w-full p-5 bg-slate-50 rounded-2xl font-black border-2 border-slate-100 outline-none" /></div>
+                  <div><label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">Data Început</label><input type="date" value={form.data} onChange={e => setForm({...form, data: e.target.value})} className="w-full p-5 bg-slate-50 rounded-2xl font-black border-2 border-slate-100 outline-none" /></div>
+                  <div><label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">Data Terminare</label><input type="date" value={form.data_sfarsit} onChange={e => setForm({...form, data_sfarsit: e.target.value})} className="w-full p-5 bg-slate-50 rounded-2xl font-black border-2 border-slate-100 outline-none" /></div>
                 </div>
                 <div className="grid grid-cols-2 gap-8">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase ml-2 block">Conținut / Denumire Registru</label>
-                    <textarea placeholder="DESCRIERE..." value={form.continut} onChange={e => setForm({...form, continut: e.target.value})} className="w-full p-5 bg-slate-50 rounded-2xl font-black border-2 border-slate-100 h-48 uppercase outline-none" />
+                  <div className="space-y-2"><label className="text-[10px] font-black text-slate-400 uppercase ml-2 block">Conținut / Denumire Registru</label><textarea placeholder="DESCRIERE..." value={form.continut} onChange={e => setForm({...form, continut: e.target.value})} className="w-full p-5 bg-slate-50 rounded-2xl font-black border-2 border-slate-100 h-48 uppercase outline-none" /></div>
+                  <div className="space-y-2"><label className="text-[10px] font-black text-slate-400 uppercase ml-2 block">Observații</label><textarea placeholder="OBSERVAȚII..." value={form.observatii} onChange={e => setForm({...form, observatii: e.target.value})} className="w-full p-5 bg-slate-50 rounded-2xl font-black border-2 border-slate-100 h-48 uppercase outline-none" /></div>
+                </div>
+              </div>
+            ) : activeTab === 'delegatii' ? ( 
+              <div className="space-y-8">
+                <div className="grid grid-cols-2 gap-8">
+                  <div>
+                    <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block tracking-widest">Titular Delegație (Nume și Prenume)</label>
+                    <input type="text" placeholder="SCRIE NUMELE..." value={form.emitent} onChange={e => setForm({...form, emitent: e.target.value})} className="w-full p-6 bg-slate-50 rounded-[2rem] font-black border-2 border-slate-100 uppercase outline-none" />
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase ml-2 block">Observații</label>
-                    <textarea placeholder="OBSERVAȚII..." value={form.observatii} onChange={e => setForm({...form, observatii: e.target.value})} className="w-full p-5 bg-slate-50 rounded-2xl font-black border-2 border-slate-100 h-48 uppercase outline-none" />
+                  <div>
+                    <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block tracking-widest">Data Delegației</label>
+                    <input type="date" value={form.data} onChange={e => setForm({...form, data: e.target.value})} className="w-full p-6 bg-slate-50 rounded-[2rem] font-black border-2 border-slate-100 outline-none" />
                   </div>
+                </div>
+                <div>
+                  <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block tracking-widest">Ruta / Scopul deplasării</label>
+                  <input type="text" placeholder="EX: TEIUȘ - ALBA IULIA - TEIUȘ (CONSFĂTUIRI)..." value={form.destinatar} onChange={e => setForm({...form, destinatar: e.target.value})} className="w-full p-6 bg-slate-50 rounded-[2rem] font-black border-2 border-slate-100 uppercase outline-none" />
                 </div>
               </div>
             ) : (
