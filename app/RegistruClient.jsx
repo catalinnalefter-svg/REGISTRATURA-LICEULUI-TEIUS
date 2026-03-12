@@ -396,8 +396,7 @@ if (activeTab === 'delegatii') tableName = 'registrul_delegatiilor'; // Linia no
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
       <div>
         <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">Nume și Prenume</label>
-        <input 
-          type="text" 
+        <input type="text" 
           placeholder="INTRODUCEȚI NUMELE..." 
           value={form.emitent} 
           onChange={e => setForm({...form, emitent: e.target.value})} 
@@ -527,7 +526,7 @@ if (activeTab === 'delegatii') tableName = 'registrul_delegatiilor'; // Linia no
                   </div>
                 </div>
               </div>
-          )}
+         
             ) : (
               <div className="space-y-6">
                 <div className="flex gap-3">
