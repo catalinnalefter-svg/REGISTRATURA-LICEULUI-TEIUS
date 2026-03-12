@@ -130,7 +130,14 @@ const formatDate = (dateString) => {
         anul: new Date().getFullYear(),
         compartiment: currentUser
       };
-    } else if {
+        } else if (activeTab === 'delegatii') { // ACEASTA ESTE LINIA 76 DIN EROARE
+      payload = {
+        nume_prenume: form.emitent.toUpperCase(),
+        ruta: form.continut.toUpperCase(),
+        data_delegatie: form.data,
+        creat_de: currentUser
+      };
+    } else {
       payload = {
         tip_document: activeTab === 'decizii' ? decizieType : 'DECIZIE',
         data_emitere: form.data,
@@ -140,13 +147,7 @@ const formatDate = (dateString) => {
         anul: new Date().getFullYear(),
         compartiment: currentUser
       };
-      } else if (activeTab === 'delegatii') { // ACEASTA ESTE LINIA 76 DIN EROARE
-      payload = {
-        nume_prenume: form.emitent.toUpperCase(),
-        ruta: form.continut.toUpperCase(),
-        data_delegatie: form.data,
-        creat_de: currentUser
-      };
+    
     }
 
     const { data: savedData, error } = editingId 
