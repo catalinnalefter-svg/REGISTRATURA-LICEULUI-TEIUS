@@ -390,7 +390,7 @@ if (activeTab === 'delegatii') tableName = 'registrul_delegatiilor'; // Linia no
             <button onClick={() => setShowForm(false)} className="absolute top-8 right-8 text-slate-300 hover:text-red-500 transition-colors"><X size={32}/></button>
             <h2 className="text-3xl font-black text-slate-800 mb-6 uppercase tracking-tighter">
                 {activeTab === 'general' ? 'Date Registru' : activeTab === 'decizii' ? 'Date Decizie / Notă' : 'Date Registru Registre'}
-            </h2> </div> {
+            </h2> </div> 
             {activeTab === 'delegatii' ? (
   <div className="space-y-8">
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
