@@ -222,3 +222,35 @@ export default function RegistruTeius() {
                     {listaCompartimente.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </div>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                <input type="date" value={form.data} onChange={e => setForm({...form, data: e.target.value})} className="w-full p-5 bg-slate-50 rounded-2xl font-black border-2 border-slate-100" />
+                <textarea placeholder="DESCRIERE..." value={form.continut} onChange={e => setForm({...form, continut: e.target.value})} className="w-full p-5 bg-slate-50 rounded-2xl font-black border-2 border-slate-100 h-32 uppercase" />
+                <textarea placeholder="OBSERVAȚII..." value={form.observatii} onChange={e => setForm({...form, observatii: e.target.value})} className="w-full p-5 bg-slate-50 rounded-2xl font-black border-2 border-slate-100 h-32 uppercase" />
+              </div>
+            )}
+
+            <button onClick={handleSave} disabled={loading} className="w-full bg-blue-600 text-white p-6 rounded-3xl font-black uppercase text-xl mt-8 shadow-xl hover:bg-blue-700 transition-all">
+              {loading ? 'SE SALVEAZĂ...' : 'Salvează în Registru'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* SUCCES MODAL */}
+      {allocatedNumber && (
+        <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-xl flex items-center justify-center z-[100] p-6">
+          <div className="bg-white rounded-[3rem] p-12 w-full max-w-md text-center shadow-2xl">
+            <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6"><CheckCircle2 size={40} /></div>
+            <h2 className="text-xl font-black text-slate-800 uppercase mb-4">Înregistrare Reușită!</h2>
+            <div className="bg-slate-50 rounded-[2rem] p-6 mb-8 border-2 border-slate-100">
+              <span className="text-5xl font-black text-blue-600">#{allocatedNumber}</span>
+            </div>
+            <button onClick={() => setAllocatedNumber(null)} className="w-full bg-slate-900 text-white p-5 rounded-2xl font-black uppercase">Închide</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
