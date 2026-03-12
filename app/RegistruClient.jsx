@@ -425,7 +425,7 @@ if (activeTab === 'delegatii') tableName = 'registrul_delegatiilor'; // Linia no
       />
     </div>
   </div>
-            {activeTab === 'general' ? (
+            activeTab === 'general' ? (
               <div className="grid grid-cols-2 gap-12">
                 <div className="space-y-6">
                   <div className="flex gap-3 mb-4">
