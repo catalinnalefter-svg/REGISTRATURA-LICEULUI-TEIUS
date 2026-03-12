@@ -539,12 +539,25 @@ if (activeTab === 'delegatii') tableName = 'registrul_delegatiilor'; // Linia no
                     <input type="date" value={form.data} onChange={e => setForm({...form, data: e.target.value})} className="w-full p-5 bg-slate-50 rounded-2xl font-black border-2 border-slate-100 outline-none" />
                     <textarea placeholder="CONȚINUT..." value={form.continut} onChange={e => setForm({...form, continut: e.target.value})} className="w-full p-5 bg-slate-50 rounded-2xl font-black border-2 border-slate-100 h-48 uppercase outline-none" />
                   </div>
-                  <textarea placeholder="OBSERVAȚII..." value={form.observatii} onChange={e => setForm({...form, observatii: e.target.value})} className="w-full p-5 bg-slate-50 rounded-2xl font-black border-2 border-slate-100 h-64 uppercase outline-none" />
+                  <div>
+                  <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">Observații</label>
+                  <textarea 
+                    placeholder="ALTE DETALII..." 
+                    value={form.observatii} 
+                    onChange={e => setForm({...form, observatii: e.target.value})} 
+                    className="w-full p-5 bg-slate-50 rounded-2xl font-black border-2 border-slate-100 h-32 uppercase outline-none" 
+                  />
                 </div>
               </div>
             )}
-            
-            <button onClick={handleSave} disabled={loading} className="w-full bg-blue-600 hover:bg-blue-700 text-white p-6 rounded-[2rem] font-black text-lg uppercase shadow-xl mt-10 transition-all">{loading ? 'SALVARE...' : 'Salvează în Registru'}</button>
+
+            <button 
+              onClick={handleSave} 
+              disabled={loading} 
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white p-6 rounded-[2rem] font-black text-lg uppercase shadow-xl mt-10 transition-all"
+            >
+              {loading ? 'SALVARE...' : 'Salvează în Registru'}
+            </button>
           </div>
         </div>
       )}
@@ -552,10 +565,20 @@ if (activeTab === 'delegatii') tableName = 'registrul_delegatiilor'; // Linia no
       {allocatedNumber && (
         <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-xl flex items-center justify-center z-[100] p-6 text-slate-900">
            <div className="bg-white rounded-[3rem] p-12 w-full max-w-lg text-center border-[12px] border-emerald-50 shadow-2xl">
-              <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6"><CheckCircle2 size={40} /></div>
+              <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                <CheckCircle2 size={40} />
+              </div>
               <h2 className="text-xl font-black text-slate-800 uppercase mb-4 tracking-tighter">Înregistrare Reușită!</h2>
-              <div className="bg-slate-50 rounded-[2rem] p-6 mb-8 border-2 border-slate-100"><span className="text-6xl font-black text-blue-600">#{allocatedNumber}</span></div>
-              <button onClick={() => setAllocatedNumber(null)} className="w-full bg-slate-900 text-white p-5 rounded-2xl font-black uppercase tracking-widest">Închide</button>
+              <div className="bg-slate-50 rounded-[2rem] p-6 mb-8 border-2 border-slate-100">
+                <span className="text-[10px] font-black text-slate-400 uppercase block mb-1">Număr Alocat</span>
+                <span className="text-5xl font-black text-blue-600 tracking-tighter">{allocatedNumber}</span>
+              </div>
+              <button 
+                onClick={() => setAllocatedNumber(null)} 
+                className="w-full bg-slate-900 text-white p-5 rounded-2xl font-black uppercase hover:bg-slate-800 transition-all"
+              >
+                Am înțeles
+              </button>
            </div>
         </div>
       )}
