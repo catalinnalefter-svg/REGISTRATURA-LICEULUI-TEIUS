@@ -70,18 +70,15 @@ const formatDate = (dateString) => {
   } else if (activeTab === 'decizii') {
     headers = "Tip;Nr Document;Data;Continut;Observatii";
     rows = data.map(i => `"${i.tip_document}";"${i.numar_inregistrare}";"${i.data_emitere}";"${i.continut}";"${i.observatii}"`);
+    else if (activeTab === 'delegatii') {
+      headers = "Nr;Nume si Prenume;Ruta;Data";
+  rows = data.map(i => `"${i.numar_inregistrare}";"${i.nume_prenume}";"${i.ruta}";"${i.data_delegatie}"`);
+      
   } else {
     headers = "Nr Registru;Data Inceput;Continut;Data Terminare;Observatii";
     rows = data.map(i => `"${i.numar_inregistrare}";"${i.data_inceput}";"${i.continut}";"${i.data_sfarsit}";"${i.observatii}"`);
-    else if (activeTab === 'delegatii') {
-      payload = {
-        nume_prenume: form.emitent.toUpperCase(),
-        ruta: form.continut.toUpperCase(),
-        data_delegatie: form.data,
-        creat_de: currentUser
-      };
-  }
-
+    }
+};
   // 2. Construim conținutul final
   const csvContent = headers + "\n" + rows.join("\n");
   
@@ -133,7 +130,7 @@ const formatDate = (dateString) => {
         anul: new Date().getFullYear(),
         compartiment: currentUser
       };
-    } else {
+    } else if {
       payload = {
         tip_document: activeTab === 'decizii' ? decizieType : 'DECIZIE',
         data_emitere: form.data,
@@ -142,6 +139,13 @@ const formatDate = (dateString) => {
         creat_de: currentUser,
         anul: new Date().getFullYear(),
         compartiment: currentUser
+      };
+      } else if (activeTab === 'delegatii') { // ACEASTA ESTE LINIA 76 DIN EROARE
+      payload = {
+        nume_prenume: form.emitent.toUpperCase(),
+        ruta: form.continut.toUpperCase(),
+        data_delegatie: form.data,
+        creat_de: currentUser
       };
     }
 
