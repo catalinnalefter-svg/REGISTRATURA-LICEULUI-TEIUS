@@ -73,6 +73,13 @@ const formatDate = (dateString) => {
   } else {
     headers = "Nr Registru;Data Inceput;Continut;Data Terminare;Observatii";
     rows = data.map(i => `"${i.numar_inregistrare}";"${i.data_inceput}";"${i.continut}";"${i.data_sfarsit}";"${i.observatii}"`);
+    else if (activeTab === 'delegatii') {
+      payload = {
+        nume_prenume: form.emitent.toUpperCase(),
+        ruta: form.continut.toUpperCase(),
+        data_delegatie: form.data,
+        creat_de: currentUser
+      };
   }
 
   // 2. Construim conținutul final
@@ -152,6 +159,7 @@ const formatDate = (dateString) => {
       fetchData();
     }
     setLoading(false);
+    
   };
 
   if (!isAuth) {
@@ -206,13 +214,14 @@ const formatDate = (dateString) => {
             <button onClick={() => setActiveTab('general')} className={`flex-1 p-4 rounded-[1.5rem] font-black uppercase text-xs transition-all border-b-4 ${activeTab === 'general' ? 'bg-white border-blue-600 text-blue-600 shadow-md' : 'bg-slate-100 border-transparent text-slate-400'}`}>Registru General</button>
             <button onClick={() => setActiveTab('decizii')} className={`flex-1 p-4 rounded-[1.5rem] font-black uppercase text-xs transition-all border-b-4 ${activeTab === 'decizii' ? 'bg-white border-blue-600 text-blue-600 shadow-md' : 'bg-slate-100 border-transparent text-slate-400'}`}>Decizii / Note</button>
             <button onClick={() => setActiveTab('registre')} className={`flex-1 p-4 rounded-[1.5rem] font-black uppercase text-xs transition-all border-b-4 ${activeTab === 'registre' ? 'bg-white border-blue-600 text-blue-600 shadow-md' : 'bg-slate-100 border-transparent text-slate-400'}`}>Registru Registre</button>
+            <button onClick={() => setActiveTab('delegatii')} className={`flex-1 p-4 rounded-[1.5rem] font-black uppercase text-xs transition-all ${activeTab === 'delegatii' ? 'bg-white text-blue-600 shadow-md' : 'text-slate-400'}`}>  Delegații</button>
         </div>
 
         {activeTab !== 'general' && (
           <div className="mb-10">
             <button onClick={() => { setEditingId(null); setForm({ data: new Date().toISOString().split('T')[0], data_sfarsit: '', nr_manual: '', emitent: '', continut: '', destinatar: '', data_expediere: '', conex: '', indicativ_dosar: '', compartiment: currentUser, observatii: '' }); setShowForm(true); }} className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 text-left hover:shadow-xl transition-all w-full md:w-1/3">
               <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-white mb-4 bg-blue-600"><Plus size={24} strokeWidth={3}/></div>
-              <h3 className="font-black text-2xl text-slate-800 mb-1">{activeTab === 'decizii' ? 'Adaugă Decizie/Notă' : 'Adaugă Registru'}</h3>
+             <h3 className="font-black text-2xl text-slate-800 mb-1">  {activeTab === 'decizii' ? 'Adaugă Decizie/Notă' :    activeTab === 'delegatii' ? 'Adaugă Delegație' :    'Adaugă Registru'}</h3>
             </button>
           </div>
         )}
@@ -261,12 +270,20 @@ const formatDate = (dateString) => {
                     <th className="px-4 py-5">Observații</th><th className="px-4 py-5 text-right">Editare</th>
                   </tr>
                 )}
+                {activeTab === 'delegatii' && (
+    <tr className="bg-slate-50/50">
+      <th className="px-4 py-5 text-left text-[10px] font-black uppercase text-slate-400 tracking-widest">Nr. Ordin</th>
+      <th className="px-4 py-5 text-left text-[10px] font-black uppercase text-slate-400 tracking-widest">Nume și Prenume</th>
+      <th className="px-4 py-5 text-left text-[10px] font-black uppercase text-slate-400 tracking-widest">Rută (Destinație)</th>
+      <th className="px-4 py-5 text-left text-[10px] font-black uppercase text-slate-400 tracking-widest">Data</th>
+      <th className="px-4 py-5 text-left text-[10px] font-black uppercase text-slate-400 tracking-widest">Creat de</th>
+      <th className="px-4 py-5 text-right text-[10px] font-black uppercase text-slate-400 tracking-widest">Acțiuni</th>
+    </tr>
+  )}
               </thead>
               <tbody className="divide-y divide-slate-50 text-[11px] font-bold text-slate-600">
                 {data.filter(i => (i.continut || '').toLowerCase().includes(search.toLowerCase())).map(item => (
-                  <tr 
-      key={item.id} 
-      className={`transition-colors ${
+                  <tr  key={item.id}       className={`transition-colors ${
         item.tip_document === 'INTRARE' ? 'bg-emerald-50/50 hover:bg-emerald-100/50' : 
         item.tip_document === 'IESIRE' ?   'bg-blue-50/50 hover:bg-blue-100/50' :
         item.tip_document === 'REZERVAT' ? 'bg-orange-50/50 hover:bg-orange-100/50' : 
@@ -295,6 +312,15 @@ const formatDate = (dateString) => {
                         <td className="px-4 py-4">{formatDate(item.data_sfarsit)}</td>
                         <td className="px-4 py-4 uppercase">{item.observatii || '-'}</td>
                       </>
+      ) : activeTab === 'delegatii' ? (
+        /* --- SECȚIUNE NOUĂ PENTRU DELEGAȚII --- */
+        <>
+          <td className="px-4 py-4 text-blue-600 font-black">{item.numar_inregistrare}</td>
+          <td className="px-4 py-4 uppercase font-black text-slate-800">{item.nume_prenume}</td>
+          <td className="px-4 py-4 uppercase">{item.ruta}</td>
+          <td className="px-4 py-4">{formatDate(item.data_delegatie)}</td>
+          <td className="px-4 py-4">-</td> {/* Spațiu liber pentru a păstra alinierea coloanelor */}
+        </>
                    ) : (
   <>
     <td className="px-4 py-4">
@@ -315,6 +341,13 @@ const formatDate = (dateString) => {
                         setEditingId(item.id); 
                         if(activeTab === 'registre') {
                           setForm({...item, data: item.data_inceput, nr_manual: item.numar_inregistrare});
+                          } else if(activeTab === 'delegatii') {
+            setForm({
+              ...item, 
+              data: item.data_delegatie, 
+              emitent: item.nume_prenume, // Punem numele în câmpul pe care îl refolosim
+              continut: item.ruta         // Punem ruta în câmpul pe care îl refolosim
+            });
                         } else {
                           setForm({...item, data: item.data_emitere || item.creat_la});
                         }
