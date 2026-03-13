@@ -346,38 +346,81 @@ export default function RegistruTeius() {
             </h2>
             
             {activeTab === 'general' ? (
-              <div className="grid grid-cols-2 gap-12">
-                <div className="space-y-6">
-                  <div className="flex gap-3 mb-4">
-                    {['INTRARE', 'IESIRE', 'REZERVAT'].map(t => (
-                      <button key={t} onClick={() => setFormType(t)} className={`px-6 py-2 rounded-xl font-black text-[10px] ${formType === t ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-400'}`}>{t}</button>
-                    ))}
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">Data Document (Z-L-A)</label>
-                    <input type="date" value={form.data} onChange={e => setForm({...form, data: e.target.value})} className="w-full p-5 bg-slate-50 rounded-2xl font-black border-2 border-slate-100 outline-none" />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">Emitent</label>
-                    <input type="text" placeholder="SCRIE EMITENTUL..." value={form.emitent} onChange={e => setForm({...form, emitent: e.target.value})} className="w-full p-5 bg-slate-50 rounded-2xl font-black border-2 border-slate-100 uppercase outline-none" />
-                  </div>
-                  <textarea value={form.continut} onChange={e => setForm({...form, continut: e.target.value})} className="w-full p-6 bg-slate-50 rounded-[2rem] border-2 border-slate-100 font-bold h-40 resize-none uppercase outline-none" placeholder="DETALII DESPRE DOCUMENT..." />
-                </div>
-                <div className="space-y-6">
-                  <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">Compartiment</label>
-                  <input type="text" placeholder="COMPARTIMENT..." value={form.compartiment} onChange={e => setForm({...form, compartment: e.target.value})} className="w-full p-5 bg-slate-50 rounded-2xl font-black border-2 border-slate-100 uppercase outline-none" />
-                  <div className="grid grid-cols-2 gap-4">
-                     <input type="date" value={form.data_expediere} onChange={e => setForm({...form, data_expediere: e.target.value})} className="w-full p-4 bg-slate-50 rounded-xl border-2 border-slate-100 font-black outline-none" />
-                     <input type="text" placeholder="CĂTRE..." value={form.destinatar} onChange={e => setForm({...form, destinatar: e.target.value})} className="w-full p-4 bg-slate-50 rounded-xl border-2 border-slate-100 font-black uppercase outline-none" />
-                  </div>
-                  <div className="p-6 bg-blue-50/50 rounded-[2rem] border-2 border-blue-100">
-                    <div className="grid grid-cols-2 gap-4">
-                      <input type="text" placeholder="NR. CONEX" value={form.conex} onChange={e => setForm({...form, conex: e.target.value})} className="p-4 bg-white rounded-xl font-black text-center shadow-sm" />
-                      <input type="text" placeholder="INDICATIV DOSAR" value={form.indicativ_dosar} onChange={e => setForm({...form, indicativ_dosar: e.target.value})} className="p-4 bg-white rounded-xl font-black text-center shadow-sm" />
-                    </div>
-                  </div>
-                </div>
-              </div>
+  <div className="grid grid-cols-2 gap-12">
+    <div className="space-y-6">
+      <div className="flex gap-3 mb-4">
+        {['INTRARE', 'IESIRE', 'REZERVAT'].map(t => (
+          <button key={t} onClick={() => setFormType(t)} className={`px-6 py-2 rounded-xl font-black text-[10px] ${formType === t ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-400'}`}>{t}</button>
+        ))}
+      </div>
+      <div>
+        <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">Data Document (Z-L-A)</label>
+        <input type="date" value={form.data} onChange={e => setForm({...form, data: e.target.value})} className="w-full p-5 bg-slate-50 rounded-2xl font-black border-2 border-slate-100 outline-none" />
+      </div>
+      <div>
+        <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">Emitent</label>
+        <div className="flex gap-2 mb-2">
+           {['DIN OFICIU', 'ISJ ALBA', 'MINISTERUL EDUCAȚIEI'].map(e => (
+             <button key={e} onClick={() => setForm({...form, emitent: e})} className="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-[9px] font-black uppercase">{e}</button>
+           ))}
+        </div>
+        <input type="text" placeholder="SCRIE EMITENTUL..." value={form.emitent} onChange={e => setForm({...form, emitent: e.target.value})} className="w-full p-5 bg-slate-50 rounded-2xl font-black border-2 border-slate-100 uppercase outline-none" />
+      </div>
+      <div>
+        <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">
+          Conținut / Descriere
+        </label>
+        <textarea 
+          value={form.continut} 
+          onChange={e => setForm({...form, content: e.target.value})} 
+          className="w-full p-6 bg-slate-50 rounded-[2rem] border-2 border-slate-100 font-bold h-40 resize-none uppercase outline-none" 
+          placeholder="DETALII DESPRE DOCUMENT..." 
+        />
+      </div>
+    </div>
+    <div className="space-y-6">
+      <div>
+        <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block">Compartiment</label>
+        <div className="flex gap-2 mb-2 flex-wrap">
+           {listaCompartimente.map(c => (
+             <button 
+               key={c} 
+               type="button"
+               onClick={() => setForm({...form, compartiment: c})} 
+               className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all ${form.compartiment === c ? 'bg-orange-600 text-white shadow-md' : 'bg-orange-50 text-orange-700 hover:bg-orange-100'}`}
+             >
+               {c}
+             </button>
+           ))}
+        </div>
+        <input 
+          type="text" 
+          placeholder="SCRIE SAU ALEGE COMPARTIMENT..." 
+          value={form.compartiment || ''} 
+          onChange={e => setForm({...form, compartiment: e.target.value})} 
+          className="w-full p-5 bg-slate-50 rounded-2xl font-black border-2 border-slate-100 uppercase outline-none focus:border-orange-200 transition-all" 
+        />
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+         <div>
+           <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-1 block">Data Expediere</label>
+           <input type="date" value={form.data_expediere} onChange={e => setForm({...form, data_expediere: e.target.value})} className="w-full p-4 bg-slate-50 rounded-xl border-2 border-slate-100 font-black outline-none" />
+         </div>
+         <div>
+           <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-1 block">Destinatar</label>
+           <input type="text" placeholder="CĂTRE..." value={form.destinatar} onChange={e => setForm({...form, destinatar: e.target.value})} className="w-full p-4 bg-slate-50 rounded-xl border-2 border-slate-100 font-black uppercase outline-none" />
+         </div>
+      </div>
+      <div className="p-6 bg-blue-50/50 rounded-[2rem] border-2 border-blue-100">
+        <p className="text-[10px] font-black text-blue-600 uppercase mb-4 text-center">Legături Document (Conex/Dosar)</p>
+        <div className="grid grid-cols-2 gap-4">
+          <input type="text" placeholder="NR. CONEX" value={form.conex} onChange={e => setForm({...form, conex: e.target.value})} className="p-4 bg-white rounded-xl font-black text-center shadow-sm" />
+          <input type="text" placeholder="INDICATIV DOSAR" value={form.indicativ_dosar} onChange={e => setForm({...form, indicativ_dosar: e.target.value})} className="p-4 bg-white rounded-xl font-black text-center shadow-sm" />
+        </div>
+      </div>
+    </div>
+  </div>
+) : ... }
             ) : activeTab === 'delegatii' ? (
               <div className="space-y-6">
                 <div className="grid grid-cols-2 gap-8">
