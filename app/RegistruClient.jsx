@@ -420,7 +420,7 @@ export default function RegistruTeius() {
       </div>
     </div>
   </div>
-) : ... }
+
             ) : activeTab === 'delegatii' ? (
               <div className="space-y-6">
                 <div className="grid grid-cols-2 gap-8">
