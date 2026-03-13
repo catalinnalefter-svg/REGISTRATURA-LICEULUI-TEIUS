@@ -34,7 +34,7 @@ export default function RegistruTeius() {
     emitent: '', continut: '', destinatar: '', 
     data_expediere: '', conex: '', indicativ_dosar: '', 
     compartiment: '', observatii: '',
-    nume_prenume: '', ruta: ''
+    nume_prenume: '', ruta: '' // Doar aceste 2 campuri sunt noi in state
   });
 
   const fetchData = useCallback(async () => {
@@ -64,7 +64,6 @@ export default function RegistruTeius() {
   const exportToExcel = () => {
     let headers = "";
     let rows = [];
-
     if (activeTab === 'general') {
       headers = "Tip;Nr Inregistrare;Data;Emitent;Continut;Compartiment;Destinatar";
       rows = data.map(i => `"${i.tip_document}";"${i.numar_inregistrare}";"${i.creat_la}";"${i.emitent}";"${i.continut}";"${i.compartiment}";"${i.destinatar}"`);
@@ -78,7 +77,6 @@ export default function RegistruTeius() {
       headers = "Nr Registru;Data Inceput;Continut;Data Terminare;Observatii";
       rows = data.map(i => `"${i.numar_inregistrare}";"${i.data_inceput}";"${i.continut}";"${i.data_sfarsit}";"${i.observatii}"`);
     }
-
     const csvContent = headers + "\n" + rows.join("\n");
     const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -95,7 +93,6 @@ export default function RegistruTeius() {
         alert("Eroare: Câmpul 'Nr. Registru' trebuie să conțină doar cifre!");
         return;
     }
-
     setLoading(true);
     let tableName = 'documente';
     if (activeTab === 'decizii') tableName = 'registrul_deciziilor';
@@ -103,7 +100,6 @@ export default function RegistruTeius() {
     if (activeTab === 'delegatii') tableName = 'registru_delegatii';
     
     let payload = {};
-
     if (activeTab === 'general') {
       payload = {
         tip_document: formType,
