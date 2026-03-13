@@ -372,7 +372,7 @@ export default function RegistruTeius() {
         </label>
         <textarea 
           value={form.continut} 
-          onChange={e => setForm({...form, content: e.target.value})} 
+          onChange={e => setForm({...form, continut: e.target.value})} 
           className="w-full p-6 bg-slate-50 rounded-[2rem] border-2 border-slate-100 font-bold h-40 resize-none uppercase outline-none" 
           placeholder="DETALII DESPRE DOCUMENT..." 
         />
