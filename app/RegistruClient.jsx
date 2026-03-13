@@ -278,7 +278,15 @@ export default function RegistruTeius() {
                 )}
               </thead>
               <tbody className="divide-y divide-slate-50 text-[11px] font-bold text-slate-600">
-                {data.filter(i => (i.continut || i.nume_prenume || '').toLowerCase().includes(search.toLowerCase())).map(item => (
+                {data.filter(i => {
+  const searchTerm = search.toLowerCase();
+  return (
+    (i.continut || '').toLowerCase().includes(searchTerm) ||
+    (i.nume_prenume || '').toLowerCase().includes(searchTerm) ||
+    (i.emitent || '').toLowerCase().includes(searchTerm) ||
+    (i.numar_inregistrare || '').toString().includes(searchTerm)
+  );
+}).map(item => (
                   <tr key={item.id} className="hover:bg-slate-50">
                     {activeTab === 'general' ? (
                       <>
