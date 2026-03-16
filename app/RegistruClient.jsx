@@ -243,7 +243,7 @@ export default function RegistruTeius() {
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
-              <thead className="bg-slate-50/50 text-[9px] font-black uppercase text-slate-400">
+             <thead className="bg-blue-600 text-[10px] font-black uppercase text-white">
                 {activeTab === 'general' ? (
                   <tr>
                     <th className="px-4 py-5">Tip</th><th className="px-4 py-5">Nr. Înregistrare</th>
