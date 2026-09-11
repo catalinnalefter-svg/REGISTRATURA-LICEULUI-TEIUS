@@ -40,19 +40,28 @@ export default function RegistruTeius() {
 const fetchData = useCallback(async () => {
     setLoading(true);
     let tableName = 'documente';
-    let sortColumn = 'numar_inregistrare';
-
+    
     if (activeTab === 'decizii') {
       tableName = 'registrul_deciziilor';
-      sortColumn = 'data_emitere'; // sortează deciziile după dată
+      // Sortare dublă: întâi după dată (desc), apoi după număr (desc)
+      const { data: result, error } = await supabase
+        .from(tableName)
+        .select('*')
+        .order('data_emitere', { ascending: false })
+        .order('numar_inregistrare', { ascending: false });
+
+      if (!error) setData(result || []);
+      setLoading(false);
+      return;
     }
+
     if (activeTab === 'registre') tableName = 'registrul_registrelor';
     if (activeTab === 'delegatii') tableName = 'registru_delegatii';
 
     const { data: result, error } = await supabase
       .from(tableName)
       .select('*')
-      .order(sortColumn, { ascending: false });
+      .order('numar_inregistrare', { ascending: false });
     
     if (!error) setData(result || []);
     setLoading(false);
