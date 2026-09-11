@@ -37,17 +37,22 @@ export default function RegistruTeius() {
     nume_prenume: '', ruta: '' // Doar aceste 2 campuri sunt noi in state
   });
 
-  const fetchData = useCallback(async () => {
+const fetchData = useCallback(async () => {
     setLoading(true);
     let tableName = 'documente';
-    if (activeTab === 'decizii') tableName = 'registrul_deciziilor';
+    let sortColumn = 'numar_inregistrare';
+
+    if (activeTab === 'decizii') {
+      tableName = 'registrul_deciziilor';
+      sortColumn = 'data_emitere'; // sortează deciziile după dată
+    }
     if (activeTab === 'registre') tableName = 'registrul_registrelor';
     if (activeTab === 'delegatii') tableName = 'registru_delegatii';
 
     const { data: result, error } = await supabase
       .from(tableName)
       .select('*')
-      .order('numar_inregistrare', { ascending: false });
+      .order(sortColumn, { ascending: false });
     
     if (!error) setData(result || []);
     setLoading(false);
